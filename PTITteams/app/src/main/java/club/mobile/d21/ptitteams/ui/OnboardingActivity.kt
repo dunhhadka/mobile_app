@@ -33,13 +33,13 @@ class OnboardingActivity : AppCompatActivity() {
             if (currentItem < onboardingItems.size - 1) {
                 binding.viewPager.currentItem = currentItem + 1
             } else {
-                //navigateToLoginScreen()
+                navigateToLoginScreen()
             }
         }
 
         // Xử lý nút Skip
         binding.skipButton.setOnClickListener {
-            //navigateToLoginScreen()
+            navigateToLoginScreen()
         }
     }
 

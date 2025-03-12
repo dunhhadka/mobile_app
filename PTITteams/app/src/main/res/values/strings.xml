@@ -4,4 +4,22 @@
     <string name="next">Next</string>
     <string name="welcome_to_ptit_teams">Welcome to PTIT Teams!</string>
     <string name="make_smart_decisions_set_clear_timelines_for_projects_and_celebrate_your_achievements">Make Smart Decisions! Set clear timelines for\nprojects and celebrate your achievements!</string>
+    <string name="sign_in">Sign in</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="enter_your_password">Enter your password</string>
+    <string name="enter_your_email">Enter your email</string>
+    <string name="remember_me">Remember me</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="phone_number">Phone number</string>
+    <string name="enter_your_phone_number">Enter your phone number</string>
+    <string name="don_t_have_an_account_sign_up_here">Don\'t have an account? Sign Up Here</string>
+    <string name="already_have_an_account_sign_in_here">Already have an account? Sign in here</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="confirm_your_password">Confirm your password</string>
+    <string name="i_agree_with_terms_conditions_and_privacy_policy"><![CDATA[I agree with terms & conditions and privacy policy]]></string>
+    <string name="forgot_password_title">FORGOT PASSWORD</string>
+    <string name="back_to_login">Back to Login</string>
+    <string name="send_email">SEND EMAIL</string>
 </resources>

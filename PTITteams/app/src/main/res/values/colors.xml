@@ -11,4 +11,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="text_1">#101828</color>
     <color name="text_2">#475467</color>
+
+    <color name="gray_400">#BDBDBD</color>
 </resources>
