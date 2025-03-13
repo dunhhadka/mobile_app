@@ -2,12 +2,15 @@ package org.example.management.management.domain.profile;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.example.management.ddd.NestedDomainEvent;
+import org.example.management.management.application.model.user.request.UserRequest;
 
 @Getter
 @Entity
+@Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "addresses")
 public class Address extends NestedDomainEvent<User> {
 
@@ -42,5 +45,11 @@ public class Address extends NestedDomainEvent<User> {
     @Override
     protected User getAggRoot() {
         return null;
+    }
+
+    public void update(UserRequest.AddressRequest addressUpdatable) {
+        this.wardName = addressUpdatable.getWardName();
+        this.districtName = addressUpdatable.getDistrictName();
+        this.countryName = addressUpdatable.getCountryName();
     }
 }
