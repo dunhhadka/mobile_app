@@ -2,7 +2,7 @@ spring:
   application:
     name: management
   datasource:
-    url: jdbc:mysql://localhost:3306/management?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/management?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
     username: root
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -14,3 +14,7 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+server:
+  port: 9000
