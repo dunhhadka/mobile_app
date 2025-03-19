@@ -17,6 +17,7 @@ public class StringListConverter implements AttributeConverter<List<String>, Str
     public String convertToDatabaseColumn(List<String> attribute) {
         if (CollectionUtils.isEmpty(attribute)) {
             log.info("attribute is empty or null value");
+            return null;
         }
         return attribute.stream()
                 .filter(StringUtils::isNotBlank)

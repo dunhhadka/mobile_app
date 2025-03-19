@@ -2,17 +2,20 @@ package org.example.management.management.application.service.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.example.management.management.application.model.user.request.UserRequest;
 import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.domain.profile.Address;
 import org.example.management.management.domain.profile.User;
 import org.example.management.management.domain.profile.UserRepository;
 import org.example.management.management.infastructure.exception.ConstrainViolationException;
+import org.example.management.management.infastructure.persistance.JpaUserRepositoryInterface;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -22,6 +25,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+
+    private final JpaUserRepositoryInterface repositoryInterface;
 
     @Override
     @Transactional
@@ -62,6 +67,18 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
         return userMapper.toUserResponse(user);
+    }
+
+    @Override
+    public List<UserResponse> getByIds(List<Integer> userIds) {
+        if (CollectionUtils.isEmpty(userIds)) {
+            return Collections.emptyList();
+        }
+
+        var users = this.repositoryInterface.findByIdIn(userIds);
+        return users.stream()
+                .map(userMapper::toUserResponse)
+                .toList();
     }
 
     private Address createAddress(UserRequest request) {

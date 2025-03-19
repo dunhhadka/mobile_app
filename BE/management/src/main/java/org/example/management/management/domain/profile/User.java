@@ -63,12 +63,6 @@ public class User extends AggregateRoot<User> {
 
     private String image;
 
-    public Address getAddress() {
-        if (CollectionUtils.isEmpty(this.addresses))
-            return null;
-        return this.addresses.get(0);
-    }
-
     public void updateAddress(int addressId, UserRequest.AddressRequest request) {
         if (CollectionUtils.isEmpty(this.addresses) || addressId == 0) {
             this.addAddress(request);

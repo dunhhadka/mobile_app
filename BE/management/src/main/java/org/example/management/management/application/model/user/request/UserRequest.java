@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.example.management.management.domain.profile.User;
 
 import java.sql.Date;
 import java.time.Instant;
@@ -30,7 +31,7 @@ public class UserRequest {
 
     private LocalDate dateOfBirth;
 
-    private String position;
+    private User.Position position;
 
     private String password;
 
