@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="purple_200">#BB86FC</color>
-    <color name="purple_300">#AA66FF</color> <!-- Màu tím trung gian giữa 200 và 400 -->
-    <color name="purple_400">#9933FF</color> <!-- Màu tím đậm hơn 300, nhạt hơn 500 -->
+    <color name="purple_300">#AA66FF</color>
+    <color name="purple_400">#9933FF</color>
     <color name="purple_500">#6200EE</color>
+    <color name="purple_600">#7A5AF8</color>
     <color name="purple_700">#FF3700B3</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
@@ -11,6 +12,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="text_1">#101828</color>
     <color name="text_2">#475467</color>
-
+    <color name="shadow_200">#80000000</color>
     <color name="gray_400">#BDBDBD</color>
 </resources>
