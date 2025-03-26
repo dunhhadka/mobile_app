@@ -18,3 +18,9 @@ spring:
     property-naming-strategy: SNAKE_CASE
 server:
   port: 8080
+
+
+cloudinary:
+  cloudName: dcfbaknh6
+  apiKey: 555627755687196
+  apiSecret: cGvOw5rPyVIsLUZ231M_H1rQaHA

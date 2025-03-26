@@ -153,5 +153,15 @@ public class ProjectService {
         return this.projectMapper.toResponse(project, taskManagementInfo.users(), taskManagementInfo.tasks());
     }
 
+    @Transactional
+    public void deleteProject(int projectId) {
+        var project = this.projectRepository.findById(projectId)
+                .orElseThrow(() -> new ConstrainViolationException("project", "project not found with id = " + projectId));
+
+        this.projectManagementService.deleteProject(project.getId());
+
+        this.projectRepository.delete(project);
+    }
+
     // region read
 }

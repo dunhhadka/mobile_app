@@ -42,4 +42,9 @@ public class ProjectController {
     public List<ProjectResponse> search(ProjectSearchRequest request) {
         return this.projectFilterService.filter(request);
     }
+
+    @DeleteMapping("/{projectId}")
+    public void deleteProject(@PathVariable int projectId) {
+        this.projectService.deleteProject(projectId);
+    }
 }

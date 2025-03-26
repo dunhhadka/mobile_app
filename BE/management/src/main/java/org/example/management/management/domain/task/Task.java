@@ -1,21 +1,31 @@
 package org.example.management.management.domain.task;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
+import lombok.Setter;
+import org.apache.commons.collections4.CollectionUtils;
+import org.example.management.management.application.converter.IntListConverter;
 import org.example.management.management.application.converter.StringListConverter;
+import org.example.management.management.application.model.task.TaskImageRequest;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Getter
 @Entity
 @Table(name = "tasks")
 public class Task {
+
+    @Setter
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "product_management_id", referencedColumnName = "id")
+    private ProjectManagement aggRoot;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,8 +64,8 @@ public class Task {
 
     private Instant finishedOn;
 
-    @Convert(converter = StringListConverter.class)
-    private List<String> files;
+    @Convert(converter = IntListConverter.class)
+    private List<Integer> imageIds = new ArrayList<>();
 
     protected Task() {
     }
@@ -137,6 +147,41 @@ public class Task {
         this.finishedOn = finishedOn;
 
         //TODO: event
+    }
+
+    public void setImages(List<Image> images) {
+        if (CollectionUtils.isEmpty(images)) {
+            return;
+        }
+
+        this.imageIds = images.stream()
+                .map(Image::getId)
+                .toList();
+    }
+
+    public List<Integer> updateImagesAndGetImageDeleted(Map<Integer, TaskImageRequest> updateImages, List<Image> newImages) {
+        if (updateImages == null) updateImages = new LinkedHashMap<>();
+        if (newImages == null) newImages = new ArrayList<>();
+
+        List<Integer> imagesDeleted = new ArrayList<>();
+
+        Map<Integer, TaskImageRequest> finalUpdateImages = updateImages;
+        this.imageIds.removeIf(id -> {
+            if (!finalUpdateImages.containsKey(id)) {
+                imagesDeleted.add(id);
+                return true;
+            }
+            return false;
+        });
+
+        newImages.forEach(image -> this.imageIds.add(image.getId()));
+
+        return imagesDeleted;
+    }
+
+    public void addImage(int id) {
+        if (this.imageIds == null) this.imageIds = new ArrayList<>();
+        this.imageIds.add(id);
     }
 
     public enum Status {

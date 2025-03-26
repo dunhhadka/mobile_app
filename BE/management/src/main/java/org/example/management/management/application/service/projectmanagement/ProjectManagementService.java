@@ -15,12 +15,12 @@ import org.example.management.management.application.utils.NumberUtils;
 import org.example.management.management.domain.profile.User;
 import org.example.management.management.domain.project.Project;
 import org.example.management.management.domain.task.ProjectManagement;
-import org.example.management.management.domain.task.ProjectTasKManagement;
 import org.example.management.management.domain.task.Task;
 import org.example.management.management.infastructure.exception.ConstrainViolationException;
 import org.example.management.management.infastructure.persistance.JpaUserRepositoryInterface;
 import org.example.management.management.infastructure.persistance.ProjectManagementRepository;
 import org.example.management.management.infastructure.persistance.ProjectRepository;
+import org.example.management.management.infastructure.persistance.TaskRepository;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 public class ProjectManagementService {
 
     private final ProjectRepository projectRepository;
+    private final TaskRepository taskRepository;
     private final JpaUserRepositoryInterface userRepository;
 
     private final ProjectManagementRepository projectManagementRepository;
@@ -135,7 +136,7 @@ public class ProjectManagementService {
             return List.of();
         }
 
-        Map<Integer, Map<Integer, List<ProjectTasKManagement>>> managementMap = projectManagements.stream()
+        Map<Integer, Map<Integer, List<Task>>> managementMap = projectManagements.stream()
                 .collect(Collectors.groupingBy(
                         ProjectManagement::getProjectId,
                         Collectors.groupingBy(
@@ -155,7 +156,7 @@ public class ProjectManagementService {
 
         List<Integer> allTaskIds = managementMap.values().stream()
                 .flatMap(map -> map.values().stream().flatMap(Collection::stream))
-                .map(ProjectTasKManagement::getTaskId)
+                .map(Task::getId)
                 .toList();
 
         List<TaskResponse> tasks = this.taskService.getByIds(allTaskIds);
@@ -175,7 +176,7 @@ public class ProjectManagementService {
 
             var taskIds = userMap.values().stream()
                     .flatMap(Collection::stream)
-                    .map(ProjectTasKManagement::getTaskId)
+                    .map(Task::getId)
                     .collect(Collectors.toSet());
             var tasksOfProject = tasks.stream()
                     .filter(t -> taskIds.contains(t.getId()))
@@ -193,33 +194,25 @@ public class ProjectManagementService {
             return;
         }
 
-        int projectId = event.projectId();
-        int userId = event.userId();
+        var projectId = event.projectId();
+        var userId = event.userId();
         var task = event.task();
 
         var projectManagements = this.projectManagementRepository.findByProjectIdAndUserIdIn(projectId, Set.of(userId));
 
-        //NOTE: Nếu chưa thêm user vào project mà thêm task => thêm projectManagement, projectTaskManagement luôn
         ProjectManagement projectManagement;
         if (CollectionUtils.isEmpty(projectManagements)) {
-            projectManagement = createNewProjectManagementIfNotExists(projectId, userId);
+            projectManagement = createNewProjectManagement(projectId, userId);
         } else {
             projectManagement = projectManagements.get(0);
         }
 
-        var taskManagements = buildTaskManagements(List.of(task));
-        projectManagement.addManagements(taskManagements);
+        projectManagement.addTasks(List.of(task));
 
         this.projectManagementRepository.save(projectManagement);
     }
 
-    private List<ProjectTasKManagement> buildTaskManagements(List<Task> tasks) {
-        return tasks.stream()
-                .map(task -> new ProjectTasKManagement(task.getId()))
-                .toList();
-    }
-
-    private ProjectManagement createNewProjectManagementIfNotExists(int projectId, Integer userId) {
+    private ProjectManagement createNewProjectManagement(int projectId, Integer userId) {
         return new ProjectManagement(
                 projectId,
                 userId
@@ -228,33 +221,75 @@ public class ProjectManagementService {
 
     @EventListener(classes = TaskService.UpdateTasKManagement.class)
     public void updateTaskManagement(TaskService.UpdateTasKManagement event) {
-        int projectId = event.projectId();
-        Integer oldUserId = event.oldUserId();
-        Integer newUserId = event.newUserId();
-        var task = event.task();
-
-        if (Objects.equals(oldUserId, newUserId)) {
+        if (Objects.equals(event.oldUserId(), event.newUserId())) {
             return;
         }
 
-        List<ProjectManagement> projectManagements = oldUserId != null
-                ? this.projectManagementRepository.findByProjectIdAndUserIdIn(projectId, Set.of(oldUserId))
-                : new ArrayList<>();
+        var projectId = event.projectId();
+        var oldUserId = event.oldUserId();
+        var newUserId = event.newUserId();
+        var task = event.task();
 
-        if (CollectionUtils.isEmpty(projectManagements)) {
-            this.projectManagementRepository.deleteAll(projectManagements);
+        if (NumberUtils.isPositive(oldUserId)) {
+            this.deleteTaskManagement(projectId, oldUserId, task.getId());
         }
 
-        if (NumberUtils.isPositive(newUserId)) {
-            var projectManagement = createNewProjectManagementIfNotExists(projectId, newUserId);
+        if (!NumberUtils.isPositive(newUserId)) {
+            return;
+        }
 
-            var taskManagements = buildTaskManagements(List.of(task));
-            projectManagement.addManagements(taskManagements);
+        var projectManagements = this.projectManagementRepository.findByProjectIdAndUserIdIn(projectId, Set.of(newUserId));
+        ProjectManagement projectManagement;
+        if (CollectionUtils.isEmpty(projectManagements)) {
+            projectManagement = this.createNewProjectManagement(projectId, newUserId);
+        } else {
+            projectManagement = projectManagements.get(0);
+        }
+        projectManagement.addTasks(List.of(task));
 
-            this.projectManagementRepository.save(projectManagement);
+        this.projectManagementRepository.save(projectManagement);
+    }
+
+    private void deleteTaskManagement(int projectId, int userId, int taskId) {
+        var projectManagements = this.projectManagementRepository.findByProjectIdAndUserIdIn(projectId, Set.of(userId));
+        if (CollectionUtils.isEmpty(projectManagements)) {
+            return;
+        }
+        var projectManagement = projectManagements.get(0);
+        projectManagement.deleteTask(taskId);
+
+        this.projectManagementRepository.save(projectManagement);
+    }
+
+    public void deleteProject(int projectId) {
+        var projectManagements = this.projectManagementRepository.findByProjectId(projectId);
+        if (CollectionUtils.isEmpty(projectManagements)) {
+            log.warn("project managements is empty");
+            return;
+        }
+
+        var allTaskIds = projectManagements.stream()
+                .map(ProjectManagement::deleteAllTask)
+                .filter(CollectionUtils::isNotEmpty)
+                .flatMap(Collection::stream)
+                .toList();
+
+        this.projectManagementRepository.deleteAll(projectManagements);
+
+        if (CollectionUtils.isNotEmpty(allTaskIds)) {
+            this.taskRepository.deleteAllById(allTaskIds);
         }
     }
 
     public record TaskManagementInfo(int projectId, List<UserResponse> users, List<TaskResponse> tasks) {
+    }
+
+    @EventListener(TaskService.TaskDeletedEvent.class)
+    public void handleTaskDeleted(TaskService.TaskDeletedEvent event) {
+        var projectId = event.projectId();
+        var userId = event.userId();
+        var taskId = event.taskId();
+
+        this.deleteTaskManagement(projectId, userId, taskId);
     }
 }

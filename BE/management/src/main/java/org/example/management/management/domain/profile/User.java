@@ -57,6 +57,8 @@ public class User extends AggregateRoot<User> {
     @Column(name = "company_id")
     private Integer companyId;
 
+    private Integer avatarId;
+
     @Fetch(FetchMode.SUBSELECT)
     @OneToMany(mappedBy = "aggRoot", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
