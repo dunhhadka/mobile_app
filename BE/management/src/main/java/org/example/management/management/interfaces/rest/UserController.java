@@ -30,7 +30,7 @@ public class UserController {
     @GetMapping("/{id}")
     public UserResponse getUser(@PathVariable(name = "id") @Min(1) int id) {
         //code
-        return null;
+        return userService.findById(id);
     }
 
     @PutMapping("/update/{id}")

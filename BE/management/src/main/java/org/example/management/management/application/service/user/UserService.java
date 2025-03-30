@@ -22,4 +22,6 @@ public interface UserService {
     Page<UserResponse> filter(UserFilterRequest request);
 
     void upload(int userId, MultipartFile file) throws IOException;
+
+    UserResponse findById(int id);
 }

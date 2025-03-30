@@ -130,6 +130,16 @@ public class UserServiceImpl implements UserService {
         this.repositoryInterface.save(user);
     }
 
+    @Override
+    public UserResponse findById(int userId) {
+        var user = this.repositoryInterface.findById(userId)
+                .orElseThrow(() -> new ConstrainViolationException(
+                        "user",
+                        "user not found by id = " + userId
+                ));
+        return this.userMapper.toUserResponse(user);
+    }
+
     private Pair<List<UserResponse>, Long> getUserResponse(UserFilterRequest request, PageRequest pageable) {
         var specification = buildUserSpecification(request);
 
