@@ -1,6 +1,7 @@
 package org.example.management.management.application.model.user.response;
 
 import lombok.*;
+import org.example.management.management.application.model.images.ImageResponse;
 import org.example.management.management.domain.profile.User;
 
 import java.time.LocalDate;
@@ -32,6 +33,8 @@ public class UserResponse {
     private User.Role role;
 
     private AddressResponse address;
+
+    private ImageResponse avatar;
 
     @Getter
     @Setter

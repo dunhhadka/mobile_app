@@ -10,7 +10,5 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        val email = intent.getStringExtra("EMAIL")
-        binding.text.text = "This is $email's home"
     }
 }

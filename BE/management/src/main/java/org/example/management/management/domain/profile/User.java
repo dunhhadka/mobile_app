@@ -57,17 +57,13 @@ public class User extends AggregateRoot<User> {
     @Column(name = "company_id")
     private Integer companyId;
 
+    private Integer avatarId;
+
     @Fetch(FetchMode.SUBSELECT)
     @OneToMany(mappedBy = "aggRoot", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
 
     private String image;
-
-    public Address getAddress() {
-        if (CollectionUtils.isEmpty(this.addresses))
-            return null;
-        return this.addresses.get(0);
-    }
 
     public void updateAddress(int addressId, UserRequest.AddressRequest request) {
         if (CollectionUtils.isEmpty(this.addresses) || addressId == 0) {
