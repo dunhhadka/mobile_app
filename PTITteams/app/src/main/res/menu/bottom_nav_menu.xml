@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title=""/>
+    <item android:id="@+id/nav_clock_in"
+        android:icon="@drawable/ic_clock_in"
+        android:title=""/>
+    <item android:id="@+id/nav_task"
+        android:icon="@drawable/ic_task"
+        android:title=""/>
+    <item android:id="@+id/nav_expense"
+        android:icon="@drawable/ic_expense"
+        android:title=""/>
+    <item android:id="@+id/nav_leave"
+        android:icon="@drawable/ic_leave"
+        android:title=""/>
+</menu>

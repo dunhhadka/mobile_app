@@ -8,10 +8,10 @@
         android:id="@+id/sign_up"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="24dp"
         android:text="@string/sign_up"
         android:textColor="@color/black"
-        android:textSize="36sp"
+        android:textSize="30sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -46,16 +46,16 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
-        android:id="@+id/phoneText"
+        android:id="@+id/nameText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:text="@string/phone_number"
-        app:layout_constraintBottom_toTopOf="@id/phoneTextLayout"
-        app:layout_constraintStart_toStartOf="@id/phoneTextLayout" />
+        android:text="@string/name"
+        app:layout_constraintBottom_toTopOf="@id/nameTextLayout"
+        app:layout_constraintStart_toStartOf="@id/nameTextLayout" />
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/phoneTextLayout"
+        android:id="@+id/nameTextLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
@@ -64,11 +64,11 @@
         app:layout_constraintTop_toBottomOf="@+id/emailTextInputLayout">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/phoneTextInput"
+            android:id="@+id/nameTextInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_white_button"
-            android:hint="@string/enter_your_phone_number"
+            android:hint="@string/enter_your_name"
             android:textColor="@color/black"
             android:textColorHint="@color/gray_400" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -89,7 +89,7 @@
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="36dp"
         app:boxBackgroundMode="filled"
-        app:layout_constraintTop_toBottomOf="@+id/phoneTextLayout">
+        app:layout_constraintTop_toBottomOf="@+id/nameTextLayout">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/passwordTextInput"

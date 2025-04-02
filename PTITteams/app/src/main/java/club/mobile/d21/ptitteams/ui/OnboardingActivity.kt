@@ -33,18 +33,27 @@ class OnboardingActivity : AppCompatActivity() {
             if (currentItem < onboardingItems.size - 1) {
                 binding.viewPager.currentItem = currentItem + 1
             } else {
-                navigateToLoginScreen()
+                //navigateToLoginScreen()
+                navigateToMainScreen()
             }
         }
 
         // Xử lý nút Skip
         binding.skipButton.setOnClickListener {
-            navigateToLoginScreen()
+            //navigateToLoginScreen()
+            navigateToMainScreen()
         }
     }
 
     private fun navigateToLoginScreen() {
         startActivity(Intent(this, LoginActivity::class.java))
+        finish()
+    }
+    private fun navigateToMainScreen(){
+        val intent = Intent(this, MainActivity::class.java).apply {
+            putExtra("UserID", "Test")
+        }
+        startActivity(intent)
         finish()
     }
 }

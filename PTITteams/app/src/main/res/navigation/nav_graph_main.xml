@@ -1,10 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    app:startDestination="@id/projectFragment">
+    app:startDestination="@id/nav_home">
 
     <fragment
-        android:id="@+id/projectFragment"
+        android:id="@+id/nav_home"
         android:name="club.mobile.d21.ptitteams.ui.project.ProjectFragment"
-        android:label="Project"/>
+        android:label="Home" />
+
+    <fragment
+        android:id="@+id/nav_clock_in"
+        android:name="club.mobile.d21.ptitteams.ui.project.ProjectFragment"
+        android:label="Clock In" />
+
+    <fragment
+        android:id="@+id/nav_task"
+        android:name="club.mobile.d21.ptitteams.ui.project.ProjectFragment"
+        android:label="Task" />
+
+    <fragment
+        android:id="@+id/nav_expense"
+        android:name="club.mobile.d21.ptitteams.ui.project.ProjectFragment"
+        android:label="Expense" />
+
+    <fragment
+        android:id="@+id/nav_leave"
+        android:name="club.mobile.d21.ptitteams.ui.project.ProjectFragment"
+        android:label="Leave" />
 </navigation>
