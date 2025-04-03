@@ -24,3 +24,11 @@ cloudinary:
   cloudName: dcfbaknh6
   apiKey: 555627755687196
   apiSecret: cGvOw5rPyVIsLUZ231M_H1rQaHA
+
+
+openapi:
+  service:
+    api-docs: api-service
+    server: http://localhost:8080
+    title: API Service
+    version: 1.0.0

@@ -1,5 +1,10 @@
 package org.example.management.management.interfaces.rest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +26,11 @@ public class UserController {
 
     private final UserService userService;
 
+    @Operation(summary = "sign up", description = "Send a request via this API to create new user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved",
+                    content = @Content(schema = @Schema(implementation = UserResponse.class)))
+    })
     @PostMapping("/sign-up")
     public UserResponse createUser(@Valid @RequestBody UserRequest request) {
         return userService.createUser(request);

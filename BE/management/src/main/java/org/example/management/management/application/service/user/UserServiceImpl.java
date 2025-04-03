@@ -162,12 +162,4 @@ public class UserServiceImpl implements UserService {
 
         return specification;
     }
-
-    private Address createAddress(UserRequest request) {
-        return Address.builder()
-                .wardName(request.getAddress().getWardName())
-                .districtName(request.getAddress().getDistrictName())
-                .countryName(request.getAddress().getCountryName())
-                .build();
-    }
 }
