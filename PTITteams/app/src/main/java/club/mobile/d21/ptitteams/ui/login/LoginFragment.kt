@@ -55,10 +55,10 @@ class LoginFragment : Fragment() {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         })
 
-        viewModel.userResult.observe(viewLifecycleOwner, Observer { user ->
-            if (user != null) {
+        viewModel.userIdResult.observe(viewLifecycleOwner, Observer { userId ->
+            if (userId != null) {
                 val intent = Intent(requireActivity(), MainActivity::class.java).apply {
-                    putExtra("UserID", user.id)
+                    putExtra("UserID", userId)
                 }
                 startActivity(intent)
                 requireActivity().finish()

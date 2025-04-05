@@ -23,9 +23,9 @@ data class LoginRequest(
 )
 
 data class LoginResponse(
-    val status: String,
+    val status: Int,
     val message: String,
-    val data: User?
+    val userId: Int?
 )
 data class RegisterRequest(
     val email: String,
@@ -33,7 +33,22 @@ data class RegisterRequest(
     val password: String,
 )
 data class RegisterResponse(
-    val status: String,
+    val id: Int,
+    val company_id: Int? = null,
+    val date_of_birth: String? = null,
+    val first_name: String,
+    val last_name: String,
+    val phone: String? = null,
+    val email: String,
+    val user_name: String? = null,
+    val position: String? = null,
+    val role: String,
+    val address: String? = null,
+    val avatar: String? = null
+)
+
+data class UserError(
+    val status: Int,
     val message: String,
     val userId: Int?
 )
