@@ -6,9 +6,12 @@ import lombok.RequiredArgsConstructor;
 import org.example.management.management.application.model.leaves.LeaveRequest;
 import org.example.management.management.application.model.leaves.LeaveResponse;
 import org.example.management.management.application.model.leaves.UpdateStatusLeaveRequest;
+import org.example.management.management.application.model.leaves.UserAttendResponse;
 import org.example.management.management.application.service.leaves.LeaveService;
+import org.example.management.management.application.service.leaves.TaskDelegationService;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -17,10 +20,20 @@ import java.util.List;
 public class LeaveController {
 
     private final LeaveService leaveService;
+    private final TaskDelegationService delegationService;
 
-    @PostMapping
-    public LeaveResponse createLeave(@Valid @RequestBody LeaveRequest leaveRequest) {
-        int leaveId = this.leaveService.createLeave(leaveRequest);
+    @GetMapping("/{taskId}/delegation-candidates")
+    public List<UserAttendResponse> getTaskDelegationCandidates(@PathVariable int taskId) {
+        return delegationService.getTaskDelegationCandidates(taskId);
+    }
+
+
+    @PostMapping("/{userId}/{taskId}")
+    public LeaveResponse createLeave(@Valid @RequestBody LeaveRequest leaveRequest,
+                                     @PathVariable(name = "userId") Integer userId,
+                                     @PathVariable(name = "taskId")  Integer taskId
+                                     ) {
+        int leaveId = this.leaveService.createLeave(leaveRequest, taskId, userId);
         return this.leaveService.getByIds(List.of(leaveId)).get(0);
     }
 

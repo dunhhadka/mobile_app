@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.management.management.domain.task.Task;
 import org.example.management.management.infastructure.exception.ConstrainViolationException;
-import org.springframework.security.core.parameters.P;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -35,7 +35,6 @@ public class Leave {
     @NotNull
     private Instant endLeave;
 
-    private Integer currentTaskId;
 
     private String taskName;
 
@@ -57,6 +56,12 @@ public class Leave {
 
     private Integer delegateId; //NOTE: người được giao lại task
 
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "currentTaskId")
+    private Task task;
+
+
     @NotNull
     @Enumerated(value = EnumType.STRING)
     private Status status;
@@ -64,36 +69,19 @@ public class Leave {
     protected Leave() {
     }
 
-    public Leave(Category category,
-                 Instant startLeave,
-                 Instant endLeave,
-                 Integer currentTaskId,
-                 Integer delegateId,
-                 String taskName,
-                 String contactPhone,
-                 String description
-    ) {
-        this.category = category;
-        this.startLeave = startLeave;
-        this.endLeave = endLeave;
-        this.currentTaskId = currentTaskId;
-        this.delegateId = delegateId;
-        this.taskName = taskName;
-        this.contactPhone = contactPhone;
-        this.description = description;
+
+    public void setTaskWithCurrentTaskId(Task task) {
+        Objects.requireNonNull(task);
+        this.task = task;
     }
-//    private Leave.Category category;
-//    private Instant startLeave;
-//    private Instant endLeave;
-//    private Integer delegateId;
-//    private String contactPhone;
-//    private String description;
+
     public Leave(Category category,
                  Instant startLeave,
                  Instant endLeave,
                  Integer delegateId,
                  String contactPhone,
-                 String description
+                 String description,
+                 Integer currentTaskId
     ) {
         this.category = category;
         this.startLeave = startLeave;
@@ -101,6 +89,8 @@ public class Leave {
         this.delegateId = delegateId;
         this.contactPhone = contactPhone;
         this.description = description;
+        this.status = Status.review;
+        this.createdOn = Instant.now();
     }
 
     public void approve(Integer approveId, Instant approvedAt) {
@@ -111,6 +101,7 @@ public class Leave {
         this.status = Status.approved;
         this.approveId = approveId;
         this.approvedAt = approvedAt;
+        this.modifiedOn = Instant.now();
         // TODO: Bổ sung event để gửi thông báo
     }
 
@@ -122,6 +113,7 @@ public class Leave {
         this.status = Status.rejected;
         this.rejectId = rejectId;
         this.rejectedAt = rejectedAt;
+        this.modifiedOn = Instant.now();
         // TODO: Bổ sung event để gửi thông báo
     }
 
@@ -142,21 +134,21 @@ public class Leave {
         this.internalSetContactPhone(contactPhone);
         this.description = description;
         this.internalSetDelegateId(delegateId);
+        this.modifiedOn = Instant.now();
     }
 
     public void updateTask(Integer currentTaskId,
                            String taskName,
                            Integer delegateId
     ) {
-        if (!Objects.equals(this.currentTaskId, currentTaskId)) {
-            this.internalSetCurrentTaskId(currentTaskId);
-        }
+        //
         if (!Objects.equals(this.taskName, taskName)) {
             this.internalSetTaskName(taskName);
         }
         if(!Objects.equals(this.delegateId, delegateId)) {
             this.internalSetDelegateId(delegateId);
         }
+        this.modifiedOn = Instant.now();
 
     }
 
@@ -193,6 +185,17 @@ public class Leave {
         this.totalLeave = new BigDecimal(days);
     }
 
+    private void updateDates(Instant startLeave, Instant endLeave) {
+        if (!Objects.equals(this.startLeave, startLeave) || !Objects.equals(this.endLeave, endLeave)) {
+            if (endLeave.isBefore(startLeave)) {
+                throw new ConstrainViolationException("dates", "endLeave must be after startLeave");
+            }
+            this.startLeave = startLeave;
+            this.endLeave = endLeave;
+            calculateTotalLeave();
+        }
+    }
+
     private void internalSetContactPhone(String contactPhone) {
         if (Objects.equals(this.contactPhone, contactPhone)) {
             return;
@@ -200,10 +203,6 @@ public class Leave {
         this.contactPhone = contactPhone;
     }
 
-    private void internalSetCurrentTaskId(Integer currentTaskId) {
-        this.currentTaskId = currentTaskId;
-        //TODO: Bổ sung event để làm thông báo
-    }
 
     private void internalSetTaskName(String taskName) {
         this.taskName = taskName;

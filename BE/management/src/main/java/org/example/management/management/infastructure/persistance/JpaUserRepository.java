@@ -5,6 +5,7 @@ import org.example.management.management.domain.profile.User;
 import org.example.management.management.domain.profile.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -45,5 +46,10 @@ public class JpaUserRepository implements UserRepository {
     @Override
     public Boolean existsByPhone(String phone) {
         return userRepositoryInterface.existsByPhone(phone);
+    }
+
+    @Override
+    public List<User> findAllByIds(List<Integer> userIds) {
+        return userRepositoryInterface.findByIdIn(userIds);
     }
 }

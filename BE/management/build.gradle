@@ -39,7 +39,7 @@ dependencies {
     implementation group: 'commons-io', name: 'commons-io', version: '2.6'
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-validation', version: '3.4.2'
-    implementation 'org.springframework.security:spring-security-crypto:6.2.0'
+    implementation 'org.springframework.security:spring-security-crypto'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     implementation 'io.hypersistence:hypersistence-utils-hibernate-60:3.5.0'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'

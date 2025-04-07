@@ -22,4 +22,6 @@ public class LeaveRequest {
     private String contactPhone;
 
     private String description;
+
+    private Integer currentTaskId;
 }
