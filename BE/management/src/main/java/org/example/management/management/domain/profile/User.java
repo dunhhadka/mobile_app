@@ -113,6 +113,7 @@ public class User extends AggregateRoot<User> {
         this.addresses.clear();
     }
 
+
     public enum Position {
         dev,
         tester,

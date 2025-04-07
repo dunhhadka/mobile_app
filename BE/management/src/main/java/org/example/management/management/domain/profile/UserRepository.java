@@ -1,6 +1,7 @@
 package org.example.management.management.domain.profile;
 
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository {
@@ -17,4 +18,5 @@ public interface UserRepository {
     Boolean existsByEmail(String email);
 
     Boolean existsByPhone(String phone);
+    List<User> findAllByIds(List<Integer> userIds);
 }

@@ -10,6 +10,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.example.management.management.application.converter.IntListConverter;
 import org.example.management.management.application.converter.StringListConverter;
 import org.example.management.management.application.model.task.TaskImageRequest;
+import org.example.management.management.domain.leaves.Leave;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -66,6 +67,10 @@ public class Task {
 
     @Convert(converter = IntListConverter.class)
     private List<Integer> imageIds = new ArrayList<>();
+
+    @OneToOne(mappedBy = "task", orphanRemoval = true)
+    @PrimaryKeyJoinColumn
+    private Leave leave;
 
     protected Task() {
     }

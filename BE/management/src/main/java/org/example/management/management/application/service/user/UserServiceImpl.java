@@ -3,6 +3,7 @@ package org.example.management.management.application.service.user;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.example.management.management.application.model.user.request.UserFilterRequest;
 import org.example.management.management.application.model.user.request.UserRequest;
@@ -33,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -62,6 +64,10 @@ public class UserServiceImpl implements UserService {
         }
         User user = userMapper.toUser(request);
 
+        String name = Stream.of(request.getFirstName(), request.getLastName())
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.joining(" "));
+        user.setUserName(name);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(User.Role.member);
         userRepository.save(user);
@@ -161,13 +167,5 @@ public class UserServiceImpl implements UserService {
         }
 
         return specification;
-    }
-
-    private Address createAddress(UserRequest request) {
-        return Address.builder()
-                .wardName(request.getAddress().getWardName())
-                .districtName(request.getAddress().getDistrictName())
-                .countryName(request.getAddress().getCountryName())
-                .build();
     }
 }
