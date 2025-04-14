@@ -1,10 +1,14 @@
 package org.example.management.management.domain.attendace;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
+@Getter
 @Entity
 @Table(name = "attendances")
 public class Attendance {
@@ -13,15 +17,35 @@ public class Attendance {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    private Instant clockIn;
+    private LocalDate date;
 
-    private Instant clockOut;
+    private LocalTime clockIn;
 
-    private Instant actualClockIn;
+    private LocalTime clockOut;
 
-    private Instant actualClockOut;
+    private LocalTime actualClockIn;
 
-    private BigDecimal totalHours;
+    private LocalTime actualClockOut;
+
+    private LocalTime totalHours;
 
     private String note;
+
+    public Attendance(
+            LocalDate date,
+            LocalTime clockIn,
+            LocalTime clockOut,
+            LocalTime actualClockIn,
+            LocalTime actualClockOut,
+            LocalTime totalHours,
+            String note
+    ) {
+        this.date = date;
+        this.clockIn = clockIn;
+        this.clockOut = clockOut;
+        this.actualClockIn = actualClockIn;
+        this.actualClockOut = actualClockOut;
+        this.totalHours = totalHours;
+        this.note = note;
+    }
 }

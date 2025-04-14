@@ -11,7 +11,6 @@ import org.example.management.management.application.service.leaves.LeaveService
 import org.example.management.management.application.service.leaves.TaskDelegationService;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController

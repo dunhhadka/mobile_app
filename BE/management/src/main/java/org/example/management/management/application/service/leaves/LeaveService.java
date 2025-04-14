@@ -6,7 +6,6 @@ import org.example.management.management.application.model.leaves.LeaveRequest;
 import org.example.management.management.application.model.leaves.LeaveResponse;
 import org.example.management.management.application.model.leaves.UpdateStatusLeaveRequest;
 import org.example.management.management.application.model.leaves.UserAttendResponse;
-import org.example.management.management.application.service.task.TaskService;
 import org.example.management.management.domain.leaves.Leave;
 import org.example.management.management.domain.leaves.LeaveRepository;
 import org.example.management.management.domain.task.Task;
@@ -17,9 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
-import java.security.Principal;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;

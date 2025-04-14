@@ -8,8 +8,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.example.management.management.application.model.user.request.UserFilterRequest;
 import org.example.management.management.application.model.user.request.UserRequest;
 import org.example.management.management.application.model.user.response.UserResponse;
+import org.example.management.management.application.service.images.ImageService;
 import org.example.management.management.application.utils.NumberUtils;
-import org.example.management.management.domain.profile.Address;
 import org.example.management.management.domain.profile.User;
 import org.example.management.management.domain.profile.UserRepository;
 import org.example.management.management.domain.profile.User_;
@@ -23,13 +23,11 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -42,13 +40,15 @@ import java.util.stream.Stream;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final PasswordEncoder passwordEncoder;
+//    private final PasswordEncoder passwordEncoder;
 
     private final JpaUserRepositoryInterface repositoryInterface;
 
     private final ImageController imageController;
 
     private final ImageRepository imageRepository;
+
+    private final ImageService imageService;
 
     @Override
     @Transactional
@@ -68,7 +68,7 @@ public class UserServiceImpl implements UserService {
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.joining(" "));
         user.setUserName(name);
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPassword(request.getPassword());
         user.setRole(User.Role.member);
         userRepository.save(user);
         return this.getByIds(List.of(user.getId())).get(0);
@@ -130,7 +130,7 @@ public class UserServiceImpl implements UserService {
                         "user",
                         "user not found by id = " + userId
                 ));
-        var imageSaved = this.imageController.uploadImageWithFile(file);
+        var imageSaved = this.imageService.uploadImageWithFile(file);
         user.setAvatarId(imageSaved.getId());
 
         this.repositoryInterface.save(user);
