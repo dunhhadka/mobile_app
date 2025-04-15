@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -22,13 +22,20 @@ import typography from '../../constants/typography'
 import Button from '../layouts/Button'
 import { useUserStore } from '../../store/user-store'
 import { useTaskStore } from '../../store/task-store'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../store/store'
+import { getUserName } from '../../utils/userUtils'
+import BaseModel from '../models/BaseModel'
+import UpdateProfileModal from '../models/UpdateProfileModal'
 
 export default function ProfileScreen() {
   const router = useRouter()
   const { currentUser } = useUserStore()
   const { tasks } = useTaskStore()
+  const [isOpenUpdateModel, setIsOpenUpdateModel] = useState(false)
+  const user = useSelector((state: RootState) => state.user.currentUser)
 
-  if (!currentUser) {
+  if (!currentUser || !user) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.emptyStateContainer}>
@@ -42,7 +49,7 @@ export default function ProfileScreen() {
   }
 
   const assignedTasks = tasks.filter((task) =>
-    task.assignedTo.some((user) => user.id === currentUser.id)
+    task.assignedTo.some((u) => u.id === currentUser.id)
   )
 
   const completedTasks = assignedTasks.filter(
@@ -54,6 +61,10 @@ export default function ProfileScreen() {
       ? Math.round((completedTasks.length / assignedTasks.length) * 100)
       : 0
 
+  useEffect(() => {
+    console.log('User updated:', user)
+  }, [user])
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
@@ -62,17 +73,30 @@ export default function ProfileScreen() {
       >
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <Avatar
-              uri={currentUser.avatar}
-              name={currentUser.name}
-              size={80}
-            />
+            {user && user.avatar && user.avatar.src ? (
+              <Avatar
+                uri={user.avatar.src}
+                name={getUserName(user)}
+                size={80}
+              />
+            ) : (
+              <Avatar name={getUserName(user)} size={80} />
+            )}
             <View style={styles.userInfo}>
-              <Text style={styles.userName}>{currentUser.name}</Text>
-              <Text style={styles.userRole}>{currentUser.role}</Text>
+              <Text style={styles.userName}>{getUserName(user)}</Text>
+              <Text style={styles.userRole}>
+                {user?.position ?? currentUser.role ?? 'Chưa xác định'}
+              </Text>
             </View>
           </View>
 
+          <Button
+            title="Edit Profile"
+            variant="outline"
+            size="small"
+            onPress={() => setIsOpenUpdateModel(true)}
+            icon={<Settings size={16} color={colors.primary} />}
+          />
         </View>
 
         <View style={styles.statsContainer}>
@@ -103,7 +127,7 @@ export default function ProfileScreen() {
               <View>
                 <Text style={styles.infoLabel}>Email</Text>
                 <Text style={styles.infoValue}>
-                  {currentUser.email || 'Not provided'}
+                  {user.email || currentUser.email || 'Not provided'}
                 </Text>
               </View>
             </View>
@@ -114,7 +138,9 @@ export default function ProfileScreen() {
               </View>
               <View>
                 <Text style={styles.infoLabel}>Số điện thoại</Text>
-                <Text style={styles.infoValue}>+1 (555) 123-4567</Text>
+                <Text style={styles.infoValue}>
+                  {user.phone || '+1 (555) 123-4567'}
+                </Text>
               </View>
             </View>
           </View>
@@ -246,6 +272,18 @@ export default function ProfileScreen() {
           </View>
         </View>
       </ScrollView>
+      {user && (
+        <BaseModel
+          title="Cập nhật thông tin"
+          open={isOpenUpdateModel}
+          onClose={() => setIsOpenUpdateModel(false)}
+        >
+          <UpdateProfileModal
+            user={user}
+            onClose={() => setIsOpenUpdateModel(false)}
+          />
+        </BaseModel>
+      )}
     </SafeAreaView>
   )
 }
@@ -371,11 +409,6 @@ const styles = StyleSheet.create({
   },
   infoItemPressed: {
     backgroundColor: `${colors.primary}05`,
-  },
-  actionsContainer: {
-    paddingHorizontal: layout.spacing.lg,
-    marginBottom: layout.spacing.xl,
-    gap: layout.spacing.md,
   },
   emptyStateContainer: {
     flex: 1,

@@ -55,6 +55,7 @@ public class UserController {
         return this.userService.filter(request);
     }
 
+    @CrossOrigin(origins = "*")
     @PostMapping("/{userId}/upload")
     public UserResponse upload(@PathVariable int userId, @RequestParam("file") MultipartFile file) throws IOException {
         this.userService.upload(userId, file);

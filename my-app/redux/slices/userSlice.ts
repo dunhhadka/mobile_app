@@ -22,13 +22,21 @@ const userSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addMatcher(
-      managementApi.endpoints.createUser.matchFulfilled,
-      (state, action) => {
-        console.log('action:', action) // Log ra response để kiểm tra
-        state.currentUser = action.payload
-      }
-    )
+    builder
+      .addMatcher(
+        managementApi.endpoints.createUser.matchFulfilled,
+        (state, action) => {
+          console.log('action:', action) // Log ra response để kiểm tra
+          state.currentUser = action.payload
+        }
+      )
+      .addMatcher(
+        managementApi.endpoints.updateUser.matchFulfilled,
+        (state, action) => {
+          console.log('Updated user:', action.payload)
+          state.currentUser = action.payload
+        }
+      )
   },
 })
 

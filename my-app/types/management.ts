@@ -1,4 +1,5 @@
 export interface UserRequest {
+  id?: number
   email: string
   phone?: string
   password: string
