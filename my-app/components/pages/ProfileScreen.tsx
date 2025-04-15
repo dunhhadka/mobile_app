@@ -93,7 +93,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
+          <Text style={styles.sectionTitle}>Liên lạc</Text>
 
           <View style={styles.infoCard}>
             <View style={styles.infoItem}>
@@ -113,7 +113,7 @@ export default function ProfileScreen() {
                 <Phone size={20} color={colors.primary} />
               </View>
               <View>
-                <Text style={styles.infoLabel}>Phone</Text>
+                <Text style={styles.infoLabel}>Số điện thoại</Text>
                 <Text style={styles.infoValue}>+1 (555) 123-4567</Text>
               </View>
             </View>
