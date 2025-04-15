@@ -1,5 +1,7 @@
 package org.example.management.management.application.service.user;
 
+import jakarta.validation.Valid;
+import org.example.management.management.application.model.user.request.LoginRequest;
 import org.example.management.management.application.model.user.request.UserFilterRequest;
 import org.example.management.management.application.model.user.request.UserRequest;
 import org.example.management.management.application.model.user.response.UserResponse;
@@ -24,4 +26,6 @@ public interface UserService {
     void upload(int userId, MultipartFile file) throws IOException;
 
     UserResponse findById(int id);
+
+    UserResponse login(@Valid LoginRequest request);
 }

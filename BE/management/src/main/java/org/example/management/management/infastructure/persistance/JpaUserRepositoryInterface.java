@@ -20,4 +20,6 @@ public interface JpaUserRepositoryInterface extends JpaRepository<User, Integer>
     List<User> findByIdIn(List<Integer> userIds);
 
     Page<User> findAll(Specification<User> spec, Pageable pageable);
+
+    Optional<User> findByEmailAndPassword(String email, String password);
 }

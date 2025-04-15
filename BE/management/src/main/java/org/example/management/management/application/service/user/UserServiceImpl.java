@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.example.management.management.application.model.user.request.LoginRequest;
 import org.example.management.management.application.model.user.request.UserFilterRequest;
 import org.example.management.management.application.model.user.request.UserRequest;
 import org.example.management.management.application.model.user.response.UserResponse;
@@ -144,6 +145,18 @@ public class UserServiceImpl implements UserService {
                         "user not found by id = " + userId
                 ));
         return this.userMapper.toUserResponse(user);
+    }
+
+    @Override
+    public UserResponse login(LoginRequest request) {
+        var possiblyUser = this.repositoryInterface.findByEmailAndPassword(request.getEmail(), request.getPassword());
+        if (possiblyUser.isEmpty()) {
+            throw new ConstrainViolationException(
+                    "user",
+                    "Email hoặc mật khẩu không đúng"
+            );
+        }
+        return this.userMapper.toUserResponse(possiblyUser.get());
     }
 
     private Pair<List<UserResponse>, Long> getUserResponse(UserFilterRequest request, PageRequest pageable) {

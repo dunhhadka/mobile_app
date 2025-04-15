@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.example.management.management.application.model.user.request.LoginRequest;
 import org.example.management.management.application.model.user.request.UserFilterRequest;
 import org.example.management.management.application.model.user.request.UserRequest;
 import org.example.management.management.application.model.user.response.UserResponse;
@@ -60,5 +61,10 @@ public class UserController {
     public UserResponse upload(@PathVariable int userId, @RequestParam("file") MultipartFile file) throws IOException {
         this.userService.upload(userId, file);
         return userService.getUserById(userId);
+    }
+
+    @PostMapping("/login")
+    public UserResponse login(@Valid @RequestBody LoginRequest request) {
+        return this.userService.login(request);
     }
 }
