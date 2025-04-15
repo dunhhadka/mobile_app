@@ -10,7 +10,7 @@ import { User, UserRequest } from '../types/management'
 export const managementApi = createApi({
   reducerPath: 'managementApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://192.168.100.8:8080/',
+    baseUrl: 'http://192.168.31.117:8080/',
   }),
   endpoints: (builder) => ({
     createUser: builder.mutation<User, UserRequest>({

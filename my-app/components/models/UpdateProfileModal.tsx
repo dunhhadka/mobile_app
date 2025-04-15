@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Pressable,
   Platform,
+  Dimensions,
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { TextInput, Button } from 'react-native-paper'
@@ -32,6 +33,9 @@ import { getUserName } from '../../utils/userUtils'
 import Avatar from '../layouts/Avatar'
 import { launchCamera } from 'react-native-image-picker'
 import * as ImagePicker from 'expo-image-picker'
+import typography from '../../constants/typography'
+import layout from '../../constants/layout'
+import colors from '../../constants/colors'
 
 interface Props {
   user: User
@@ -47,7 +51,7 @@ export const getAddress = (address: AddressResponse | null): string => {
 export default function UpdateProfileModel({ user, onClose }: Props) {
   const [firstName, setFirstName] = useState<string>(user.first_name ?? '')
   const [lastName, setLastName] = useState(user.last_name ?? '')
-  const [dob, setDob] = useState<Date | undefined>(undefined)
+  const [dob, setDob] = useState<Date|undefined>(undefined)
   const [position, setPosition] = useState(user.position)
   const [country, setCountry] = useState(user?.address?.country_name ?? '')
   const [districtName, setDistrictName] = useState(
@@ -164,7 +168,7 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.boundary}  contentContainerStyle={styles.container}>
       <Text style={styles.header}>My Personal Data</Text>
       <Text style={styles.subHeader}>Details about my personal data</Text>
 
@@ -218,7 +222,7 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             onChange={(event, selectedDate) => {
-              setShowPicker(Platform.OS !== 'ios') // Chỉ đóng picker khi không phải iOS
+              setShowPicker(false)
               if (selectedDate) setDob(selectedDate)
             }}
           />
@@ -309,65 +313,105 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {},
+  gradientContainer: {
+    flex:1,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0, // Ensure full width
+    backgroundColor: colors.white, // Fallback for gradient
+  },
+  boundary: {
+    width: "100%",
+  },
+  container: {
+    flexGrow: 1,
+    paddingHorizontal: layout.spacing.lg,
+    paddingVertical: layout.spacing.md,
+  },
   header: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginTop: 20,
+    fontSize: typography.fontSizes.xl,
+    fontWeight: typography.fontWeights.bold,
+    color: colors.textPrimary,
     textAlign: 'center',
+    marginTop: layout.spacing.lg,
+    marginBottom: layout.spacing.sm,
   },
   subHeader: {
-    fontSize: 14,
-    color: 'gray',
+    fontSize: typography.fontSizes.md,
+    color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: layout.spacing.lg,
   },
   avatarContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: layout.spacing.lg,
   },
   uploadText: {
-    marginTop: 8,
-    fontWeight: '600',
+    marginTop: layout.spacing.sm,
+    fontSize: typography.fontSizes.md,
+    fontWeight: typography.fontWeights.semibold,
+    color: colors.primary,
   },
   hintText: {
-    fontSize: 12,
-    color: 'gray',
+    fontSize: typography.fontSizes.sm,
+    color: colors.textSecondary,
+    marginTop: layout.spacing.xs,
   },
   input: {
-    marginBottom: 12,
+    marginBottom: layout.spacing.md,
     width: '100%',
+    backgroundColor: colors.white,
+    borderRadius: layout.borderRadius.md,
   },
   sectionTitle: {
-    marginTop: 10,
-    fontWeight: 'bold',
-    fontSize: 16,
+    marginTop: layout.spacing.md,
+    marginBottom: layout.spacing.sm,
+    fontSize: typography.fontSizes.lg,
+    fontWeight: typography.fontWeights.semibold,
+    color: colors.textPrimary,
   },
   button: {
-    marginTop: 20,
-    paddingVertical: 6,
+    marginTop: layout.spacing.lg,
+    paddingVertical: layout.spacing.sm,
+    borderRadius: layout.borderRadius.lg,
+    backgroundColor: colors.primary,
   },
   buttonWrapper: {
-    borderRadius: 30,
+    borderRadius: layout.borderRadius.lg,
     overflow: 'hidden',
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.white,
+    fontSize: typography.fontSizes.md,
+    fontWeight: typography.fontWeights.semibold,
+    textAlign: 'center',
   },
 })
 
 const pickerStyle = {
   inputIOS: {
-    fontSize: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
+    fontSize: typography.fontSizes.md,
+    paddingVertical: layout.spacing.sm,
+    paddingHorizontal: layout.spacing.md,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    color: 'black',
-    paddingRight: 30,
-    marginBottom: 12,
+    borderColor: colors.textSecondary,
+    borderRadius: layout.borderRadius.md,
+    color: colors.textPrimary,
+    paddingRight: layout.spacing.lg,
+    marginBottom: layout.spacing.md,
+    backgroundColor: colors.white,
+  },
+  inputAndroid: {
+    fontSize: typography.fontSizes.md,
+    paddingVertical: layout.spacing.sm,
+    paddingHorizontal: layout.spacing.md,
+    borderWidth: 1,
+    borderColor: colors.textSecondary,
+    borderRadius: layout.borderRadius.md,
+    color: colors.textPrimary,
+    paddingRight: layout.spacing.lg,
+    marginBottom: layout.spacing.md,
+    backgroundColor: colors.white,
   },
 }

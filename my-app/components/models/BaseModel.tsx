@@ -1,4 +1,5 @@
 import { Modal, View, StyleSheet, TouchableOpacity, Text } from 'react-native'
+import { black } from 'react-native-paper/lib/typescript/styles/themes/v2/colors'
 
 interface Props {
   children: React.ReactNode
@@ -35,15 +36,16 @@ export default function BaseModel({ children, open, onClose, title }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
+    flex: 1
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)', // Overlay background mờ
   },
   modalContainer: {
+    flex: 1,
+    alignSelf: 'stretch',
     padding: 20,
     backgroundColor: 'white',
     borderRadius: 10,
@@ -56,6 +58,8 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   content: {
+    flex: 1,
+    alignSelf: 'stretch',
     marginBottom: 20,
     alignItems: 'center',
   },
