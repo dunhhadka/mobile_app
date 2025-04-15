@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -22,11 +22,21 @@ import typography from '../../constants/typography'
 import Button from '../layouts/Button'
 import { useUserStore } from '../../store/user-store'
 import { useTaskStore } from '../../store/task-store'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../store/store'
+import { getUserName } from '../../utils/userUtils'
+import BaseModel from '../models/BaseModel'
+import UpdateProfileModal from '../models/UpdateProfileModal'
 
 export default function ProfileScreen() {
   const router = useRouter()
   const { currentUser } = useUserStore()
   const { tasks } = useTaskStore()
+
+  const [isOpenUpdateModel, setIsOpenUpdateModel] = useState(false)
+
+  const user = useSelector((state: RootState) => state.user.currentUser)
+  console.log('user:profle', user) // Log ra response để kiểm tra
 
   if (!currentUser) {
     return (
@@ -58,6 +68,10 @@ export default function ProfileScreen() {
       ? Math.round((completedTasks.length / assignedTasks.length) * 100)
       : 0
 
+  useEffect(() => {
+    console.log('User updated:', user)
+  }, [user])
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
@@ -66,14 +80,21 @@ export default function ProfileScreen() {
       >
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <Avatar
-              uri={currentUser.avatar}
-              name={currentUser.name}
-              size={80}
-            />
+            {user && user.avatar && user.avatar.src ? (
+              <Avatar
+                uri={user.avatar.src}
+                name={getUserName(user)}
+                size={50}
+              />
+            ) : (
+              <Avatar name={getUserName(user)} size={50} />
+            )}
+
             <View style={styles.userInfo}>
-              <Text style={styles.userName}>{currentUser.name}</Text>
-              <Text style={styles.userRole}>{currentUser.role}</Text>
+              <Text style={styles.userName}>{getUserName(user)}</Text>
+              <Text style={styles.userRole}>
+                {user?.position ?? 'Chưa xác định'}
+              </Text>
             </View>
           </View>
 
@@ -81,7 +102,7 @@ export default function ProfileScreen() {
             title="Edit Profile"
             variant="outline"
             size="small"
-            onPress={() => router.push('/profile/edit')}
+            onPress={() => setIsOpenUpdateModel(true)}
             icon={<Settings size={16} color={colors.primary} />}
           />
         </View>
@@ -260,6 +281,18 @@ export default function ProfileScreen() {
           />
         </View>
       </ScrollView>
+      {user && (
+        <BaseModel
+          title="Mở model"
+          open={isOpenUpdateModel}
+          onClose={() => setIsOpenUpdateModel(false)}
+        >
+          <UpdateProfileModal
+            user={user}
+            onClose={() => setIsOpenUpdateModel(false)}
+          />
+        </BaseModel>
+      )}
     </SafeAreaView>
   )
 }
@@ -290,7 +323,7 @@ const styles = StyleSheet.create({
     marginBottom: layout.spacing.lg,
   },
   userInfo: {
-    marginLeft: layout.spacing.lg,
+    marginLeft: layout.spacing.md,
   },
   userName: {
     fontSize: typography.fontSizes.xl,

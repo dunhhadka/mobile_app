@@ -20,7 +20,28 @@ export const managementApi = createApi({
         body: request,
       }),
     }),
+    updateUser: builder.mutation<User, UserRequest>({
+      query: (request) => ({
+        url: `/api/users/update/${request.id}`,
+        method: 'PUT',
+        body: request,
+      }),
+    }),
+    uploadUserAvatar: builder.mutation<
+      User,
+      { userId: number; formData: FormData }
+    >({
+      query: ({ userId, formData }) => ({
+        url: `/api/users/${userId}/upload`,
+        method: 'POST',
+        body: formData,
+      }),
+    }),
   }),
 })
 
-export const { useCreateUserMutation } = managementApi
+export const {
+  useCreateUserMutation,
+  useUpdateUserMutation,
+  useUploadUserAvatarMutation,
+} = managementApi
