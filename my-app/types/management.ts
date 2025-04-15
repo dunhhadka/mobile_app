@@ -64,3 +64,15 @@ export enum Position {
   manager = 'Quản lý',
   other = 'Khác',
 }
+
+export interface LogResponse {
+  id: number;
+  type: Type;
+  image: ImageResponse | null;
+  note?: string;
+  latitude?: string;
+  longitude?: string;
+
+  user: User;
+}
+export type Type =  'in'| 'out'| 'break_work'|'back_work'
