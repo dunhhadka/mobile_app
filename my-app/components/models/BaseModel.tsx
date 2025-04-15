@@ -23,11 +23,10 @@ export default function BaseModel({ children, open, onClose, title }: Props) {
         activeOpacity={1} // Giúp tránh việc touch không vào modal
       >
         <View style={styles.modalContainer}>
-          <View style={styles.content}>{children}</View>
-
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeText}>Đóng</Text>
+        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeText}>X</Text>
           </TouchableOpacity>
+          <View style={styles.content}>{children}</View>
         </View>
       </TouchableOpacity>
     </Modal>
@@ -49,8 +48,7 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: 'white',
     borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 20,
+    alignItems: 'center'
   },
   title: {
     fontSize: 18,
@@ -60,14 +58,21 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignSelf: 'stretch',
+    marginTop: 20,
     marginBottom: 20,
     alignItems: 'center',
   },
   closeButton: {
-    marginTop: 10,
-    backgroundColor: '#007bff',
-    padding: 10,
-    borderRadius: 5,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#808080', // Màu xám
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 5,
+    position: 'absolute', // Để đặt vị trí chính xác
+    top: 10, // Khoảng cách từ phía trên
+    left: 10, // Khoảng cách từ phía trái
   },
   closeText: {
     color: 'white',

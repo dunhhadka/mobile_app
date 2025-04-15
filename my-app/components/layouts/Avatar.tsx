@@ -3,7 +3,7 @@ import { Avatar as PaperAvatar } from 'react-native-paper'
 
 type AvatarProps = {
   uri?: string
-  name: string
+  name?: string
   size: number
 }
 
