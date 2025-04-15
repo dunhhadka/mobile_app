@@ -10,9 +10,9 @@ import {
   Briefcase,
   Building,
   Calendar,
-  Clock,
-  CheckCircle,
-  AlertCircle,
+  Lock,
+  HelpCircle,
+  LogOut,
   ChevronRight,
 } from 'lucide-react-native'
 import Avatar from '../layouts/Avatar'
@@ -48,10 +48,6 @@ export default function ProfileScreen() {
   const completedTasks = assignedTasks.filter(
     (task) => task.status === 'completed'
   )
-  const pendingTasks = assignedTasks.filter((task) => task.status === 'pending')
-  const inProgressTasks = assignedTasks.filter(
-    (task) => task.status === 'inProgress'
-  )
 
   const completionRate =
     assignedTasks.length > 0
@@ -77,13 +73,6 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <Button
-            title="Edit Profile"
-            variant="outline"
-            size="small"
-            onPress={() => router.push('/profile/edit')}
-            icon={<Settings size={16} color={colors.primary} />}
-          />
         </View>
 
         <View style={styles.statsContainer}>
@@ -132,132 +121,129 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Work Information</Text>
+          <Text style={styles.sectionTitle}>Tài khoản</Text>
 
           <View style={styles.infoCard}>
-            <View style={styles.infoItem}>
+            <Pressable 
+              style={({ pressed }) => [
+                styles.infoItem,
+                pressed && styles.infoItemPressed
+              ]}
+              onPress={() => {}}
+            >
               <View style={styles.infoIconContainer}>
                 <Briefcase size={20} color={colors.primary} />
               </View>
-              <View>
-                <Text style={styles.infoLabel}>Role</Text>
-                <Text style={styles.infoValue}>{currentUser.role}</Text>
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoTitle}>Thông tin cá nhân</Text>
               </View>
-            </View>
+              <ChevronRight size={20} color={colors.textLight} />
+            </Pressable>
 
-            <View style={styles.infoItem}>
+            <Pressable 
+              style={({ pressed }) => [
+                styles.infoItem,
+                pressed && styles.infoItemPressed
+              ]}
+              onPress={() => {}}
+            >
               <View style={styles.infoIconContainer}>
                 <Building size={20} color={colors.primary} />
               </View>
-              <View>
-                <Text style={styles.infoLabel}>Department</Text>
-                <Text style={styles.infoValue}>
-                  {currentUser.department || 'Not assigned'}
-                </Text>
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoTitle}>Tài sản cá nhân</Text>
               </View>
-            </View>
+              <ChevronRight size={20} color={colors.textLight} />
+            </Pressable>
 
-            <View style={styles.infoItem}>
+            <Pressable 
+              style={({ pressed }) => [
+                styles.infoItem,
+                pressed && styles.infoItemPressed
+              ]}
+              onPress={() => {}}
+            >
               <View style={styles.infoIconContainer}>
                 <Calendar size={20} color={colors.primary} />
               </View>
-              <View>
-                <Text style={styles.infoLabel}>Joined</Text>
-                <Text style={styles.infoValue}>January 15, 2023</Text>
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoTitle}>Bảng Lương</Text>
               </View>
-            </View>
+              <ChevronRight size={20} color={colors.textLight} />
+            </Pressable>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Task Summary</Text>
+          <Text style={styles.sectionTitle}>Settings</Text>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.taskSummaryItem,
-              pressed && styles.taskSummaryItemPressed,
-            ]}
-            onPress={() => router.push('/tasks')}
-          >
-            <View style={styles.taskSummaryIconContainer}>
-              <Clock size={20} color={colors.warning} />
-            </View>
-            <View style={styles.taskSummaryContent}>
-              <Text style={styles.taskSummaryTitle}>Pending Tasks</Text>
-              <Text style={styles.taskSummaryCount}>
-                {pendingTasks.length} tasks
-              </Text>
-            </View>
-            <ChevronRight size={20} color={colors.textLight} />
-          </Pressable>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.taskSummaryItem,
-              pressed && styles.taskSummaryItemPressed,
-            ]}
-            onPress={() => router.push('/tasks')}
-          >
-            <View
-              style={[
-                styles.taskSummaryIconContainer,
-                { backgroundColor: `${colors.primary}15` },
+          <View style={styles.infoCard}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.infoItem,
+                pressed && styles.infoItemPressed,
               ]}
+              onPress={() => router.push('/settings/change-password')}
             >
-              <AlertCircle size={20} color={colors.primary} />
-            </View>
-            <View style={styles.taskSummaryContent}>
-              <Text style={styles.taskSummaryTitle}>In Progress</Text>
-              <Text style={styles.taskSummaryCount}>
-                {inProgressTasks.length} tasks
-              </Text>
-            </View>
-            <ChevronRight size={20} color={colors.textLight} />
-          </Pressable>
+              <View style={styles.infoIconContainer}>
+                <Lock size={20} color={colors.primary} />
+              </View>
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoTitle}>Change Password</Text>
+              </View>
+              <ChevronRight size={20} color={colors.textLight} />
+            </Pressable>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.taskSummaryItem,
-              pressed && styles.taskSummaryItemPressed,
-            ]}
-            onPress={() => router.push('/tasks')}
-          >
-            <View
-              style={[
-                styles.taskSummaryIconContainer,
-                { backgroundColor: `${colors.success}15` },
+            <Pressable
+              style={({ pressed }) => [
+                styles.infoItem,
+                pressed && styles.infoItemPressed,
               ]}
+              onPress={() => router.push('/settings/versioning')}
             >
-              <CheckCircle size={20} color={colors.success} />
-            </View>
-            <View style={styles.taskSummaryContent}>
-              <Text style={styles.taskSummaryTitle}>Completed</Text>
-              <Text style={styles.taskSummaryCount}>
-                {completedTasks.length} tasks
-              </Text>
-            </View>
-            <ChevronRight size={20} color={colors.textLight} />
-          </Pressable>
-        </View>
+              <View style={styles.infoIconContainer}>
+                <Settings size={20} color={colors.primary} />
+              </View>
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoTitle}>Versioning</Text>
+              </View>
+              <ChevronRight size={20} color={colors.textLight} />
+            </Pressable>
 
-        <View style={styles.actionsContainer}>
-          <Button
-            title="Settings"
-            variant="outline"
-            fullWidth
-            onPress={() => router.push('/settings')}
-            icon={<Settings size={20} color={colors.primary} />}
-          />
+            <Pressable
+              style={({ pressed }) => [
+                styles.infoItem,
+                pressed && styles.infoItemPressed,
+              ]}
+              onPress={() => router.push('/settings/faq')}
+            >
+              <View style={styles.infoIconContainer}>
+                <HelpCircle size={20} color={colors.primary} />
+              </View>
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoTitle}>FAQ and Help</Text>
+              </View>
+              <ChevronRight size={20} color={colors.textLight} />
+            </Pressable>
 
-          <Button
-            title="Log Out"
-            variant="secondary"
-            fullWidth
-            onPress={() => {
-              /* Handle logout */
-            }}
-            icon={<User size={20} color={colors.primary} />}
-          />
+            <Pressable
+              style={({ pressed }) => [
+                styles.infoItem,
+                pressed && styles.infoItemPressed,
+              ]}
+              onPress={() => {
+                /* Handle logout */
+              }}
+            >
+              <View style={styles.infoIconContainer}>
+                <LogOut size={20} color={colors.danger} />
+              </View>
+              <View style={styles.infoTextContainer}>
+                <Text style={[styles.infoTitle, { color: colors.danger }]}>Logout</Text>
+              </View>
+              <ChevronRight size={20} color={colors.textLight} />
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -343,7 +329,7 @@ const styles = StyleSheet.create({
   infoCard: {
     backgroundColor: colors.white,
     borderRadius: layout.borderRadius.lg,
-    padding: layout.spacing.lg,
+    padding: layout.spacing.md,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -353,7 +339,8 @@ const styles = StyleSheet.create({
   infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: layout.spacing.md,
+    padding: layout.spacing.sm,
+    marginBottom: layout.spacing.sm,
   },
   infoIconContainer: {
     width: 40,
@@ -363,6 +350,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: layout.spacing.md,
+  },
+  infoTextContainer: {
+    flex: 1,
   },
   infoLabel: {
     fontSize: typography.fontSizes.sm,
@@ -374,43 +364,13 @@ const styles = StyleSheet.create({
     fontWeight: typography.fontWeights.medium,
     color: colors.textPrimary,
   },
-  taskSummaryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: layout.borderRadius.lg,
-    padding: layout.spacing.md,
-    marginBottom: layout.spacing.md,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  taskSummaryItemPressed: {
-    opacity: 0.8,
-  },
-  taskSummaryIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: `${colors.warning}15`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: layout.spacing.md,
-  },
-  taskSummaryContent: {
-    flex: 1,
-  },
-  taskSummaryTitle: {
+  infoTitle: {
     fontSize: typography.fontSizes.md,
     fontWeight: typography.fontWeights.medium,
     color: colors.textPrimary,
-    marginBottom: 2,
   },
-  taskSummaryCount: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
+  infoItemPressed: {
+    backgroundColor: `${colors.primary}05`,
   },
   actionsContainer: {
     paddingHorizontal: layout.spacing.lg,
