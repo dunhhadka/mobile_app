@@ -1,10 +1,12 @@
-import React, { ElementType } from 'react'
+// App.tsx
+
+import React from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Bell, Calendar, Home, ListChecks, User } from 'lucide-react-native'
-import { Provider } from 'react-redux' // Đừng quên import Provider từ react-redux
-import { store } from './store/store' // Import store đã tạo
+import { Provider } from 'react-redux'
+import { store } from './store/store'
 
 // Screens
 import HomeScreen from './components/pages/HomeScreen'
@@ -17,18 +19,48 @@ import SignUpScreen from './components/pages/SignUpScreen'
 import OnboardScreen from './components/pages/OnboardScreen'
 import { ToastProvider } from 'react-native-toast-notifications'
 import CustomToast from './components/layouts/CustomToast'
+import ProjectDetail from './components/pages/ProjectDetail'
+import ChatListScreen from './components/pages/ChatListScreen'
+import ChatRoomScreen from './components/pages/ChatRoomScreen'
 
-// Create Stack and Tab navigators
-const Stack = createNativeStackNavigator()
-const Tab = createBottomTabNavigator()
-
-interface ToastRenderProps {
-  type?: string
-  message?: string | React.ReactNode
-  [key: string]: any
+// Param types for Task stack
+export type TasksStackParamList = {
+  ProjectList: undefined
+  ProjectDetail: { project_id: number }
 }
 
-// Main tabs navigator
+export type HomeStackParamList = {
+  Home: undefined
+  Notification: undefined
+  ChatList: undefined
+  ChatRoom: { room_id: number; member_id: number }
+}
+const HomeStack = createNativeStackNavigator<HomeStackParamList>()
+function HomesStack() {
+  return (
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="Home" component={HomeScreen} />
+      <HomeStack.Screen name="Notification" component={NotificationsScreen} />
+      <HomeStack.Screen name="ChatList" component={ChatListScreen} />
+      <HomeStack.Screen name="ChatRoom" component={ChatRoomScreen} />
+    </HomeStack.Navigator>
+  )
+}
+
+// Main navigators
+const RootStack = createNativeStackNavigator()
+const Tab = createBottomTabNavigator()
+const TaskStack = createNativeStackNavigator<TasksStackParamList>()
+
+function TasksStack() {
+  return (
+    <TaskStack.Navigator screenOptions={{ headerShown: false }}>
+      <TaskStack.Screen name="ProjectList" component={TaskScreen} />
+      <TaskStack.Screen name="ProjectDetail" component={ProjectDetail} />
+    </TaskStack.Navigator>
+  )
+}
+
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -56,8 +88,8 @@ function MainTabs() {
         tabBarInactiveTintColor: '#777',
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Tasks" component={TaskScreen} />
+      <Tab.Screen name="Home" component={HomesStack} />
+      <Tab.Screen name="Tasks" component={TasksStack} />
       <Tab.Screen name="Calendar" component={CalendarScreen} />
       <Tab.Screen name="Notification" component={NotificationsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
@@ -65,32 +97,31 @@ function MainTabs() {
   )
 }
 
-// App component with stack navigation
 export default function App() {
   return (
     <Provider store={store}>
       <ToastProvider
-        renderToast={({ type, message }: ToastRenderProps) => (
+        renderToast={({ type, message }) => (
           <CustomToast
             type={(type as 'success' | 'error' | 'info') || 'info'}
-            message={typeof message === 'string' ? message : ''} // Chỉ lấy string
+            message={typeof message === 'string' ? message : ''}
           />
         )}
         placement="top"
-        offsetTop={50}
+        offsetTop={25}
         animationType="slide-in"
         swipeEnabled={true}
       >
         <NavigationContainer>
-          <Stack.Navigator
+          <RootStack.Navigator
             initialRouteName="Onboarding"
             screenOptions={{ headerShown: false }}
           >
-            <Stack.Screen name="Onboarding" component={OnboardScreen} />
-            <Stack.Screen name="SignIn" component={SignInScreen} />
-            <Stack.Screen name="SignUp" component={SignUpScreen} />
-            <Stack.Screen name="Main" component={MainTabs} />
-          </Stack.Navigator>
+            <RootStack.Screen name="Onboarding" component={OnboardScreen} />
+            <RootStack.Screen name="SignIn" component={SignInScreen} />
+            <RootStack.Screen name="SignUp" component={SignUpScreen} />
+            <RootStack.Screen name="Main" component={MainTabs} />
+          </RootStack.Navigator>
         </NavigationContainer>
       </ToastProvider>
     </Provider>

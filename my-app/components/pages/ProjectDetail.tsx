@@ -8,22 +8,23 @@ import {
   TouchableOpacity,
 } from 'react-native'
 import { Circle } from 'lucide-react-native'
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'
 import colors from '../../constants/colors'
 import StatusBadge from '../layouts/StatusBadge'
 import ProgressBar from '../layouts/ProgressBar'
 import BaseModel from '../models/BaseModel'
-import CreateOrUpdateTaskFrom from '../form/CreateOrUpdateTaskFrom'
+import CreateOrUpdateTaskForm from '../form/CreateOrUpdateTaskFrom'
 import {
   useGetProjectByIdQuery,
   useLazyGetTaskByIdQuery,
 } from '../../api/magementApi'
 import { TaskItem } from '../card/TaskItem'
 import { Task } from '../../types/management'
+import Loading from '../loading/Loading'
 
-export type TaskStatus = 'todo' | 'inProgress' | 'done'
-export type TaskPriority = 'high' | 'medium' | 'low'
+// Types
 
-export interface Sprint {
+interface Sprint {
   id: string
   number: number
   name: string
@@ -33,26 +34,59 @@ export interface Sprint {
   advice: string
 }
 
-export interface TaskSummary {
+interface TaskSummary {
   todo: number
   inProgress: number
   done: number
 }
 
-export const getTaskSummary = (tasks: Task[]) => {
-  return {
-    todo: tasks.filter((task) => task.status === 'to_do').length,
-    inProgress: tasks.filter((task) => task.status === 'in_process').length,
-    done: tasks.filter((task) => task.status === 'finish').length,
+type ProjectDetailRouteProp = RouteProp<
+  { params: { project_id: number } },
+  'params'
+>
+
+// Helper
+const getTaskSummary = (tasks: Task[]): TaskSummary => ({
+  todo: tasks.filter((t) => t.status === 'to_do').length,
+  inProgress: tasks.filter((t) => t.status === 'in_process').length,
+  done: tasks.filter((t) => t.status === 'finish').length,
+})
+
+const getSprintStatus = (status: Sprint['status']) => {
+  switch (status) {
+    case 'good':
+      return { color: colors.done, label: 'Good' }
+    case 'warning':
+      return { color: colors.inProgress, label: 'Warning' }
+    case 'danger':
+      return { color: colors.highPriority, label: 'Danger' }
+    default:
+      return { color: colors.done, label: 'Good' }
   }
 }
 
-interface Props {
-  project_id: number
-}
+export default function ProjectDetail() {
+  const route = useRoute<ProjectDetailRouteProp>()
+  const { project_id } = route.params
 
-export default function ProjectDetail({ project_id }: Props) {
-  const { data: project } = useGetProjectByIdQuery(project_id)
+  const { data: project, isLoading } = useGetProjectByIdQuery(project_id)
+  const [getTask, { data: taskSelected }] = useLazyGetTaskByIdQuery()
+
+  const [openCreateTaskModal, setOpenCreateTaskModal] = useState(false)
+  const [taskSelectedInForm, setTaskSelectedInForm] = useState<
+    Task | undefined
+  >()
+
+  useEffect(() => {
+    if (taskSelected) {
+      setTaskSelectedInForm(taskSelected)
+      setOpenCreateTaskModal(true)
+    }
+  }, [taskSelected])
+
+  const summary = project
+    ? getTaskSummary(project.tasks || [])
+    : { todo: 0, inProgress: 0, done: 0 }
 
   const sprint: Sprint = {
     id: '1',
@@ -64,52 +98,9 @@ export default function ProjectDetail({ project_id }: Props) {
     advice: 'Keep going!',
   }
 
-  const [getTask, { data: taskSelected, isLoading: isTaskLoading }] =
-    useLazyGetTaskByIdQuery()
-
-  const [openCreateTaskModal, setOpenCreateTaskModal] = useState(false)
-  const [openEditTaskModal, setOpenEditTaskModal] = useState(false)
-
-  const [taskSelectedInFro, setTaskSelectedInFrom] = useState<Task | undefined>(
-    undefined
+  const { color: sprintColor, label: sprintLabel } = getSprintStatus(
+    sprint.status
   )
-
-  const summary: TaskSummary = project
-    ? getTaskSummary(project.tasks || [])
-    : { todo: 0, inProgress: 0, done: 0 }
-
-  const getStatusColor = () => {
-    switch (sprint.status) {
-      case 'good':
-        return colors.done
-      case 'warning':
-        return colors.inProgress
-      case 'danger':
-        return colors.highPriority
-      default:
-        return colors.done
-    }
-  }
-
-  const getStatusText = () => {
-    switch (sprint.status) {
-      case 'good':
-        return 'Good'
-      case 'warning':
-        return 'Warning'
-      case 'danger':
-        return 'Danger'
-      default:
-        return 'Good'
-    }
-  }
-
-  useEffect(() => {
-    if (taskSelected) {
-      setTaskSelectedInFrom(taskSelected)
-      setOpenCreateTaskModal(true)
-    }
-  }, [taskSelected])
 
   return (
     <SafeAreaView style={styles.container}>
@@ -146,12 +137,9 @@ export default function ProjectDetail({ project_id }: Props) {
               Sprint {sprint.number} - Burnout Stats
             </Text>
             <View
-              style={[
-                styles.statusBadge,
-                { backgroundColor: getStatusColor() },
-              ]}
+              style={[styles.statusBadge, { backgroundColor: sprintColor }]}
             >
-              <Text style={styles.statusText}>{getStatusText()}</Text>
+              <Text style={styles.statusText}>{sprintLabel}</Text>
             </View>
           </View>
           <Text style={styles.description}>
@@ -185,10 +173,8 @@ export default function ProjectDetail({ project_id }: Props) {
           <View key={task.id}>
             <TaskItem
               task={task}
-              onDelete={(id) => console.log('Delete Id' + id)}
-              onView={(id) => {
-                getTask(id)
-              }}
+              onDelete={() => {}}
+              onView={(id) => getTask(id)}
             />
           </View>
         ))}
@@ -208,19 +194,20 @@ export default function ProjectDetail({ project_id }: Props) {
           open={openCreateTaskModal}
           onClose={() => {
             setOpenCreateTaskModal(false)
-            setTaskSelectedInFrom(undefined)
+            setTaskSelectedInForm(undefined)
           }}
         >
-          <CreateOrUpdateTaskFrom
+          <CreateOrUpdateTaskForm
             project={project}
+            task={taskSelectedInForm}
             onClose={() => {
               setOpenCreateTaskModal(false)
-              setTaskSelectedInFrom(undefined)
+              setTaskSelectedInForm(undefined)
             }}
-            task={taskSelectedInFro}
           />
         </BaseModel>
       )}
+      {isLoading && <Loading />}
     </SafeAreaView>
   )
 }

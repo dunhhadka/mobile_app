@@ -17,9 +17,7 @@ import {
   TextInput,
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
-import { StatusBar } from 'expo-status-bar'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useRouter } from 'expo-router'
 import { ChevronDown, FileText, Users } from 'lucide-react-native'
 import colors from '../../constants/colors'
 import {
@@ -30,13 +28,11 @@ import {
 import {
   Project,
   ProjectRequest,
-  ProjectSearchRequest,
   UserFilterRequest,
 } from '../../types/management'
-import { CheckBox } from 'react-native-elements'
 import { formatDate } from '../models/UpdateProfileModal'
-import { handleApiError } from '../../utils/errorHandler'
-import { useToast } from 'react-native-toast-notifications'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../store/store'
 
 interface Props {
   onClose?: () => void
@@ -44,15 +40,14 @@ interface Props {
 }
 
 export default function CreateOrUpdateProject({ onClose, project }: Props) {
+  const currentUser = useSelector((state: RootState) => state.user.currentUser)
+
   const [userFilter, setUserFilter] = useState<UserFilterRequest>({})
   const [selectedUsers, setSelectedUser] = useState<number[]>(
     project?.users?.map((u) => u.id) ?? []
   )
 
   const isCreate = !project
-
-  console.log('isCreate', isCreate)
-  console.log('Project: ', project)
 
   const toggleSelected = (userId: number) => {
     const included = selectedUsers.includes(userId)
@@ -101,6 +96,7 @@ export default function CreateOrUpdateProject({ onClose, project }: Props) {
       status: 'none',
       user_ids: selectedUsers,
       started_on: startedOn,
+      created_id: currentUser?.id ?? 0,
     } as ProjectRequest
     try {
       let response: Project

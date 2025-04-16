@@ -14,14 +14,17 @@ import org.example.management.management.infastructure.exception.ConstrainViolat
 import org.example.management.management.infastructure.persistance.JpaUserRepositoryInterface;
 import org.example.management.management.infastructure.persistance.ProjectManagementRepository;
 import org.example.management.management.infastructure.persistance.ProjectRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +37,8 @@ public class ProjectService {
     private final ProjectManagementService projectManagementService;
 
     private final ProjectMapper projectMapper;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     // region write
     @Transactional
@@ -50,8 +55,10 @@ public class ProjectService {
 
         projectRepository.save(project);
 
-        var event = new ProjectCreatedEvent(project.getId(), new UserInProjectInfo(List.of(), userIds));
+        var event = new ProjectCreatedEvent(project.getId(), new UserInProjectInfo(List.of(), userIds), project);
         this.projectManagementService.handleProjectCreated(event);
+
+        this.applicationEventPublisher.publishEvent(event);
 
         return project.getId();
     }
@@ -61,10 +68,15 @@ public class ProjectService {
             return;
         }
 
-        var userMap = jpaUserRepositoryInterface.findByIdIn(request.getUserIds()).stream()
+        var allUserIds = Stream.concat(
+                userIds.stream(),
+                Optional.of(request.getCreatedId()).stream()
+        ).toList();
+
+        var userMap = jpaUserRepositoryInterface.findByIdIn(allUserIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
-        String userNotFound = request.getUserIds().stream()
+        String userNotFound = allUserIds.stream()
                 .filter(id -> !userMap.containsKey(id))
                 .map(String::valueOf)
                 .collect(Collectors.joining(", "));
@@ -86,6 +98,7 @@ public class ProjectService {
                 .description(request.getDescription())
                 .companyId(request.getCompanyId())
                 .status(request.getStatus())
+                .createdId(request.getCreatedId())
                 .startedOn(request.getStartedOn());
 
         return projectBuilder.build();
@@ -111,7 +124,7 @@ public class ProjectService {
 
         var userIdsValid = this.splitOldAndNewUserId(project, userIds);
 
-        var event = new ProjectCreatedEvent(projectId, new UserInProjectInfo(userIdsValid.getKey(), userIdsValid.getValue()));
+        var event = new ProjectCreatedEvent(projectId, new UserInProjectInfo(userIdsValid.getKey(), userIdsValid.getValue()), project);
         this.projectManagementService.handleProjectCreated(event);
 
         return projectId;

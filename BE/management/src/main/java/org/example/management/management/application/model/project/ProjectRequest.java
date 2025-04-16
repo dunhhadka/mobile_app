@@ -30,4 +30,6 @@ public class ProjectRequest {
 
     @NotNull(message = "Ngày bắt đầu không được để trống")
     private LocalDate startedOn;
+
+    private int createdId;
 }

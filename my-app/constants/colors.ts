@@ -35,7 +35,12 @@ export const colors = {
     lightPurple: '#A48BFF',
     backgroundLight: '#F5F8FA',
     textLight: '#666666',
+    timestamp: '#6B7280',
     borderColor: '#E5E9EC',
+    messagePreview: '#6B7280',
+    unread: '#EF4444',
+    separator: '#E5E7EB',
+    backgroundSecondary: '#EBF4FF',
   },
 
   todo: '#6366F1', // Blue for To Do
@@ -50,6 +55,10 @@ export const colors = {
   statusBarIcons: '#FFFFFF',
 
   divider: '#CBD5E1',
+
+  card: '#FFFFFF',
+  sent: '#6c5ce7',
+  received: '#e8f4f8',
 }
 
 // Task status colors

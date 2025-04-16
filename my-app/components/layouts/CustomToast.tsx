@@ -43,7 +43,6 @@ const CustomToast = ({
 const styles = StyleSheet.create({
   wrapper: {
     position: 'absolute',
-    top: 40,
     left: 16,
     right: 16,
     zIndex: 9999, // Đè lên modal

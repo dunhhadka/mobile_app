@@ -1,6 +1,7 @@
 package org.example.management.management.domain.project;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,7 @@ public class Project {
 
     private Integer companyId;
 
+    @NotBlank
     @Size(max = 255)
     private String title;
 
@@ -44,6 +46,8 @@ public class Project {
     @NotNull
     @Enumerated(value = EnumType.STRING)
     private Status status;
+
+    private int createdId;
 
     public enum Status {
         in_process,

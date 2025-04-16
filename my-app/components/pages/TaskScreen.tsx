@@ -10,27 +10,21 @@ import {
   ActivityIndicator,
   Pressable,
 } from 'react-native'
-import typography from '../../constants/typography'
-import layout from '../../constants/layout'
-import { gradients, statusColors, colors } from '../../constants/colors'
+import { colors } from '../../constants/colors'
 import { LinearGradient } from 'expo-linear-gradient'
 import ProjectCard from '../card/ProjectCard'
 import ProjectSummary from '../process/ProjectSummary'
 import { ClipboardList } from 'lucide-react-native'
-import BaseButton from '../models/BaseButton'
 import { useState } from 'react'
 import FilterTabs from '../card/FilterTabs'
 import BaseModel from '../models/BaseModel'
 import CreateOrUpdateProject from './CreateOrUpdateProject'
 import { Project, ProjectSearchRequest } from '../../types/management'
 import { useSearchProjectQuery } from '../../api/magementApi'
-import ProjectDetail from './ProjectDetail'
+import { NavigationProp, useNavigation } from '@react-navigation/native'
+import Loading from '../loading/Loading'
 
 const TaskScreen = () => {
-  const [activeFilter, setActiveFilter] = useState<
-    'all' | 'in_progress' | 'done'
-  >('all')
-
   const [projectUpdateSelected, setProjectUpdateSelected] = useState<
     Project | undefined
   >(undefined)
@@ -39,17 +33,11 @@ const TaskScreen = () => {
 
   const [openCreateModel, setOpenCreateModel] = useState(false)
 
-  const [openProjectDetail, setOpenProjectDetail] = useState(false)
-
-  const [projectDetail, setProjectDetail] = useState<Project | undefined>(
-    undefined
-  )
-
   const {
     data: projects,
     isLoading: isProjectLoading,
     isFetching: isProjectFetching,
-  } = useSearchProjectQuery(projetFilter)
+  } = useSearchProjectQuery(projetFilter, { refetchOnMountOrArgChange: true })
 
   const handleEditProject = (id: number) => {
     console.log('ProjectId', id)
@@ -59,7 +47,10 @@ const TaskScreen = () => {
     setOpenCreateModel(true)
   }
 
-  const isCreateLoading = isProjectFetching || isProjectLoading
+  const navigation = useNavigation<NavigationProp<TasksStackParamList>>()
+
+  const isLoading = isProjectLoading || isProjectFetching
+
   return (
     <View style={styles.container}>
       <LinearGradient colors={['#7B5CFF', '#5E3FD9']} style={styles.background}>
@@ -90,11 +81,9 @@ const TaskScreen = () => {
                 <Pressable
                   key={project.id}
                   onPress={() => {
-                    const projectClicked = projects.find(
-                      (p) => p.id === project.id
-                    )
-                    setProjectDetail(projectClicked)
-                    setOpenProjectDetail(true)
+                    navigation.navigate('ProjectDetail', {
+                      project_id: project.id,
+                    })
                   }}
                 >
                   <ProjectCard
@@ -115,17 +104,13 @@ const TaskScreen = () => {
             <TouchableOpacity
               style={styles.buttonWrapper}
               onPress={() => setOpenCreateModel(true)}
-              disabled={isCreateLoading} // Disable nút khi đang submit
+              disabled={isLoading} // Disable nút khi đang submit
             >
               <LinearGradient
                 colors={['#7B5AFF', '#4D66F4']}
                 style={styles.button}
               >
-                {isCreateLoading ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.buttonText}>Create Project</Text>
-                )}
+                <Text style={styles.buttonText}>Create Project</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -148,16 +133,7 @@ const TaskScreen = () => {
           />
         </BaseModel>
       )}
-      {openProjectDetail && projectDetail && (
-        <BaseModel
-          open={openProjectDetail}
-          onClose={() => {
-            setOpenProjectDetail(false)
-          }}
-        >
-          <ProjectDetail project_id={projectDetail.id} />
-        </BaseModel>
-      )}
+      {isLoading && <Loading />}
     </View>
   )
 }

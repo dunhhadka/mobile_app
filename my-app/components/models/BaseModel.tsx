@@ -37,14 +37,7 @@ export default function BaseModel({
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity
-        style={styles.modalOverlay}
-        activeOpacity={1}
-        // onPress={() => {
-        //   onBlur?.()
-        //   onClose()
-        // }}
-      >
+      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1}>
         <View
           style={[
             styles.modalContainer,
@@ -94,7 +87,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: 20,
     alignSelf: 'stretch',
-    marginTop: 20,
     marginBottom: 20,
     alignItems: 'center',
   },

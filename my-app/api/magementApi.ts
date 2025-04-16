@@ -6,7 +6,10 @@ import {
   FetchBaseQueryError,
 } from '@reduxjs/toolkit/query/react'
 import {
+  ChatMember,
+  ChatRoom,
   LoginRequest,
+  LogResponse,
   Project,
   ProjectRequest,
   ProjectSearchRequest,
@@ -17,10 +20,12 @@ import {
   UserRequest,
 } from '../types/management'
 
+export const URL = 'http://192.168.100.8:8080'
+
 export const managementApi = createApi({
   reducerPath: 'managementApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://192.168.31.117:8080',
+    baseUrl: URL,
   }),
   tagTypes: ['project'],
   endpoints: (builder) => ({
@@ -38,28 +43,19 @@ export const managementApi = createApi({
         body: request,
       }),
     }),
-    uploadUserAvatar: builder.mutation<User, { userId: number, formData: FormData }>
-      ({
-        query: ({ userId, formData }) => ({
-          url: `/api/users/${userId}/upload`,
-          method: 'POST',
-          body: formData,
-        }),
-      }),
-    clockIn: builder.mutation<LogResponse, FormData>
-    ({
-        query: (formData) => ({
-          url: `/api/attendances/logs`,
-          method: 'POST',
-          body: formData
-        })
-    })
     uploadUserAvatar: builder.mutation<
       User,
       { userId: number; formData: FormData }
     >({
       query: ({ userId, formData }) => ({
         url: `/api/users/${userId}/upload`,
+        method: 'POST',
+        body: formData,
+      }),
+    }),
+    clockIn: builder.mutation<LogResponse, FormData>({
+      query: (formData) => ({
+        url: `/api/attendances/logs`,
         method: 'POST',
         body: formData,
       }),
@@ -144,6 +140,18 @@ export const managementApi = createApi({
         return [{ type: 'project', id: result?.project_id }]
       },
     }),
+    getChatMemberByUserId: builder.query<ChatMember[], number>({
+      query: (id) => ({
+        url: `/api/chats/members/${id}`,
+        method: 'GET',
+      }),
+    }),
+    getRoomById: builder.query<ChatRoom, number>({
+      query: (id) => ({
+        url: `/api/chats/rooms/${id}`,
+        method: 'GET',
+      }),
+    }),
   }),
 })
 
@@ -161,4 +169,6 @@ export const {
   useGetProjectByIdQuery,
   useLazyGetTaskByIdQuery,
   useUpdateTaskMutation,
+  useGetChatMemberByUserIdQuery,
+  useGetRoomByIdQuery,
 } = managementApi

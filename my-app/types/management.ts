@@ -81,6 +81,7 @@ export interface ProjectRequest {
   status?: 'in_process' | 'done' | 'reject' | 'none'
   user_ids?: number[]
   started_on: Date // Dạng ISO 8601 string, ví dụ: "2025-04-15T12:00:00Z"
+  created_id: number
 }
 
 export interface Project {
@@ -215,7 +216,6 @@ export interface TaskRequest {
   process_value?: number
 }
 
-
 export interface ImageRequest {
   id?: number
   alt?: string
@@ -224,13 +224,52 @@ export interface ImageRequest {
 }
 
 export interface LogResponse {
-  id: number;
-  type: Type;
-  image: ImageResponse | null;
-  note?: string;
-  latitude?: string;
-  longitude?: string;
+  id: number
+  type: Type
+  image: ImageResponse | null
+  note?: string
+  latitude?: string
+  longitude?: string
 
-  user: User;
+  user: User
 }
-export type Type =  'in'| 'out'| 'break_work'|'back_work'
+export type Type = 'in' | 'out' | 'break_work' | 'back_work'
+
+export interface ChatRoom {
+  id: number
+  name: string
+  user: User
+  project: Project
+  last_message: LastMessage
+}
+
+export interface LastMessage {
+  sender: User
+  content: string
+}
+
+export interface ChatMember {
+  id: number
+  user: User
+  chat_room: ChatRoom
+  joined_at: string
+  un_read: boolean
+}
+
+export interface MessageRequest {
+  sender_id: number
+  chat_room_id: number
+  chat_member_id: number
+  content: string
+  time: string
+}
+
+export interface Message {
+  id: number
+  sender_id: number
+  chat_room: ChatRoom
+  chat_member: ChatMember
+  content: string
+  time: string
+  sender: User
+}

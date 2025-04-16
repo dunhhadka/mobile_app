@@ -1,327 +1,415 @@
-import { useRoute } from '@react-navigation/native'
+import React, { useState, useEffect } from 'react'
 import {
+  StyleSheet,
   Text,
   View,
-  StyleSheet,
-  SafeAreaView,
   ScrollView,
-  FlatList,
+  TouchableOpacity,
 } from 'react-native'
-import { useTaskStore } from '../../store/task-store'
-import { useUserStore } from '../../store/user-store'
-import { Task } from '../../types/task'
-import TaskCard from '../layouts/TaskCard'
-import { useRouter } from 'expo-router'
-import colors from '../../constants/colors'
-import layout from '../../constants/layout'
-import typography from '../../constants/typography'
-import Avatar from '../layouts/Avatar'
-import SearchBar from '../layouts/SearchBar'
-import { Calendar, Clock, ListChecks } from 'lucide-react-native'
-import ProgressBar from '../layouts/ProgressBar'
-import Button from '../layouts/Button'
-import { useSelector } from 'react-redux'
-import { RootState } from '../../store/store'
+import { Image } from 'expo-image'
+import { Bell, MessageSquare, CheckCircle } from 'lucide-react-native'
+import SummaryCard from '../card/SummaryCard'
+import EmptyCard from '../card/EmptyCard'
+import { NavigationProp, useNavigation } from '@react-navigation/native'
+import { HomeStackParamList } from '../../App'
+
+// Mock Data
+export const meetings = [
+  {
+    id: '1',
+    title: 'Townhall Meeting',
+    startTime: '01:30 AM',
+    endTime: '02:00 AM',
+    participants: [
+      {
+        id: '1',
+        avatar:
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
+      },
+      {
+        id: '2',
+        avatar:
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
+      },
+      {
+        id: '3',
+        avatar:
+          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=150&auto=format&fit=crop',
+      },
+    ],
+    extraParticipants: 3,
+  },
+  {
+    id: '2',
+    title: 'Dashboard Report',
+    startTime: '01:30 AM',
+    endTime: '02:00 AM',
+    participants: [
+      {
+        id: '1',
+        avatar:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop',
+      },
+      {
+        id: '2',
+        avatar:
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=150&auto=format&fit=crop',
+      },
+      {
+        id: '4',
+        avatar:
+          'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=150&auto=format&fit=crop',
+      },
+    ],
+  },
+]
+
+export const tasks = [
+  {
+    id: '1',
+    title: 'Wiring Dashboard Analytics',
+    status: 'In Progress' as const,
+    priority: 'High' as const,
+    dueDate: '27 April',
+    count: 2,
+    assignees: [
+      {
+        id: '1',
+        avatar:
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
+      },
+      {
+        id: '2',
+        avatar:
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
+      },
+      {
+        id: '3',
+        avatar:
+          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=150&auto=format&fit=crop',
+      },
+    ],
+  },
+]
 
 export default function HomeScreen() {
-  const router = useRouter()
-  const { tasks, filteredTasks, fetchTasks, setSearchQuery, activeFilters } =
-    useTaskStore()
-  const { currentUser } = useUserStore()
+  const [currentTime, setCurrentTime] = useState('')
 
-  const user = useSelector((state: RootState) => state.user.currentUser)
+  const navigation = useNavigation<NavigationProp<HomeStackParamList>>()
 
-  const inProgressTasks = tasks.filter((task) => task.status === 'inProgress')
-  const pendingTasks = tasks.filter((task) => task.status === 'pending')
-  const completedTasks = tasks.filter((task) => task.status === 'completed')
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date()
+      const hours = now.getHours().toString().padStart(2, '0')
+      const minutes = now.getMinutes().toString().padStart(2, '0')
+      setCurrentTime(`${hours}:${minutes}`)
+    }
 
-  const totalTasks = tasks.length
-  const completionRate =
-    totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0
-
-  const renderTaskItem = ({ item }: { item: Task }) => (
-    <View style={styles.taskCardContainer}>
-      <TaskCard task={item} onPress={() => router.push(`/task/${item.id}`)} />
-    </View>
-  )
-
-  const getGreeting = () => {
-    const hour = new Date().getHours()
-    if (hour < 12) return 'Good Morning'
-    if (hour < 18) return 'Good Afternoon'
-    return 'Good Evening'
-  }
+    updateTime()
+    const interval = setInterval(updateTime, 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      //   edges={['top']}
-    >
-      <ScrollView>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>{getGreeting()},</Text>
-            <Text style={styles.userName}>
-              {user?.user_name ?? user?.first_name ?? 'User'}
-            </Text>
-          </View>
-          <Avatar name={''} size={50} uri={user?.avatar?.src} />
-        </View>
-
-        <View style={styles.searchContainer}>
-          <SearchBar
-            value={activeFilters.search}
-            onChangeText={setSearchQuery}
-            placeholder="Search tasks..."
-          />
-        </View>
-
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <ListChecks size={20} color={colors.primary} />
+    <View style={styles.container}>
+      <View style={styles.headerContainer}>
+        <View style={styles.profileContainer}>
+          <View style={styles.profileInfo}>
+            <Image
+              source={{
+                uri: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?q=80&w=150&auto=format&fit=crop',
+              }}
+              style={styles.avatar}
+            />
+            <View style={styles.userInfo}>
+              <View style={styles.nameContainer}>
+                <Text style={styles.name}>Tonald Drump</Text>
+                <CheckCircle
+                  size={16}
+                  color="#6c5ce7"
+                  style={styles.verifiedIcon}
+                />
+              </View>
+              <Text style={styles.role}>Junior Full Stack Developer</Text>
             </View>
-            <Text style={styles.statValue}>{totalTasks}</Text>
-            <Text style={styles.statLabel}>Total Tasks</Text>
           </View>
-
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <Clock size={20} color={colors.warning} />
-            </View>
-            <Text style={styles.statValue}>{pendingTasks.length}</Text>
-            <Text style={styles.statLabel}>Pending</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <Calendar size={20} color={colors.success} />
-            </View>
-            <Text style={styles.statValue}>{completedTasks.length}</Text>
-            <Text style={styles.statLabel}>Completed</Text>
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => navigation.navigate('ChatList')}
+            >
+              <MessageSquare size={20} color="#6c5ce7" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => {
+                navigation.navigate('Notification')
+              }}
+            >
+              <Bell size={20} color="#6c5ce7" />
+            </TouchableOpacity>
           </View>
         </View>
+      </View>
 
-        <View style={styles.progressSection}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header tích hợp ở đây luôn */}
+
+        <SummaryCard />
+
+        {/* <SummaryCard /> */}
+
+        {/* Meetings Section */}
+        <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Your Progress</Text>
-          </View>
-
-          <View style={styles.progressCard}>
-            <View style={styles.progressHeader}>
-              <Text style={styles.progressTitle}>Task Completion</Text>
-              <Text style={styles.progressValue}>{completionRate}%</Text>
+            <Text style={styles.sectionTitle}>Today Meeting</Text>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{meetings.length}</Text>
             </View>
-            <ProgressBar
-              progress={completionRate}
-              height={8}
-              color={colors.primary}
-            />
-            <Text style={styles.progressSubtext}>
-              {completedTasks.length} of {totalTasks} tasks completed
-            </Text>
           </View>
+          <Text style={styles.sectionSubtitle}>Your schedule for the day</Text>
+
+          <View style={styles.meetingsContainer}>
+            {meetings.map((meeting, index) => (
+              <Text>Meeting</Text>
+              // <MeetingItem key={index} meeting={meeting} />
+            ))}
+          </View>
+          <EmptyCard />
         </View>
 
-        <View style={styles.tasksSection}>
+        {/* Tasks Section */}
+        <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>In Progress</Text>
-            <Button
-              title="View All"
-              variant="ghost"
-              size="small"
-              onPress={() => router.push('/tasks')}
-            />
-          </View>
-
-          {inProgressTasks.length > 0 ? (
-            <FlatList
-              data={inProgressTasks.slice(0, 5)}
-              renderItem={renderTaskItem}
-              keyExtractor={(item) => item.id}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.tasksList}
-            />
-          ) : (
-            <View style={styles.emptyStateContainer}>
-              <Text style={styles.emptyStateText}>No tasks in progress</Text>
+            <Text style={styles.sectionTitle}>Today Task</Text>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{tasks.length}</Text>
             </View>
-          )}
+          </View>
+          <Text style={styles.sectionSubtitle}>
+            The tasks assigned to you for today
+          </Text>
+
+          <View style={styles.tasksContainer}>
+            {tasks.map((task, index) => (
+              <Text>Task Item</Text>
+              // <TaskItem key={index} task={task} />
+            ))}
+          </View>
         </View>
 
-        <View style={styles.tasksSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Upcoming Tasks</Text>
-            <Button
-              title="View All"
-              variant="ghost"
-              size="small"
-              onPress={() => router.push('/tasks')}
-            />
-          </View>
-
-          {pendingTasks.length > 0 ? (
-            <FlatList
-              data={pendingTasks.slice(0, 5)}
-              renderItem={renderTaskItem}
-              keyExtractor={(item) => item.id}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.tasksList}
-            />
-          ) : (
-            <View style={styles.emptyStateContainer}>
-              <Text style={styles.emptyStateText}>No upcoming tasks</Text>
-            </View>
-          )}
-        </View>
+        <View style={styles.bottomPadding} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 10,
   },
   scrollView: {
     flex: 1,
   },
-  header: {
+  headerContainer: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  timeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: layout.spacing.lg,
-    paddingTop: layout.spacing.lg,
-    paddingBottom: layout.spacing.md,
+    marginBottom: 16,
   },
-  greeting: {
-    fontSize: typography.fontSizes.lg,
-    color: colors.textSecondary,
-    marginBottom: 4,
+  time: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
   },
-  userName: {
-    fontSize: typography.fontSizes['2xl'],
-    // fontWeight: typography.fontWeights.bold,
-    color: colors.textPrimary,
+  statusIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  searchContainer: {
-    paddingHorizontal: layout.spacing.lg,
-    marginBottom: layout.spacing.lg,
+  signalIcon: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    height: 12,
+    gap: 1,
   },
-  statsContainer: {
+  signalBar: {
+    width: 3,
+    backgroundColor: '#333',
+    borderRadius: 1,
+  },
+  signalBar1: { height: 3 },
+  signalBar2: { height: 6 },
+  signalBar3: { height: 9 },
+  signalBar4: { height: 12 },
+  wifiIcon: {
+    position: 'relative',
+    width: 15,
+    height: 12,
+  },
+  wifiCircle: {
+    position: 'absolute',
+    bottom: 0,
+    left: 6,
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: '#333',
+  },
+  wifiWave1: {
+    position: 'absolute',
+    bottom: 2,
+    left: 3,
+    width: 9,
+    height: 4.5,
+    borderTopLeftRadius: 9,
+    borderTopRightRadius: 9,
+    borderWidth: 1.5,
+    borderBottomWidth: 0,
+    borderColor: '#333',
+  },
+  wifiWave2: {
+    position: 'absolute',
+    bottom: 5,
+    left: 0,
+    width: 15,
+    height: 7.5,
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    borderWidth: 1.5,
+    borderBottomWidth: 0,
+    borderColor: '#333',
+  },
+  batteryIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  batteryBody: {
+    width: 20,
+    height: 10,
+    borderWidth: 1,
+    borderColor: '#333',
+    borderRadius: 2,
+    backgroundColor: '#333',
+  },
+  batteryHead: {
+    width: 2,
+    height: 4,
+    backgroundColor: '#333',
+    borderTopRightRadius: 1,
+    borderBottomRightRadius: 1,
+  },
+  profileContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: layout.spacing.lg,
-    marginBottom: layout.spacing.xl,
-  },
-  statCard: {
-    backgroundColor: colors.white,
-    borderRadius: layout.borderRadius.lg,
-    padding: layout.spacing.md,
     alignItems: 'center',
-    width: '30%',
-    shadowColor: colors.shadow,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 12,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     elevation: 2,
   },
-  statIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: `${colors.primary}15`,
+  profileInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f0f0f0',
+  },
+  userInfo: {
+    justifyContent: 'center',
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+  },
+  verifiedIcon: {
+    marginLeft: 4,
+  },
+  role: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 2,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  iconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: layout.spacing.sm,
+    backgroundColor: '#f0f0f0',
   },
-  statValue: {
-    fontSize: typography.fontSizes.xl,
-    // fontWeight: typography.fontWeights.bold,
-    color: colors.textPrimary,
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: typography.fontSizes.xs,
-    color: colors.textSecondary,
-  },
-  progressSection: {
-    marginBottom: layout.spacing.xl,
+  section: {
+    marginTop: 24,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: layout.spacing.lg,
-    marginBottom: layout.spacing.md,
   },
   sectionTitle: {
-    fontSize: typography.fontSizes.lg,
-    // fontWeight: typography.fontWeights.semibold,
-    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
   },
-  progressCard: {
-    backgroundColor: colors.white,
-    borderRadius: layout.borderRadius.lg,
-    padding: layout.spacing.lg,
-    marginHorizontal: layout.spacing.lg,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+  badge: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 8,
   },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: layout.spacing.md,
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666',
   },
-  progressTitle: {
-    fontSize: typography.fontSizes.md,
-    // fontWeight: typography.fontWeights.semibold,
-    color: colors.textPrimary,
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 4,
   },
-  progressValue: {
-    fontSize: typography.fontSizes.lg,
-    // fontWeight: typography.fontWeights.bold,
-    color: colors.primary,
+  meetingsContainer: {
+    marginTop: 16,
+    gap: 12,
   },
-  progressSubtext: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
-    marginTop: layout.spacing.sm,
+  tasksContainer: {
+    marginTop: 16,
   },
-  tasksSection: {
-    marginBottom: layout.spacing.xl,
-  },
-  tasksList: {
-    paddingHorizontal: layout.spacing.lg,
-    paddingBottom: layout.spacing.sm,
-  },
-  taskCardContainer: {
-    width: 280,
-    marginRight: layout.spacing.md,
-  },
-  emptyStateContainer: {
-    backgroundColor: colors.white,
-    borderRadius: layout.borderRadius.lg,
-    padding: layout.spacing.lg,
-    marginHorizontal: layout.spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 120,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  emptyStateText: {
-    fontSize: typography.fontSizes.md,
-    color: colors.textSecondary,
+  bottomPadding: {
+    height: 100,
   },
 })
