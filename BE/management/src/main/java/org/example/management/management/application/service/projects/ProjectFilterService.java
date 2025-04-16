@@ -14,6 +14,10 @@ import org.example.management.management.application.service.user.UserService;
 import org.example.management.management.domain.project.Project;
 import org.example.management.management.domain.task.ProjectManagement;
 import org.example.management.management.infastructure.persistance.ProjectManagementRepository;
+import org.example.management.management.infastructure.persistance.ProjectRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -27,24 +31,22 @@ public class ProjectFilterService {
 
     private final EntityManager entityManager;
 
+    private final ProjectRepository projectRepository;
+
     private final ProjectMapper projectMapper;
 
     private final ProjectManagementService projectManagementService;
 
     //TODO: Phân trang
     public List<ProjectResponse> filter(ProjectSearchRequest request) {
+
         var specification = buildSpecification(request);
 
-        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Project> criteriaQuery = builder.createQuery(Project.class);
-        Root<Project> root = criteriaQuery.from(Project.class);
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id"));
 
-        var predicate = specification.toPredicate(root, criteriaQuery, builder);
+        var page = this.projectRepository.findAll(specification, pageable);
 
-        criteriaQuery.where(predicate);
-
-        var projects = entityManager.createQuery(criteriaQuery).getResultList();
-        return toResponse(projects);
+        return toResponse(page.getContent());
     }
 
     private List<ProjectResponse> toResponse(List<Project> projects) {

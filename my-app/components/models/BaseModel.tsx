@@ -1,33 +1,66 @@
+import React from 'react'
 import { Modal, View, StyleSheet, TouchableOpacity, Text } from 'react-native'
-import { black } from 'react-native-paper/lib/typescript/styles/themes/v2/colors'
+import { X } from 'lucide-react-native'
+import colors from '../../constants/colors'
 
 interface Props {
   children: React.ReactNode
   open: boolean
   onClose: () => void
   title?: string
+  height?: number
+  onBlur?: () => void
+  showIcon?: boolean
 }
 
-export default function BaseModel({ children, open, onClose, title }: Props) {
+export default function BaseModel({
+  children,
+  open,
+  onClose,
+  title,
+  height,
+  onBlur,
+  showIcon = true,
+}: Props) {
   return (
     <Modal
       animationType="slide"
-      transparent={true}
+      transparent
       visible={open}
       onRequestClose={onClose}
-      hardwareAccelerated={true} // Tăng tốc phần cứng cho modal
+      hardwareAccelerated
       style={styles.container}
     >
+      {showIcon && (
+        <TouchableOpacity style={styles.backButton} onPress={onClose}>
+          <X size={24} color={colors.primary} strokeWidth={3} />
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity
         style={styles.modalOverlay}
-        activeOpacity={1} // Giúp tránh việc touch không vào modal
+        activeOpacity={1}
+        // onPress={() => {
+        //   onBlur?.()
+        //   onClose()
+        // }}
       >
-        <View style={styles.modalContainer}>
+        <View
+          style={[
+            styles.modalContainer,
+            height != null
+              ? {
+                  height,
+                  flex: undefined,
+                  position: 'absolute',
+                  width: '100%',
+                  bottom: 0,
+                }
+              : { flex: 1 },
+          ]}
+        >
+          {title && <Text style={styles.title}>{title}</Text>}
           <View style={styles.content}>{children}</View>
-
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeText}>Đóng</Text>
-          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     </Modal>
@@ -36,19 +69,18 @@ export default function BaseModel({ children, open, onClose, title }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
+    flex: 1,
   },
   modalOverlay: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Overlay background mờ
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
-    flex: 1,
     alignSelf: 'stretch',
-    padding: 20,
     backgroundColor: 'white',
-    borderRadius: 10,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
     alignItems: 'center',
     marginTop: 20,
   },
@@ -56,9 +88,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
+    textAlign: 'center',
   },
   content: {
     flex: 1,
+    marginTop: 20,
     alignSelf: 'stretch',
     marginBottom: 20,
     alignItems: 'center',
@@ -72,5 +106,11 @@ const styles = StyleSheet.create({
   closeText: {
     color: 'white',
     fontSize: 16,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 25,
+    left: 5,
+    zIndex: 10,
   },
 })

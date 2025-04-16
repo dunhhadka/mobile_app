@@ -43,4 +43,9 @@ public class TaskController {
 
         return this.taskService.getByIds(List.of(taskId)).get(0);
     }
+
+    @GetMapping("/{id}")
+    public TaskResponse getById(@PathVariable int id) {
+        return this.taskService.getByIds(List.of(id)).get(0);
+    }
 }

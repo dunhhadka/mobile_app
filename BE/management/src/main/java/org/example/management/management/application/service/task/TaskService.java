@@ -10,8 +10,10 @@ import org.example.management.management.application.model.task.TaskCreateReques
 import org.example.management.management.application.model.task.TaskImageRequest;
 import org.example.management.management.application.model.task.TaskResponse;
 import org.example.management.management.application.model.task.TaskUpdateRequest;
+import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.application.service.images.ImageProcessService;
 import org.example.management.management.application.service.projectmanagement.ProjectManagementService;
+import org.example.management.management.application.service.user.UserMapper;
 import org.example.management.management.application.utils.NumberUtils;
 import org.example.management.management.domain.profile.User;
 import org.example.management.management.domain.task.Image;
@@ -28,9 +30,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -44,6 +48,7 @@ public class TaskService {
     private final ApplicationEventPublisher eventPublisher;
 
     private final TaskMapper taskMapper;
+    private final UserMapper userMapper;
 
     private final ImageProcessService imageProcessService;
     private final ImageRepository imageRepository;
@@ -53,6 +58,8 @@ public class TaskService {
         var project = this.projectRepository.findById(request.getProjectId())
                 .orElseThrow(() ->
                         new ConstrainViolationException("project", "project not found with id = " + request.getProjectId()));
+
+        this.validate(request);
 
         var userInfo = this.getUserInfo(request);
         var assignedUser = userInfo.getKey();
@@ -69,7 +76,8 @@ public class TaskService {
                 Optional.ofNullable(processedUser).map(User::getId).orElse(null),
                 request.getPriority(),
                 request.getDifficulty(),
-                request.getStatus()
+                request.getStatus(),
+                request.getProcessValue()
         );
 
         task.setImages(images);
@@ -92,6 +100,17 @@ public class TaskService {
             return this.imageRepository.saveAll(images);
         }
         return List.of();
+    }
+
+    private void validate(TaskCreateRequest request) {
+        if (request.getProcessValue() != null &&
+                (request.getProcessValue().signum() < 0
+                        || request.getProcessValue().compareTo(BigDecimal.valueOf(100)) > 0)) {
+            throw new ConstrainViolationException(
+                    "process_value",
+                    "Tiến độ công việc không hợp lệ"
+            );
+        }
     }
 
     private List<StoredImageResult> storeImages(List<TaskImageRequest> images) throws IOException {
@@ -195,11 +214,15 @@ public class TaskService {
 
         this.validate(task, request);
 
+        this.validate(request);
+
         Integer oldProcessId = task.getProcessId();
 
         this.updateTaskUser(request, task);
 
         task.update(request.getPriority(), request.getDifficulty(), request.getStatus());
+
+        task.updateProcessValue(request.getProcessValue());
 
         if (request.getFinishedOn() != null) {
             task.markupFinished(request.getFinishedOn());
@@ -358,8 +381,30 @@ public class TaskService {
                 })
                 .toList();
 
+        List<Integer> userIds = tasks.stream()
+                .flatMap(task -> {
+                    List<Integer> userTaskIds = new ArrayList<>();
+                    if (task.getAssignId() != null) userTaskIds.add(task.getAssignId());
+                    if (task.getProcessId() != null) userTaskIds.add(task.getProcessId());
+                    return userTaskIds.stream();
+                })
+                .distinct()
+                .toList();
+
+        var userMap = this.userRepository.findByIdIn(userIds)
+                .stream()
+                .map(this.userMapper::toUserResponse)
+                .collect(Collectors.toMap(UserResponse::getId, Function.identity()));
+
         return taskWithImages.stream()
-                .map(taskWithImage -> this.taskMapper.toResponse(taskWithImage.task, taskWithImage.images))
+                .map(taskWithImage ->
+                        this.taskMapper.toResponse(
+                                taskWithImage.task,
+                                taskWithImage.images,
+                                userMap.get(taskWithImage.task.getAssignId()),
+                                userMap.get(taskWithImage.task.getProcessId()))
+                )
+                .sorted(Comparator.comparingInt(TaskResponse::getId).reversed())
                 .toList();
 
     }

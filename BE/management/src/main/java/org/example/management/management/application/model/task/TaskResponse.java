@@ -3,8 +3,10 @@ package org.example.management.management.application.model.task;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.management.management.application.model.images.ImageResponse;
+import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.domain.task.Task;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -19,7 +21,10 @@ public class TaskResponse {
     private int projectId;
 
     private Integer assignId;
+    private UserResponse assign;
+
     private Integer processId;
+    private UserResponse process;
 
     private Task.Priority priority;
     private Task.Difficulty difficulty;
@@ -32,4 +37,6 @@ public class TaskResponse {
     private Instant finishedOn;
 
     private List<ImageResponse> images;
+
+    private BigDecimal processValue;
 }

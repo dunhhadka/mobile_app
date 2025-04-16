@@ -8,12 +8,12 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.example.management.management.application.converter.IntListConverter;
-import org.example.management.management.application.converter.StringListConverter;
 import org.example.management.management.application.model.task.TaskImageRequest;
 import org.example.management.management.domain.leaves.Leave;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
 
@@ -72,6 +72,8 @@ public class Task {
     @PrimaryKeyJoinColumn
     private Leave leave;
 
+    private BigDecimal processValue;
+
     protected Task() {
     }
 
@@ -83,8 +85,8 @@ public class Task {
             Integer processId,
             Priority priority,
             Difficulty difficulty,
-            Status status
-    ) {
+            Status status,
+            BigDecimal processValue) {
         this.title = title;
         this.description = description;
 
@@ -96,6 +98,8 @@ public class Task {
         this.priority = priority;
         this.difficulty = difficulty;
         this.status = status;
+
+        this.processValue = processValue;
     }
 
     public void updateUser(Integer assignId, Integer processId) {
@@ -187,6 +191,10 @@ public class Task {
     public void addImage(int id) {
         if (this.imageIds == null) this.imageIds = new ArrayList<>();
         this.imageIds.add(id);
+    }
+
+    public void updateProcessValue(BigDecimal processValue) {
+        this.processValue = processValue;
     }
 
     public enum Status {

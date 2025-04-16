@@ -3,6 +3,7 @@ package org.example.management.management.application.service.task;
 import org.apache.commons.collections4.CollectionUtils;
 import org.example.management.management.application.model.images.ImageResponse;
 import org.example.management.management.application.model.task.TaskResponse;
+import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.domain.task.Image;
 import org.example.management.management.domain.task.Task;
 import org.mapstruct.Mapper;
@@ -24,6 +25,13 @@ public abstract class TaskMapper {
                     .toList();
             taskResponse.setImages(imageResponses);
         }
+        return taskResponse;
+    }
+
+    public TaskResponse toResponse(Task task, List<Image> images, UserResponse assign, UserResponse process) {
+        var taskResponse = this.toResponse(task, images);
+        taskResponse.setAssign(assign);
+        taskResponse.setProcess(process);
         return taskResponse;
     }
 }

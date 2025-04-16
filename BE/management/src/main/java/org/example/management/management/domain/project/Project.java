@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 @Builder(toBuilder = true)
@@ -36,7 +37,7 @@ public class Project {
     private Instant createdOn;
 
     @NotNull
-    private Instant startedOn;
+    private LocalDate startedOn;
 
     private Instant modifiedOn;
 

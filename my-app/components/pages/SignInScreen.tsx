@@ -1,46 +1,131 @@
-import React from 'react'
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native'
+import React, { useState } from 'react'
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+} from 'react-native'
 import { TextInput, Button, Checkbox } from 'react-native-paper'
 import colors from '../../constants/colors'
 import { LinearGradient } from 'expo-linear-gradient'
+import { Controller, useForm } from 'react-hook-form'
+import { LoginRequest } from '../../types/management'
+import { useSignInMutation } from '../../api/magementApi'
+import { useDispatch } from 'react-redux'
+import { setUser } from '../../redux/slices/userSlice'
+import { useToast } from 'react-native-toast-notifications'
 
 export default function SignInScreen({ navigation }: any) {
-  const [email, setEmail] = React.useState('')
-  const [password, setPassword] = React.useState('')
   const [rememberMe, setRememberMe] = React.useState(false)
-  const [passwordVisible, setPasswordVisible] = React.useState(false)
+
+  const [showPassword, setShowPassword] = useState(false)
+
+  const [signIn, { isLoading: isSignInLoading }] = useSignInMutation()
+
+  const dispath = useDispatch()
+
+  const toast = useToast()
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginRequest>({
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  })
+
+  const handleSignIn = async (data: LoginRequest) => {
+    console.log('Login Data', data)
+    try {
+      const response = await signIn(data).unwrap()
+      if (response) {
+        dispath(setUser(response))
+        toast.show('Đăng nhập thành công', { type: 'success', duration: 4000 })
+        navigation.navigate('Main')
+      }
+    } catch (err: any) {
+      if (err?.data?.message) {
+        toast.show(err.data.message, {
+          type: 'danger',
+          duration: 4000,
+        })
+      } else {
+        toast.show('Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại!', {
+          type: 'danger',
+          duration: 4000,
+        })
+      }
+    }
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Sign In</Text>
       <Text style={styles.subtitle}>Sign in to my account</Text>
 
-      <TextInput
-        label="Email"
-        value={email}
-        mode="outlined"
-        onChangeText={setEmail}
-        style={styles.input}
-        left={<TextInput.Icon icon="email-outline" />}
-        theme={{ roundness: 12 }}
+      <Controller
+        name="email"
+        control={control}
+        rules={{
+          required: 'Băn phải nhập email',
+          pattern: {
+            value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+            message: 'Invalid email address',
+          },
+        }}
+        render={({ field: { onChange, onBlur, value } }) => (
+          <TextInput
+            label="Email"
+            value={value}
+            mode="outlined"
+            onChangeText={onChange}
+            style={styles.input}
+            left={<TextInput.Icon icon="email-outline" />}
+            theme={{ roundness: 12 }}
+            error={!!errors.email}
+            keyboardType="email-address"
+          />
+        )}
       />
 
-      <TextInput
-        label="Password"
-        value={password}
-        mode="outlined"
-        secureTextEntry={!passwordVisible}
-        onChangeText={setPassword}
-        style={styles.input}
-        left={<TextInput.Icon icon="lock-outline" />}
-        right={
-          <TextInput.Icon
-            icon={passwordVisible ? 'eye-off-outline' : 'eye-outline'}
-            onPress={() => setPasswordVisible(!passwordVisible)}
+      {errors.email && (
+        <Text style={styles.errorText}>{errors.email.message}</Text>
+      )}
+
+      <Controller
+        name="password"
+        control={control}
+        rules={{
+          required: 'Bắt buộc nhập mật khẩu',
+        }}
+        render={({ field: { onChange, onBlur, value } }) => (
+          <TextInput
+            label="Mật khẩu"
+            mode="outlined"
+            value={value}
+            onChangeText={onChange}
+            secureTextEntry={!showPassword}
+            left={<TextInput.Icon icon="lock-outline" />}
+            right={
+              <TextInput.Icon
+                icon={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                onPress={() => setShowPassword(!showPassword)}
+              />
+            }
+            style={styles.input}
+            theme={{ roundness: 12 }}
+            error={!!errors.password}
           />
-        }
-        theme={{ roundness: 12 }}
+        )}
       />
+
+      {errors.password && (
+        <Text style={styles.errorText}>{errors.password.message}</Text>
+      )}
 
       <View style={styles.row}>
         <View style={styles.checkboxContainer}>
@@ -55,9 +140,16 @@ export default function SignInScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.buttonWrapper}>
+      <TouchableOpacity
+        style={styles.buttonWrapper}
+        onPress={handleSubmit(handleSignIn)}
+      >
         <LinearGradient colors={['#7B5AFF', '#4D66F4']} style={styles.button}>
-          <Text style={styles.buttonText}>Sign In</Text>
+          {isSignInLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Sign In</Text>
+          )}
         </LinearGradient>
       </TouchableOpacity>
 
@@ -188,5 +280,10 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     overflow: 'hidden',
     marginTop: 20,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginBottom: 8,
   },
 })

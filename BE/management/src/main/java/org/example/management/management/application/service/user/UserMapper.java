@@ -14,7 +14,7 @@ public abstract class UserMapper {
     @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
     abstract User toUser(UserRequest userRequest);
 
-    abstract UserResponse toUserResponse(User user);
+    public abstract UserResponse toUserResponse(User user);
 
     abstract Address toAddressEntity(UserRequest.AddressRequest request);
 
