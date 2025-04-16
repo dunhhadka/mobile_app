@@ -1,246 +1,234 @@
 import {
-  Text,
   View,
+  Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
-  FlatList,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  Platform,
+  ActivityIndicator,
   Pressable,
 } from 'react-native'
-import colors from '../../constants/colors'
-import {
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Plus,
-  Search,
-  XCircle,
-} from 'lucide-react-native'
-import { useRouter } from 'expo-router'
-import { useTaskStore } from '../../store/task-store'
-import React, { useEffect, useState } from 'react'
-import TaskCard from '../layouts/TaskCard'
 import typography from '../../constants/typography'
 import layout from '../../constants/layout'
-import { Task } from '../../types/task'
-import FloatingActionButton from '../layouts/FloatingActionButton'
-import FilterChip from '../layouts/FilterChip'
-import TabBar from '../layouts/TabBar'
-import SearchBar from '../layouts/SearchBar'
+import { gradients, statusColors, colors } from '../../constants/colors'
+import { LinearGradient } from 'expo-linear-gradient'
+import ProjectCard from '../card/ProjectCard'
+import ProjectSummary from '../process/ProjectSummary'
+import { ClipboardList } from 'lucide-react-native'
+import BaseButton from '../models/BaseButton'
+import { useState } from 'react'
+import FilterTabs from '../card/FilterTabs'
+import BaseModel from '../models/BaseModel'
+import CreateOrUpdateProject from './CreateOrUpdateProject'
+import { Project, ProjectSearchRequest } from '../../types/management'
+import { useSearchProjectQuery } from '../../api/magementApi'
+import ProjectDetail from './ProjectDetail'
 
-const statusFilters = [
-  {
-    key: 'all',
-    label: 'All Tasks',
-    icon: <Search size={16} color={colors.primary} />,
-  },
-  {
-    key: 'pending',
-    label: 'To Do',
-    icon: <Clock size={16} color={colors.warning} />,
-  },
-  {
-    key: 'inProgress',
-    label: 'In Progress',
-    icon: <AlertCircle size={16} color={colors.primary} />,
-  },
-  {
-    key: 'review',
-    label: 'In Review',
-    icon: <AlertCircle size={16} color={colors.info} />,
-  },
-  {
-    key: 'completed',
-    label: 'Completed',
-    icon: <CheckCircle size={16} color={colors.success} />,
-  },
-  {
-    key: 'cancelled',
-    label: 'Cancelled',
-    icon: <XCircle size={16} color={colors.danger} />,
-  },
-]
+const TaskScreen = () => {
+  const [activeFilter, setActiveFilter] = useState<
+    'all' | 'in_progress' | 'done'
+  >('all')
 
-const priorityFilters = [
-  { key: 'all', label: 'All Priorities' },
-  { key: 'high', label: 'High Priority' },
-  { key: 'medium', label: 'Medium Priority' },
-  { key: 'low', label: 'Low Priority' },
-]
+  const [projectUpdateSelected, setProjectUpdateSelected] = useState<
+    Project | undefined
+  >(undefined)
 
-export default function TaskScreen() {
-  const router = useRouter()
+  const [projetFilter, setProjectFilter] = useState<ProjectSearchRequest>({})
+
+  const [openCreateModel, setOpenCreateModel] = useState(false)
+
+  const [openProjectDetail, setOpenProjectDetail] = useState(false)
+
+  const [projectDetail, setProjectDetail] = useState<Project | undefined>(
+    undefined
+  )
 
   const {
-    tasks,
-    filteredTasks,
-    activeFilters,
-    fetchTasks,
-    setFilter,
-    setSearchQuery,
-    clearFilters,
-  } = useTaskStore()
+    data: projects,
+    isLoading: isProjectLoading,
+    isFetching: isProjectFetching,
+  } = useSearchProjectQuery(projetFilter)
 
-  const [activeTab, setActiveTab] = useState<string>('all')
-
-  useEffect(() => {
-    fetchTasks()
-  }, [])
-
-  const handleTabChange = (tabKey: string) => {
-    setActiveTab(tabKey)
+  const handleEditProject = (id: number) => {
+    console.log('ProjectId', id)
+    const project = projects?.find((p) => p.id === id)
+    console.log('Project', project)
+    setProjectUpdateSelected(project)
+    setOpenCreateModel(true)
   }
 
-  const renderTaskItem = ({ item }: { item: Task }) => (
-    <View style={styles.taskCardContainer}>
-      <TaskCard task={item} onPress={() => router.push(`/task/${item.id}`)} />
+  const isCreateLoading = isProjectFetching || isProjectLoading
+  return (
+    <View style={styles.container}>
+      <LinearGradient colors={['#7B5CFF', '#5E3FD9']} style={styles.background}>
+        <SafeAreaView style={styles.safeArea}>
+          <StatusBar barStyle="light-content" />
+
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.title}>Project List</Text>
+              <Text style={styles.subtitle}>Your Projects, Your Vision</Text>
+            </View>
+            <View style={styles.iconContainer}>
+              <ClipboardList size={24} color="white" />
+            </View>
+          </View>
+
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            <ProjectSummary />
+
+            <FilterTabs />
+
+            {projects &&
+              projects.map((project) => (
+                <Pressable
+                  key={project.id}
+                  onPress={() => {
+                    const projectClicked = projects.find(
+                      (p) => p.id === project.id
+                    )
+                    setProjectDetail(projectClicked)
+                    setOpenProjectDetail(true)
+                  }}
+                >
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    onEdit={handleEditProject}
+                  />
+                </Pressable>
+              ))}
+          </ScrollView>
+          <View
+            style={{
+              backgroundColor: 'white',
+              paddingLeft: 8,
+              paddingRight: 8,
+            }}
+          >
+            <TouchableOpacity
+              style={styles.buttonWrapper}
+              onPress={() => setOpenCreateModel(true)}
+              disabled={isCreateLoading} // Disable nút khi đang submit
+            >
+              <LinearGradient
+                colors={['#7B5AFF', '#4D66F4']}
+                style={styles.button}
+              >
+                {isCreateLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Create Project</Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+      {openCreateModel && (
+        <BaseModel
+          open={openCreateModel}
+          onClose={() => {
+            setOpenCreateModel(false)
+            setProjectUpdateSelected(undefined)
+          }}
+        >
+          <CreateOrUpdateProject
+            onClose={() => {
+              setOpenCreateModel(false)
+              setProjectUpdateSelected(undefined)
+            }}
+            project={projectUpdateSelected}
+          />
+        </BaseModel>
+      )}
+      {openProjectDetail && projectDetail && (
+        <BaseModel
+          open={openProjectDetail}
+          onClose={() => {
+            setOpenProjectDetail(false)
+          }}
+        >
+          <ProjectDetail project_id={projectDetail.id} />
+        </BaseModel>
+      )}
     </View>
   )
-
-  const tabs = statusFilters.map((filter) => ({
-    key: filter.key,
-    label: filter.label,
-    icon: filter.icon,
-  }))
-
-  return (
-    <SafeAreaView
-      style={styles.container}
-      // edges={['top']}
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>Tasks</Text>
-      </View>
-
-      <View style={styles.searchContainer}>
-        <SearchBar
-          value={activeFilters.search}
-          onChangeText={setSearchQuery}
-          placeholder="Search tasks..."
-        />
-      </View>
-
-      <TabBar tabs={tabs} activeTab={activeTab} onTabChange={handleTabChange} />
-
-      <View style={styles.filtersContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersScrollContent}
-        >
-          {priorityFilters.map((filter) => (
-            <FilterChip
-              key={filter.key}
-              label={filter.label}
-              selected={activeFilters.priority === filter.key}
-              onPress={() => setFilter('priority', filter.key)}
-              onClear={
-                activeFilters.priority === filter.key
-                  ? () => setFilter('priority', 'all')
-                  : undefined
-              }
-            />
-          ))}
-        </ScrollView>
-      </View>
-
-      {filteredTasks.length > 0 ? (
-        <FlatList
-          data={filteredTasks}
-          renderItem={renderTaskItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.tasksList}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <View style={styles.emptyStateContainer}>
-          <Text style={styles.emptyStateTitle}>No tasks found</Text>
-          <Text style={styles.emptyStateDescription}>
-            {activeFilters.status !== 'all' ||
-            activeFilters.priority !== 'all' ||
-            activeFilters.search
-              ? 'Try changing your filters or search query'
-              : 'Create your first task by tapping the + button'}
-          </Text>
-
-          {(activeFilters.status !== 'all' ||
-            activeFilters.priority !== 'all' ||
-            activeFilters.search) && (
-            <Pressable style={styles.clearFiltersButton} onPress={clearFilters}>
-              <Text style={styles.clearFiltersText}>Clear Filters</Text>
-            </Pressable>
-          )}
-        </View>
-      )}
-
-      <FloatingActionButton
-        onPress={() => router.push('/task/new')}
-        icon={<Plus size={24} color={colors.white} />}
-      />
-    </SafeAreaView>
-  )
 }
+
+export default TaskScreen
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+  },
+  background: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
-    paddingHorizontal: layout.spacing.lg,
-    paddingTop: layout.spacing.lg,
-    paddingBottom: layout.spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
   },
   title: {
-    fontSize: typography.fontSizes['3xl'],
-    // fontWeight: typography.fontWeights.bold,
-    color: colors.textPrimary,
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.background,
+    marginBottom: 4,
   },
-  searchContainer: {
-    paddingHorizontal: layout.spacing.lg,
-    marginBottom: layout.spacing.md,
+  subtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
-  filtersContainer: {
-    marginBottom: layout.spacing.md,
-  },
-  filtersScrollContent: {
-    paddingHorizontal: layout.spacing.lg,
-    paddingBottom: layout.spacing.sm,
-  },
-  tasksList: {
-    padding: layout.spacing.lg,
-    gap: layout.spacing.md,
-  },
-  taskCardContainer: {
-    marginBottom: layout.spacing.md,
-  },
-  emptyStateContainer: {
-    flex: 1,
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: layout.spacing.xl,
   },
-  emptyStateTitle: {
-    fontSize: typography.fontSizes.xl,
-    // fontWeight: typography.fontWeights.semibold,
-    color: colors.textPrimary,
-    marginBottom: layout.spacing.sm,
+  content: {
+    flex: 1,
+    backgroundColor: colors.background,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
-  emptyStateDescription: {
-    fontSize: typography.fontSizes.md,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: layout.spacing.lg,
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
   },
-  clearFiltersButton: {
-    paddingVertical: layout.spacing.sm,
-    paddingHorizontal: layout.spacing.lg,
-    backgroundColor: colors.primary,
-    borderRadius: layout.borderRadius.md,
+  buttonContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-  clearFiltersText: {
-    color: colors.white,
-    fontSize: typography.fontSizes.md,
-    // fontWeight: typography.fontWeights.medium,
+  button: {
+    height: 50,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  buttonText: {
+    color: colors.background,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonWrapper: {
+    borderRadius: 30,
+    overflow: 'hidden',
   },
 })

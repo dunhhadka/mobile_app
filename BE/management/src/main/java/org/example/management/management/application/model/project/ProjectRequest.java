@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.example.management.management.domain.project.Project;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -27,6 +28,6 @@ public class ProjectRequest {
 
     private List<Integer> userIds;
 
-    @NotNull
-    private Instant startedOn;
+    @NotNull(message = "Ngày bắt đầu không được để trống")
+    private LocalDate startedOn;
 }

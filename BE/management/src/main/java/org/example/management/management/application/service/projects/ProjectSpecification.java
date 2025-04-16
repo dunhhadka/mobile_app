@@ -51,4 +51,5 @@ public class ProjectSpecification {
     public static Specification<Project> hasStatusIn(List<Project.Status> statuses) {
         return (root, query, cb) -> root.get(Project_.STATUS).in(statuses);
     }
+
 }

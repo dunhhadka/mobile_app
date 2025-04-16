@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.example.management.management.domain.task.Task;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
@@ -32,6 +33,8 @@ public class TaskCreateRequest {
     private Task.Difficulty difficulty;
 
     private Task.Status status;
+
+    private BigDecimal processValue;
 
     private List<@Valid TaskImageRequest> images;
 }

@@ -20,12 +20,16 @@ import SearchBar from '../layouts/SearchBar'
 import { Calendar, Clock, ListChecks } from 'lucide-react-native'
 import ProgressBar from '../layouts/ProgressBar'
 import Button from '../layouts/Button'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../store/store'
 
 export default function HomeScreen() {
   const router = useRouter()
   const { tasks, filteredTasks, fetchTasks, setSearchQuery, activeFilters } =
     useTaskStore()
   const { currentUser } = useUserStore()
+
+  const user = useSelector((state: RootState) => state.user.currentUser)
 
   const inProgressTasks = tasks.filter((task) => task.status === 'inProgress')
   const pendingTasks = tasks.filter((task) => task.status === 'pending')
@@ -57,13 +61,11 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>{getGreeting()},</Text>
-            <Text style={styles.userName}>{currentUser?.name || 'User'}</Text>
+            <Text style={styles.userName}>
+              {user?.user_name ?? user?.first_name ?? 'User'}
+            </Text>
           </View>
-          <Avatar
-            uri={currentUser?.avatar}
-            name={currentUser?.name}
-            size={48}
-          />
+          <Avatar name={''} size={50} uri={user?.avatar?.src} />
         </View>
 
         <View style={styles.searchContainer}>

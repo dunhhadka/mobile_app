@@ -1,3 +1,6 @@
+import { DifficultyType } from '../components/form/CreateOrUpdateTaskFrom'
+import { TaskPriority } from './task'
+
 export interface UserRequest {
   id?: number
   email: string
@@ -63,6 +66,161 @@ export enum Position {
   analyst = 'Phân tích',
   manager = 'Quản lý',
   other = 'Khác',
+}
+
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface ProjectRequest {
+  id?: number
+  company_id?: number
+  title?: string
+  description?: string
+  status?: 'in_process' | 'done' | 'reject' | 'none'
+  user_ids?: number[]
+  started_on: Date // Dạng ISO 8601 string, ví dụ: "2025-04-15T12:00:00Z"
+}
+
+export interface Project {
+  id: number
+  company_id?: number
+  title: string
+  description: string
+  created_on: string // Dạng ISO 8601 string
+  started_on: Date // Dạng ISO 8601 string
+  modified_on: string // Dạng ISO 8601 string
+  status?: 'to_do' | 'in_process' | 'finish'
+  users: User[]
+  tasks: Task[]
+}
+
+export interface Task {
+  id: number
+  title: string
+  description: string
+  project_id: number
+  assign_id?: number
+  process_id?: number
+  priority?: TaskPriority
+  difficulty?: 'very_easy' | 'easy' // Bạn có thể thêm các giá trị difficulty còn lại
+  status?: 'to_do' | 'in_process' | 'finish'
+  created_on: string // Dạng ISO 8601 string
+  modified_on: string // Dạng ISO 8601 string
+  finished_on?: string // Dạng ISO 8601 string
+  images: ImageResponse[]
+  assign?: User
+  process?: User
+  due_date?: Date
+  process_value?: number
+}
+
+export interface UserFilterRequest {
+  ids?: number[]
+}
+
+export interface ProjectSearchRequest {}
+
+export interface TaskRequest {
+  id?: number
+  title?: string
+  description?: string
+  project_id?: number
+  assign_id?: number
+  process_id?: number
+  priority?: PriorityType
+  difficulty?: DifficultyType
+  status?: StatusType
+  images?: ImageRequest[]
+  process_value?: number
+}
+
+export type StatusType = 'to_do' | 'in_process' | 'finish'
+
+export type PriorityType = 'low' | 'medium' | 'high'
+
+export interface ImageRequest {
+  id?: number
+  alt?: string
+  name?: string
+  file?: File
+}
+
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface ProjectRequest {
+  id?: number
+  company_id?: number
+  title?: string
+  description?: string
+  status?: 'in_process' | 'done' | 'reject' | 'none'
+  user_ids?: number[]
+  started_on: Date // Dạng ISO 8601 string, ví dụ: "2025-04-15T12:00:00Z"
+}
+
+export interface Project {
+  id: number
+  company_id?: number
+  title: string
+  description: string
+  created_on: string // Dạng ISO 8601 string
+  started_on: Date // Dạng ISO 8601 string
+  modified_on: string // Dạng ISO 8601 string
+  status?: 'to_do' | 'in_process' | 'finish'
+  users: User[]
+  tasks: Task[]
+}
+
+export interface Task {
+  id: number
+  title: string
+  description: string
+  project_id: number
+  assign_id?: number
+  process_id?: number
+  priority?: TaskPriority
+  difficulty?: 'very_easy' | 'easy' // Bạn có thể thêm các giá trị difficulty còn lại
+  status?: 'to_do' | 'in_process' | 'finish'
+  created_on: string // Dạng ISO 8601 string
+  modified_on: string // Dạng ISO 8601 string
+  finished_on?: string // Dạng ISO 8601 string
+  images: ImageResponse[]
+  assign?: User
+  process?: User
+  due_date?: Date
+  process_value?: number
+}
+
+export interface UserFilterRequest {
+  ids?: number[]
+}
+
+export interface ProjectSearchRequest {}
+
+export interface TaskRequest {
+  id?: number
+  title?: string
+  description?: string
+  project_id?: number
+  assign_id?: number
+  process_id?: number
+  priority?: PriorityType
+  difficulty?: DifficultyType
+  status?: StatusType
+  images?: ImageRequest[]
+  process_value?: number
+}
+
+
+export interface ImageRequest {
+  id?: number
+  alt?: string
+  name?: string
+  file?: File
 }
 
 export interface LogResponse {

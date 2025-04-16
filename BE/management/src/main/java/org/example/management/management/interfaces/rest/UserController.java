@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -51,9 +52,10 @@ public class UserController {
         return this.userService.updateUser(id, request);
     }
 
-    @GetMapping
-    public Page<UserResponse> filter(@RequestBody UserFilterRequest request) {
-        return this.userService.filter(request);
+    @PostMapping("/filter")
+    public List<UserResponse> filter(@RequestBody UserFilterRequest request) {
+        var userPage = this.userService.filter(request);
+        return userPage.getContent();
     }
 
     @CrossOrigin(origins = "*")

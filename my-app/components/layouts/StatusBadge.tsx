@@ -15,6 +15,8 @@ const statusLabels: Record<TaskStatus, string> = {
   pending: 'To Do',
   cancelled: 'Cancelled',
   review: 'In Review',
+  todo: 'To Do',
+  done: 'Done',
 }
 
 export default function StatusBadge({

@@ -7,6 +7,7 @@ import org.example.management.management.application.model.user.response.UserRes
 import org.example.management.management.domain.project.Project;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -20,7 +21,7 @@ public class ProjectResponse {
     private String description;
 
     private Instant createdOn;
-    private Instant startedOn;
+    private LocalDate startedOn;
     private Instant modifiedOn;
 
     private Project.Status status;

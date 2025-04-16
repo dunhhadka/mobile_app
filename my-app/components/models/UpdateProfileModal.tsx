@@ -48,10 +48,23 @@ export const getAddress = (address: AddressResponse | null): string => {
   return `${ward_name}, ${district_name}, ${country_name}`
 }
 
+export const formatDate = (date: Date | string | undefined | null): string => {
+  if (!date) return ''
+
+  const parsedDate = date instanceof Date ? date : new Date(date)
+  if (isNaN(parsedDate.getTime())) return '' // kiểm tra nếu date không hợp lệ
+
+  return parsedDate.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
 export default function UpdateProfileModel({ user, onClose }: Props) {
   const [firstName, setFirstName] = useState<string>(user.first_name ?? '')
   const [lastName, setLastName] = useState(user.last_name ?? '')
-  const [dob, setDob] = useState<Date|undefined>(undefined)
+  const [dob, setDob] = useState<Date | undefined>(undefined)
   const [position, setPosition] = useState(user.position)
   const [country, setCountry] = useState(user?.address?.country_name ?? '')
   const [districtName, setDistrictName] = useState(
@@ -60,15 +73,6 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
   const [ward, setWard] = useState(user?.address?.ward_name ?? '')
   const [address, setAddress] = useState('')
   const [showPicker, setShowPicker] = useState(false)
-
-  const formatDate = (date: Date | undefined) => {
-    if (!date) return ''
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    }) // Ví dụ: 10 December 1997
-  }
 
   const dispatch = useDispatch()
   const toast = useToast()
@@ -168,7 +172,10 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
   }
 
   return (
-    <ScrollView style={styles.boundary}  contentContainerStyle={styles.container}>
+    <ScrollView
+      style={styles.boundary}
+      contentContainerStyle={styles.container}
+    >
       <Text style={styles.header}>My Personal Data</Text>
       <Text style={styles.subHeader}>Details about my personal data</Text>
 
@@ -314,7 +321,7 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
 
 const styles = StyleSheet.create({
   gradientContainer: {
-    flex:1,
+    flex: 1,
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -322,7 +329,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white, // Fallback for gradient
   },
   boundary: {
-    width: "100%",
+    width: '100%',
   },
   container: {
     flexGrow: 1,

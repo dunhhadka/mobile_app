@@ -33,6 +33,7 @@ function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        headerShown: false,
         tabBarShowLabel: true,
         tabBarStyle: { height: 70, paddingBottom: 10, paddingTop: 5 },
         tabBarIcon: ({ focused, color, size }) => {
