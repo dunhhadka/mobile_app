@@ -174,7 +174,7 @@ export default function HomeScreen() {
 
           <View style={styles.meetingsContainer}>
             {meetings.map((meeting, index) => (
-              <Text>Meeting</Text>
+              <Text key={index}>Meeting</Text>
               // <MeetingItem key={index} meeting={meeting} />
             ))}
           </View>
@@ -195,7 +195,7 @@ export default function HomeScreen() {
 
           <View style={styles.tasksContainer}>
             {tasks.map((task, index) => (
-              <Text>Task Item</Text>
+              <Text key={index}>Task Item</Text>
               // <TaskItem key={index} task={task} />
             ))}
           </View>

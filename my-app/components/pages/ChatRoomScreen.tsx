@@ -20,7 +20,11 @@ import { Stack } from 'expo-router'
 import Avatar from '../layouts/Avatar'
 import { ArrowLeft, Send } from 'lucide-react-native'
 import { HomeStackParamList } from '../../App'
-import { URL, useGetRoomByIdQuery } from '../../api/magementApi'
+import {
+  URL,
+  useGetMessageByRoomIdQuery,
+  useGetRoomByIdQuery,
+} from '../../api/magementApi'
 import Loading from '../loading/Loading'
 import { useEffect, useRef, useState } from 'react'
 import * as Stomp from '@stomp/stompjs'
@@ -101,6 +105,9 @@ const ChatRoomScreen = () => {
   const roomId = route.params.room_id
   const memberId = route.params.member_id
 
+  const { data: fechedData, isLoading: isMessageLoading } =
+    useGetMessageByRoomIdQuery(roomId, { refetchOnMountOrArgChange: true })
+
   const currentUser = useSelector((state: RootState) => state.user.currentUser)
 
   const [message, setMessage] = useState('')
@@ -121,6 +128,10 @@ const ChatRoomScreen = () => {
     const isSender = item.sender_id === currentUser?.id
     return <MessageBubble message={item} isSender={isSender} />
   }
+
+  useEffect(() => {
+    setMessages(fechedData || [])
+  }, [fechedData])
 
   useEffect(() => {
     console.log('👉 Bắt đầu tạo kết nối WebSocket...')

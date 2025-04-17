@@ -10,6 +10,7 @@ import {
   ChatRoom,
   LoginRequest,
   LogResponse,
+  Message,
   Project,
   ProjectRequest,
   ProjectSearchRequest,
@@ -20,7 +21,7 @@ import {
   UserRequest,
 } from '../types/management'
 
-export const URL = 'http://192.168.100.8:8080'
+export const URL = 'http://172.11.166.43:8080'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',
@@ -152,6 +153,12 @@ export const managementApi = createApi({
         method: 'GET',
       }),
     }),
+    getMessageByRoomId: builder.query<Message[], number>({
+      query: (id) => ({
+        url: `/api/chats/rooms/${id}/messages`,
+        method: 'GET',
+      }),
+    }),
   }),
 })
 
@@ -171,4 +178,5 @@ export const {
   useUpdateTaskMutation,
   useGetChatMemberByUserIdQuery,
   useGetRoomByIdQuery,
+  useGetMessageByRoomIdQuery,
 } = managementApi

@@ -5,7 +5,6 @@ import org.example.management.management.application.model.chat.ChatMemberRespon
 import org.example.management.management.application.model.chat.ChatRoomResponse;
 import org.example.management.management.application.model.chat.MessageResponse;
 import org.example.management.management.application.service.chat.ChatService;
-import org.example.management.management.domain.chat.Message;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,7 +29,7 @@ public class ChatController {
         return this.chatService.getRoomById(id);
     }
 
-    @GetMapping("/messages/{roomId}")
+    @GetMapping("/rooms/{roomId}/messages")
     public List<MessageResponse> getMessageByRoomId(@PathVariable int roomId) {
         return this.chatService.getMessageByRoomId(roomId);
     }
