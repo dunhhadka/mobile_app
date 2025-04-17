@@ -8,10 +8,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.management.ddd.AggregateRoot;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Builder(toBuilder = true)
@@ -19,7 +21,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "projects")
-public class Project {
+public class Project extends AggregateRoot<Project> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,6 +50,11 @@ public class Project {
     private Status status;
 
     private int createdId;
+
+    public void addEvents(int createdId, List<Integer> memberIds) {
+        var projectCreatedEvent = new ProjectCreatedEvent(Instant.now(), this.id, createdId, memberIds);
+        this.addDomainEvent(projectCreatedEvent);
+    }
 
     public enum Status {
         in_process,

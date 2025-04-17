@@ -2,6 +2,7 @@ package org.example.management.management.application.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ public final class JsonUtils {
 
     static {
         objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
         // TODO: config
     }
 

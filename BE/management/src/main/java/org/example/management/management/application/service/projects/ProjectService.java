@@ -1,12 +1,15 @@
 package org.example.management.management.application.service.projects;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.example.management.management.application.model.project.ProjectRequest;
 import org.example.management.management.application.model.project.ProjectResponse;
+import org.example.management.management.application.service.event.EventModel;
 import org.example.management.management.application.service.projectmanagement.ProjectManagementService;
+import org.example.management.management.application.utils.JsonUtils;
 import org.example.management.management.domain.profile.User;
 import org.example.management.management.domain.project.Project;
 import org.example.management.management.domain.task.ProjectManagement;
@@ -59,6 +62,20 @@ public class ProjectService {
         this.projectManagementService.handleProjectCreated(event);
 
         this.applicationEventPublisher.publishEvent(event);
+
+        project.addEvents(
+                project.getCreatedId(),
+                userIds.stream()
+                        .filter(id -> id != request.getCreatedId())
+                        .toList()
+        );
+
+        try {
+            var modelEvent = new EventModel(JsonUtils.marshal(project));
+            this.applicationEventPublisher.publishEvent(modelEvent);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
         return project.getId();
     }
