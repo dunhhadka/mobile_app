@@ -68,9 +68,6 @@ public class Task {
     @Convert(converter = IntListConverter.class)
     private List<Integer> imageIds = new ArrayList<>();
 
-    @OneToOne(mappedBy = "task", orphanRemoval = true)
-    @PrimaryKeyJoinColumn
-    private Leave leave;
 
     protected Task() {
     }

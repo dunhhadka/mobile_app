@@ -1,6 +1,8 @@
 package org.example.management.management.domain.profile;
 
 
+import org.springframework.data.jpa.repository.Query;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -19,4 +21,6 @@ public interface UserRepository {
 
     Boolean existsByPhone(String phone);
     List<User> findAllByIds(List<Integer> userIds);
+
+    List<User> findByPosition(User.Position position);
 }

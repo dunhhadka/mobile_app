@@ -44,6 +44,8 @@ public class Project {
     @Enumerated(value = EnumType.STRING)
     private Status status;
 
+
+
     public enum Status {
         in_process,
         done,

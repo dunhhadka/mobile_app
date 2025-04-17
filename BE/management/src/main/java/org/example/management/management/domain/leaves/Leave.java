@@ -50,16 +50,11 @@ public class Leave {
 
     private Instant rejectedAt;
 
-    private Integer approveId;
-
-    private Integer rejectId;
+    private Integer reviewId;
 
     private Integer delegateId; //NOTE: người được giao lại task
 
-    @OneToOne
-    @MapsId
-    @JoinColumn(name = "currentTaskId")
-    private Task task;
+    private Integer requestId;
 
 
     @NotNull
@@ -70,10 +65,6 @@ public class Leave {
     }
 
 
-    public void setTaskWithCurrentTaskId(Task task) {
-        Objects.requireNonNull(task);
-        this.task = task;
-    }
 
     public Leave(Category category,
                  Instant startLeave,
@@ -81,7 +72,8 @@ public class Leave {
                  Integer delegateId,
                  String contactPhone,
                  String description,
-                 Integer currentTaskId
+                 Integer currentTaskId,
+                 Integer requestId
     ) {
         this.category = category;
         this.startLeave = startLeave;
@@ -90,16 +82,17 @@ public class Leave {
         this.contactPhone = contactPhone;
         this.description = description;
         this.status = Status.review;
+        this.requestId = requestId;
         this.createdOn = Instant.now();
     }
 
     public void approve(Integer approveId, Instant approvedAt) {
         if (this.status != Status.review) {
-            throw new ConstrainViolationException(this.status.toString(),
+            throw new ConstrainViolationException("status",
                     "Cannot approve a leave that is not in review status");
         }
         this.status = Status.approved;
-        this.approveId = approveId;
+        this.reviewId = approveId;
         this.approvedAt = approvedAt;
         this.modifiedOn = Instant.now();
         // TODO: Bổ sung event để gửi thông báo
@@ -107,11 +100,11 @@ public class Leave {
 
     public void reject(Integer rejectId, Instant rejectedAt) {
         if (this.status != Status.review) {
-            throw new ConstrainViolationException(this.status.toString(),
+            throw new ConstrainViolationException("status",
                     "Cannot reject a leave that is not in review status");
         }
         this.status = Status.rejected;
-        this.rejectId = rejectId;
+        this.reviewId = rejectId;
         this.rejectedAt = rejectedAt;
         this.modifiedOn = Instant.now();
         // TODO: Bổ sung event để gửi thông báo
@@ -126,7 +119,7 @@ public class Leave {
                        String description
     ) {
         if (this.status != Status.review) {
-            throw new ConstrainViolationException(this.status.toString(),
+            throw new ConstrainViolationException("status",
                     "Cannot update field leave that is not in review status");
         }
         this.internalSetCategory(category);

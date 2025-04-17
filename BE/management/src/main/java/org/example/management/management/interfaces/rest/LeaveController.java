@@ -7,8 +7,8 @@ import org.example.management.management.application.model.leaves.LeaveRequest;
 import org.example.management.management.application.model.leaves.LeaveResponse;
 import org.example.management.management.application.model.leaves.UpdateStatusLeaveRequest;
 import org.example.management.management.application.model.leaves.UserAttendResponse;
+import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.application.service.leaves.LeaveService;
-import org.example.management.management.application.service.leaves.TaskDelegationService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,13 +26,17 @@ public class LeaveController {
         return delegationService.getTaskDelegationCandidates(taskId);
     }
 
+    @GetMapping("/get-delegate/{userId}")
+    public List<UserResponse> getDelegateUser(@PathVariable(name = "userId") Integer userId) {
+        return leaveService.getPotentialDelegates(userId);
+    }
 
     @PostMapping("/{userId}/{taskId}")
     public LeaveResponse createLeave(@Valid @RequestBody LeaveRequest leaveRequest,
                                      @PathVariable(name = "userId") Integer userId,
                                      @PathVariable(name = "taskId")  Integer taskId
                                      ) {
-        int leaveId = this.leaveService.createLeave(leaveRequest, taskId, userId);
+        int leaveId = this.leaveService.createLeave(leaveRequest, userId);
         return this.leaveService.getByIds(List.of(leaveId)).get(0);
     }
 

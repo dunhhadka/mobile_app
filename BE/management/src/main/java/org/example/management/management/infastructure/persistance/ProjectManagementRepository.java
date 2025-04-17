@@ -13,4 +13,6 @@ public interface ProjectManagementRepository extends JpaRepository<ProjectManage
     List<ProjectManagement> findByProjectId(int projectId);
 
     List<ProjectManagement> findByProjectIdIn(List<Integer> projectIds);
+
+    List<ProjectManagement> findByUserId(Integer userId);
 }
