@@ -25,5 +25,20 @@ public class Notification {
 
     private boolean isRead;
 
+    @Enumerated(value = EnumType.STRING)
+    private Type type;
+
     private Instant createdAt;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String data;
+
+    public enum Type {
+        messenger, // các thông báo liên quan đến messager
+        task, // các thông báo liên quan đến task,
+        comment, // các thông báo liên quan đến người tạo recomment task,
+        deadline, // thông báo liên quan đến nhắc nhở task,
+        user, // thông báo liên quan đến người dùng VD: thêm vào project, tạp project
+    }
 }

@@ -3,7 +3,10 @@
 import React from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+import {
+  BottomTabNavigationOptions,
+  createBottomTabNavigator,
+} from '@react-navigation/bottom-tabs'
 import { Bell, Calendar, Home, ListChecks, User } from 'lucide-react-native'
 import { Provider } from 'react-redux'
 import { store } from './store/store'
@@ -22,6 +25,9 @@ import CustomToast from './components/layouts/CustomToast'
 import ProjectDetail from './components/pages/ProjectDetail'
 import ChatListScreen from './components/pages/ChatListScreen'
 import ChatRoomScreen from './components/pages/ChatRoomScreen'
+import NotificationProvider from './provider/NotificationProvider'
+import Toast from 'react-native-toast-message'
+import CustomNotificationToast from './components/CustomNotificationToast'
 
 // Param types for Task stack
 export type TasksStackParamList = {
@@ -88,7 +94,15 @@ function MainTabs() {
         tabBarInactiveTintColor: '#777',
       })}
     >
-      <Tab.Screen name="Home" component={HomesStack} />
+      <Tab.Screen
+        name="Home"
+        component={HomesStack}
+        options={
+          {
+            unmountOnBlur: true,
+          } as BottomTabNavigationOptions
+        }
+      />
       <Tab.Screen name="Tasks" component={TasksStack} />
       <Tab.Screen name="Calendar" component={CalendarScreen} />
       <Tab.Screen name="Notification" component={NotificationsScreen} />
@@ -100,30 +114,39 @@ function MainTabs() {
 export default function App() {
   return (
     <Provider store={store}>
-      <ToastProvider
-        renderToast={({ type, message }) => (
-          <CustomToast
-            type={(type as 'success' | 'error' | 'info') || 'info'}
-            message={typeof message === 'string' ? message : ''}
-          />
-        )}
-        placement="top"
-        offsetTop={25}
-        animationType="slide-in"
-        swipeEnabled={true}
-      >
-        <NavigationContainer>
-          <RootStack.Navigator
-            initialRouteName="Onboarding"
-            screenOptions={{ headerShown: false }}
-          >
-            <RootStack.Screen name="Onboarding" component={OnboardScreen} />
-            <RootStack.Screen name="SignIn" component={SignInScreen} />
-            <RootStack.Screen name="SignUp" component={SignUpScreen} />
-            <RootStack.Screen name="Main" component={MainTabs} />
-          </RootStack.Navigator>
-        </NavigationContainer>
-      </ToastProvider>
+      <NotificationProvider>
+        <ToastProvider
+          renderToast={({ type, message }) => (
+            <CustomToast
+              type={(type as 'success' | 'error' | 'info') || 'info'}
+              message={typeof message === 'string' ? message : ''}
+            />
+          )}
+          placement="top"
+          offsetTop={25}
+          animationType="slide-in"
+          swipeEnabled={true}
+        >
+          <NavigationContainer>
+            <RootStack.Navigator
+              initialRouteName="Onboarding"
+              screenOptions={{ headerShown: false }}
+            >
+              <RootStack.Screen name="Onboarding" component={OnboardScreen} />
+              <RootStack.Screen name="SignIn" component={SignInScreen} />
+              <RootStack.Screen name="SignUp" component={SignUpScreen} />
+              <RootStack.Screen name="Main" component={MainTabs} />
+            </RootStack.Navigator>
+          </NavigationContainer>
+        </ToastProvider>
+        <Toast
+          config={{
+            custom_notification: ({ props }) => (
+              <CustomNotificationToast notification={props.notification} />
+            ),
+          }}
+        />
+      </NotificationProvider>
     </Provider>
   )
 }

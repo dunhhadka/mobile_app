@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   text: {
-    color: colors.textLight,
+    color: colors.white,
     fontSize: 10,
     fontWeight: '600',
   },

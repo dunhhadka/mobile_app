@@ -145,7 +145,7 @@ public class Leave {
         if (!Objects.equals(this.taskName, taskName)) {
             this.internalSetTaskName(taskName);
         }
-        if(!Objects.equals(this.delegateId, delegateId)) {
+        if (!Objects.equals(this.delegateId, delegateId)) {
             this.internalSetDelegateId(delegateId);
         }
         this.modifiedOn = Instant.now();

@@ -8,8 +8,11 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 public class ChatMessageController {
 
@@ -22,5 +25,10 @@ public class ChatMessageController {
         System.out.println("📝 Nội dung message: " + request.getContent());
 
         return chatService.saveMessage(roomId, request);
+    }
+
+    @GetMapping("/api/messages/{userId}/un-read")
+    public int countUnRead(@PathVariable int userId) {
+        return 5;
     }
 }

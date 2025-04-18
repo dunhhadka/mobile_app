@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   sendButton: {
-    backgroundColor: colors.light.tint,
+    backgroundColor: colors.primary,
     width: 40,
     height: 40,
     borderRadius: 20,

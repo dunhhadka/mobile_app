@@ -48,4 +48,9 @@ public class TaskController {
     public TaskResponse getById(@PathVariable int id) {
         return this.taskService.getByIds(List.of(id)).get(0);
     }
+
+    @GetMapping("/{userId}/current-tasks")
+    public List<TaskResponse> getTaskByUserId(@PathVariable int userId) {
+        return this.taskService.getByUserId(userId);
+    }
 }

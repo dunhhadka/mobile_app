@@ -19,8 +19,11 @@ interface SelectOption {
   subtitle?: string
   data: Item[]
   selectedId?: number
-  onSelect: (id: number) => void
+  onSelect: (id: number | number[]) => void
   onCancel?: () => void
+  multiple?: boolean
+  multipleSelected?: number[]
+  onMultipleSelected?: (ids: number[]) => void
 }
 
 export default function SelectOption({
@@ -30,8 +33,14 @@ export default function SelectOption({
   selectedId,
   onSelect,
   onCancel,
+  multiple,
+  multipleSelected,
+  onMultipleSelected,
 }: SelectOption) {
   const [current, setCurrent] = useState<number | undefined>(selectedId)
+  const [multipleSelectedIds, setMultipleSelectedIds] = useState<number[]>(
+    multipleSelected ?? []
+  )
 
   const handleSelect = () => {
     if (current !== undefined) {
@@ -52,14 +61,33 @@ export default function SelectOption({
         style={{ marginTop: 10 }}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={[styles.item, current === item.value && styles.itemSelected]}
-            onPress={() => setCurrent(item.value)}
+            style={[
+              styles.item,
+              current === item.value && styles.itemSelected,
+              multiple &&
+                multipleSelectedIds.includes(item.value) &&
+                styles.itemSelected,
+            ]}
+            onPress={() => {
+              if (!multiple) {
+                setCurrent(item.value)
+                return
+              }
+              setMultipleSelectedIds((prev) => {
+                if (prev.includes(item.value))
+                  return prev.filter((id) => id !== item.value)
+                return [...prev, item.value]
+              })
+            }}
           >
             <View style={styles.itemText}>
               <Text style={styles.label}>{item.label}</Text>
             </View>
             <View style={styles.radioCircle}>
               {current === item.value && <View style={styles.radioDot} />}
+              {multiple && multipleSelectedIds.includes(item.value) && (
+                <View style={styles.radioDot} />
+              )}
             </View>
           </TouchableOpacity>
         )}
@@ -72,10 +100,13 @@ export default function SelectOption({
         <TouchableOpacity
           style={[
             styles.selectButton,
-            current === undefined && { opacity: 0.5 },
+            current === undefined && !multiple && { opacity: 0.5 },
           ]}
-          disabled={current === undefined}
-          onPress={handleSelect}
+          disabled={current === undefined && !multiple}
+          onPress={() => {
+            if (!multiple) handleSelect()
+            else onMultipleSelected?.(multipleSelectedIds)
+          }}
         >
           <Text style={styles.selectText}>Select</Text>
         </TouchableOpacity>

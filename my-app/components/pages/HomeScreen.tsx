@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   StyleSheet,
   Text,
@@ -10,92 +10,42 @@ import { Image } from 'expo-image'
 import { Bell, MessageSquare, CheckCircle } from 'lucide-react-native'
 import SummaryCard from '../card/SummaryCard'
 import EmptyCard from '../card/EmptyCard'
-import { NavigationProp, useNavigation } from '@react-navigation/native'
+import {
+  NavigationProp,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native'
 import { HomeStackParamList } from '../../App'
-
-// Mock Data
-export const meetings = [
-  {
-    id: '1',
-    title: 'Townhall Meeting',
-    startTime: '01:30 AM',
-    endTime: '02:00 AM',
-    participants: [
-      {
-        id: '1',
-        avatar:
-          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
-      },
-      {
-        id: '2',
-        avatar:
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
-      },
-      {
-        id: '3',
-        avatar:
-          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=150&auto=format&fit=crop',
-      },
-    ],
-    extraParticipants: 3,
-  },
-  {
-    id: '2',
-    title: 'Dashboard Report',
-    startTime: '01:30 AM',
-    endTime: '02:00 AM',
-    participants: [
-      {
-        id: '1',
-        avatar:
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop',
-      },
-      {
-        id: '2',
-        avatar:
-          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=150&auto=format&fit=crop',
-      },
-      {
-        id: '4',
-        avatar:
-          'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=150&auto=format&fit=crop',
-      },
-    ],
-  },
-]
-
-export const tasks = [
-  {
-    id: '1',
-    title: 'Wiring Dashboard Analytics',
-    status: 'In Progress' as const,
-    priority: 'High' as const,
-    dueDate: '27 April',
-    count: 2,
-    assignees: [
-      {
-        id: '1',
-        avatar:
-          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
-      },
-      {
-        id: '2',
-        avatar:
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
-      },
-      {
-        id: '3',
-        avatar:
-          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=150&auto=format&fit=crop',
-      },
-    ],
-  },
-]
+import colors from '../../constants/colors'
+import {
+  useGetMessageAndNotificationUnreadQuery,
+  useGetTasksByUserIdQuery,
+} from '../../api/magementApi'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../store/store'
+import Loading from '../loading/Loading'
+import { TaskItem } from '../card/TaskItem'
 
 export default function HomeScreen() {
+  const currentUser = useSelector((state: RootState) => state.user.currentUser)
+
   const [currentTime, setCurrentTime] = useState('')
 
   const navigation = useNavigation<NavigationProp<HomeStackParamList>>()
+
+  const {
+    data: countData,
+    isLoading: isCountLoading,
+    refetch,
+  } = useGetMessageAndNotificationUnreadQuery(currentUser?.id ?? 0)
+
+  const { unReadMessage, unReadNotification } = countData ?? {}
+
+  const {
+    data: tasks,
+    isLoading: isTasksLoading,
+    isFetching: isTasksFetching,
+  } = useGetTasksByUserIdQuery(currentUser?.id ?? 0, { skip: !currentUser?.id })
 
   useEffect(() => {
     const updateTime = () => {
@@ -110,27 +60,45 @@ export default function HomeScreen() {
     return () => clearInterval(interval)
   }, [])
 
+  useFocusEffect(
+    useCallback(() => {
+      refetch()
+    }, [refetch])
+  )
+
+  const isLoading = isCountLoading || isTasksLoading || isTasksFetching
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <View style={styles.profileContainer}>
           <View style={styles.profileInfo}>
-            <Image
-              source={{
-                uri: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?q=80&w=150&auto=format&fit=crop',
-              }}
-              style={styles.avatar}
-            />
+            {currentUser?.avatar?.src ? (
+              <Image
+                source={{
+                  uri: currentUser.avatar.src,
+                }}
+                style={styles.avatar}
+              />
+            ) : (
+              <View style={styles.avatar}>
+                <Text style={{ fontSize: 20 }}>
+                  {currentUser?.user_name?.charAt(0)}
+                </Text>
+              </View>
+            )}
             <View style={styles.userInfo}>
               <View style={styles.nameContainer}>
-                <Text style={styles.name}>Tonald Drump</Text>
+                <Text style={styles.name}>{currentUser?.user_name ?? ''}</Text>
                 <CheckCircle
                   size={16}
                   color="#6c5ce7"
                   style={styles.verifiedIcon}
                 />
               </View>
-              <Text style={styles.role}>Junior Full Stack Developer</Text>
+              <Text style={styles.role}>
+                {currentUser?.position ?? 'Chưa có vị trí'}
+              </Text>
             </View>
           </View>
           <View style={styles.actions}>
@@ -139,6 +107,12 @@ export default function HomeScreen() {
               onPress={() => navigation.navigate('ChatList')}
             >
               <MessageSquare size={20} color="#6c5ce7" />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationText}>
+                  {unReadMessage ?? 0}
+                </Text>
+                {/* Số tin nhắn chưa đọc */}
+              </View>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconButton}
@@ -147,6 +121,12 @@ export default function HomeScreen() {
               }}
             >
               <Bell size={20} color="#6c5ce7" />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationText}>
+                  {unReadNotification ?? 0}
+                </Text>
+                {/* Số tin nhắn chưa đọc */}
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -165,19 +145,18 @@ export default function HomeScreen() {
         {/* Meetings Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Today Meeting</Text>
+            <Text style={styles.sectionTitle}>Today task</Text>
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{meetings.length}</Text>
+              <Text style={styles.badgeText}>{2}</Text>
             </View>
           </View>
           <Text style={styles.sectionSubtitle}>Your schedule for the day</Text>
-
-          <View style={styles.meetingsContainer}>
-            {meetings.map((meeting, index) => (
-              <Text key={index}>Meeting</Text>
-              // <MeetingItem key={index} meeting={meeting} />
-            ))}
-          </View>
+          {tasks?.map((t, index) => (
+            <View key={index} style={{ marginTop: 10 }}>
+              <TaskItem task={t} />
+            </View>
+          ))}
+          <View style={styles.meetingsContainer}></View>
           <EmptyCard />
         </View>
 
@@ -186,23 +165,19 @@ export default function HomeScreen() {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Today Task</Text>
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{tasks.length}</Text>
+              <Text style={styles.badgeText}>{2}</Text>
             </View>
           </View>
           <Text style={styles.sectionSubtitle}>
             The tasks assigned to you for today
           </Text>
 
-          <View style={styles.tasksContainer}>
-            {tasks.map((task, index) => (
-              <Text key={index}>Task Item</Text>
-              // <TaskItem key={index} task={task} />
-            ))}
-          </View>
+          <View style={styles.tasksContainer}></View>
         </View>
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+      {isLoading && <Loading />}
     </View>
   )
 }
@@ -331,6 +306,10 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: '#f0f0f0',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   userInfo: {
     justifyContent: 'center',
@@ -411,5 +390,21 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 100,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: colors.primary, // Màu nền cho số tin nhắn
+    borderRadius: 10,
+    width: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationText: {
+    color: colors.white, // Màu chữ của số tin nhắn
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 })

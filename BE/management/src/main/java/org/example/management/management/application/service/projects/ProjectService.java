@@ -49,7 +49,7 @@ public class ProjectService {
         var project = buildGeneralInfo(null, request);
 
         List<Integer> userIds = new ArrayList<>();
-        this.setUserIds(userIds, request);
+        this.setUserIds(request.getUserIds(), request, userIds);
 
         project = project.toBuilder()
                 .createdOn(Instant.now())
@@ -80,7 +80,7 @@ public class ProjectService {
         return project.getId();
     }
 
-    public void setUserIds(List<Integer> userIds, ProjectRequest request) {
+    public void setUserIds(List<Integer> userIds, ProjectRequest request, List<Integer> ids) {
         if (CollectionUtils.isEmpty(request.getUserIds())) {
             return;
         }
@@ -101,7 +101,7 @@ public class ProjectService {
             throw new ConstrainViolationException("users", "users not found with id = " + userNotFound);
         }
 
-        userIds.addAll(userMap.values().stream().map(User::getId).toList());
+        ids.addAll(userMap.values().stream().map(User::getId).toList());
     }
 
 
@@ -137,7 +137,7 @@ public class ProjectService {
         this.projectRepository.save(project);
 
         List<Integer> userIds = new ArrayList<>();
-        this.setUserIds(userIds, request);
+        this.setUserIds(request.getUserIds(), request, userIds);
 
         var userIdsValid = this.splitOldAndNewUserId(project, userIds);
 

@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface TaskRepository extends JpaRepository<Task, Integer> {
     List<Task> findByIdIn(List<Integer> taskIds);
+
+    List<Task> findByProcessIdIn(List<Integer> userIds);
 }

@@ -14,6 +14,8 @@ public class ProjectSearchRequest {
 
     private Integer companyId;
 
+    private List<Integer> createdIds;
+
     private String title;
     private String description;
 

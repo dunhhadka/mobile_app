@@ -33,6 +33,9 @@ import {
 import { formatDate } from '../models/UpdateProfileModal'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store/store'
+import SelectOption, { Item } from '../form/SelectOption'
+import BaseModel from '../models/BaseModel'
+import { getUserName, getUserNameWithPosition } from '../../utils/userUtils'
 
 interface Props {
   onClose?: () => void
@@ -46,6 +49,8 @@ export default function CreateOrUpdateProject({ onClose, project }: Props) {
   const [selectedUsers, setSelectedUser] = useState<number[]>(
     project?.users?.map((u) => u.id) ?? []
   )
+
+  const [openSelecteMember, setOpenSelecteMember] = useState(false)
 
   const isCreate = !project
 
@@ -100,6 +105,7 @@ export default function CreateOrUpdateProject({ onClose, project }: Props) {
     } as ProjectRequest
     try {
       let response: Project
+      console.log('Create Project Reuest', request)
       if (!isCreate) response = await updateProject(request).unwrap()
       else response = await createProject(request).unwrap()
       console.log('Project created: ', response)
@@ -117,7 +123,11 @@ export default function CreateOrUpdateProject({ onClose, project }: Props) {
     }
   }
 
-  const isLoading = isUserLoading || isCreateProjectLoading || isUserFetching
+  const isLoading =
+    isUserLoading ||
+    isCreateProjectLoading ||
+    isUserFetching ||
+    isUpdateProjectLoading
 
   return (
     <KeyboardAvoidingView
@@ -193,7 +203,10 @@ export default function CreateOrUpdateProject({ onClose, project }: Props) {
               />
             )}
 
-            <Pressable style={styles.selectorButton} onPress={toggleModal}>
+            <Pressable
+              style={styles.selectorButton}
+              onPress={() => setOpenSelecteMember(true)}
+            >
               <Users size={20} color={colors.light.primaryPurple} />
               <Text style={styles.selectorText}>
                 {selectedUsers.length > 0
@@ -268,69 +281,32 @@ export default function CreateOrUpdateProject({ onClose, project }: Props) {
           </View>
         </ScrollView>
       </TouchableWithoutFeedback>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={toggleModal}
+      <BaseModel
+        open={openSelecteMember}
+        onClose={() => setOpenSelecteMember(false)}
+        height={550}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Members</Text>
-              <Pressable onPress={toggleModal}>
-                <Text style={styles.closeButton}>Close</Text>
-              </Pressable>
-            </View>
-
-            <FlatList
-              data={users}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => {
-                const fullName =
-                  `${item.first_name ?? ''} ${item.last_name ?? ''}`.trim() ||
-                  item.email
-                const role = item.position ?? 'No Role'
-                const isSelected = selectedUsers.includes(item.id)
-
-                return (
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.pressedItem,
-                      { backgroundColor: isSelected ? '#D3D3D3' : '#FFF' }, // Đổi màu khi được chọn
-                    ]}
-                    onPress={() => {
-                      toggleSelected(item.id)
-                    }}
-                  >
-                    <View style={styles.avatarContainer}>
-                      {item.avatar?.src ? (
-                        <Image
-                          source={{ uri: item.avatar.src }}
-                          style={styles.avatar}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View style={styles.avatarPlaceholder}>
-                          <Text style={styles.avatarText}>
-                            {item.first_name?.[0]?.toUpperCase() ??
-                              item.email[0]?.toUpperCase()}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={styles.infoContainer}>
-                      <Text style={styles.name}>{fullName}</Text>
-                      <Text style={styles.role}>{role}</Text>
-                    </View>
-                  </Pressable>
-                )
-              }}
-              style={styles.membersList}
-            />
-          </View>
-        </View>
-      </Modal>
+        <SelectOption
+          title={'Chọn thành viên tham gia'}
+          subtitle="Hãy xem xét danh sách thành viên tham gia dự án của bạn"
+          data={
+            users
+              ?.filter((u) => u.id !== currentUser?.id)
+              ?.map(
+                (u) =>
+                  ({ value: u.id, label: getUserNameWithPosition(u) } as Item)
+              ) || []
+          }
+          onSelect={(id) => {}}
+          onCancel={() => setOpenSelecteMember(false)}
+          multiple
+          onMultipleSelected={(ids) => {
+            setSelectedUser(ids)
+            setOpenSelecteMember(false)
+          }}
+          multipleSelected={selectedUsers ?? []}
+        />
+      </BaseModel>
     </KeyboardAvoidingView>
   )
 }

@@ -273,3 +273,28 @@ export interface Message {
   time: string
   sender: User
 }
+
+export interface Notification {
+  id: number
+  receive_message: string
+  receive: User
+  read: boolean
+  created_at: string
+  type: NotificationType
+  data?: string
+}
+
+export type NotificationType =
+  | 'messenger'
+  | 'task'
+  | 'comment'
+  | 'deadline'
+  | 'user'
+
+export const NotificationTitle = {
+  messenger: 'Tin nhắn',
+  task: 'Nhiệm vụ',
+  comment: 'Bình luận',
+  deadline: 'Hạn chót',
+  user: 'Người dùng',
+}

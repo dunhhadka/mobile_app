@@ -21,6 +21,7 @@ import org.example.management.management.infastructure.persistance.ProjectReposi
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -80,7 +81,7 @@ public class ProjectHandleEventService {
                         ));
 
         String messageBuilder = createdUser.getUserName() +
-                "vừa tạo Dự án - " +
+                " vừa tạo Dự án - " +
                 createdProject.getTitle();
 
         var newEvent = Event.builder()
@@ -89,12 +90,14 @@ public class ProjectHandleEventService {
                 .build();
         var savedEvent = this.eventRepository.save(newEvent);
 
+        var projectJson = JsonUtils.marshal(new Data(project.getId()));
+
         // thông báo của người tạo project sé khác với thông báo của người được thêm vào project
-        var createdNotification = createNotificationForCreateUser(users.get(createdEvent.getCreatedBy()), createdEvent, project);
+        var createdNotification = createNotificationForCreateUser(users.get(createdEvent.getCreatedBy()), createdEvent, project, projectJson);
 
         List<Notification> notifications = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(createdEvent.getMemberIds())) {
-            notifications = createNewNotification(savedEvent, createdEvent.getMemberIds(), users, project);
+            notifications = createNewNotification(savedEvent, createdEvent.getMemberIds(), users, project, projectJson);
         }
 
         var allNotifications = Stream.concat(
@@ -102,27 +105,35 @@ public class ProjectHandleEventService {
                 notifications.stream()
         ).toList();
 
+        this.notificationRepository.saveAll(allNotifications);
+
         this.notificationService.sendNotifications(allNotifications);
     }
 
-    private Notification createNotificationForCreateUser(UserResponse userResponse, ProjectCreatedEvent createdEvent, Project project) {
+    public record Data(int projectId) {
+
+    }
+
+    private Notification createNotificationForCreateUser(UserResponse userResponse, ProjectCreatedEvent createdEvent, Project project, String projectJson) {
         return Notification.builder()
                 .receiveMessage("Bạn vừa tạo tạo dự án " + project.getTitle())
                 .receiveId(userResponse.getId())
                 .isRead(false)
+                .type(Notification.Type.user)
                 .createdAt(Instant.now())
+                .data(projectJson)
                 .build();
     }
 
-    private List<Notification> createNewNotification(Event savedEvent, List<Integer> memberIds, Map<Integer, UserResponse> users, Project project) {
+    private List<Notification> createNewNotification(Event savedEvent, List<Integer> memberIds, Map<Integer, UserResponse> users, Project project, String projectJson) {
         log.info("Create notification for ListUser");
 
         return memberIds.stream()
-                .map(memberId -> buildNotification(savedEvent, memberId, users, project))
+                .map(memberId -> buildNotification(savedEvent, memberId, users, project, projectJson))
                 .toList();
     }
 
-    private Notification buildNotification(Event savedEvent, Integer memberId, Map<Integer, UserResponse> userResponse, Project project) {
+    private Notification buildNotification(Event savedEvent, Integer memberId, Map<Integer, UserResponse> userResponse, Project project, String projectJson) {
         var createdUser = userResponse.get(savedEvent.getCreatedBy());
 
         var message = "Bạn vừa được " + createdUser.getUserName() + " thêm vào dự án " + project.getTitle();
@@ -132,7 +143,9 @@ public class ProjectHandleEventService {
                 .eventId(savedEvent.getId())
                 .receiveId(memberId)
                 .isRead(false)
+                .type(Notification.Type.user)
                 .createdAt(Instant.now())
+                .data(projectJson)
                 .build();
     }
 

@@ -15,77 +15,38 @@ import Avatar from '../layouts/Avatar'
 import layout from '../../constants/layout'
 import typography from '../../constants/typography'
 import users from '../../mocks/users'
-
-const notifications = [
-  {
-    id: '1',
-    type: 'task_assigned',
-    title: 'New Task Assigned',
-    message: 'You have been assigned to "Design new dashboard"',
-    time: '2 hours ago',
-    read: false,
-    user: users[0],
-    taskId: '1',
-  },
-  {
-    id: '2',
-    type: 'task_completed',
-    title: 'Task Completed',
-    message: 'Jane Smith completed "Create employee onboarding flow"',
-    time: '5 hours ago',
-    read: false,
-    user: users[1],
-    taskId: '3',
-  },
-  {
-    id: '3',
-    type: 'comment',
-    title: 'New Comment',
-    message: 'Robert Johnson commented on "Implement authentication system"',
-    time: 'Yesterday',
-    read: true,
-    user: users[2],
-    taskId: '2',
-  },
-  {
-    id: '4',
-    type: 'deadline',
-    title: 'Upcoming Deadline',
-    message: '"Optimize database queries" is due tomorrow',
-    time: 'Yesterday',
-    read: true,
-    taskId: '5',
-  },
-  {
-    id: '5',
-    type: 'mention',
-    title: 'You were mentioned',
-    message:
-      'Emily Davis mentioned you in a comment on "Create mobile responsive layouts"',
-    time: '2 days ago',
-    read: true,
-    user: users[3],
-    taskId: '6',
-  },
-]
+import { useSelector } from 'react-redux'
+import { RootState } from '../../store/store'
+import {
+  useGetNotificationByUserIdQuery,
+  useMarkIsReadMutation,
+} from '../../api/magementApi'
+import Loading from '../loading/Loading'
+import {
+  Notification,
+  NotificationTitle,
+  NotificationType,
+} from '../../types/management'
+import { getTimeAgo } from '../../utils/timeUtils'
+import { NavigationProp, useNavigation } from '@react-navigation/native'
 
 interface NotificationItemProps {
-  notification: (typeof notifications)[0]
+  notification: Notification
   onPress: () => void
 }
 
 const NotificationItem = ({ notification, onPress }: NotificationItemProps) => {
   const getIcon = () => {
     switch (notification.type) {
-      case 'task_assigned':
+      case 'task':
         return <Clock size={20} color={colors.primary} />
-      case 'task_completed':
-        return <CheckCircle size={20} color={colors.success} />
       case 'comment':
+        return <CheckCircle size={20} color={colors.success} />
+      case 'messenger':
         return <MessageCircle size={20} color={colors.info} />
       case 'deadline':
         return <AlertCircle size={20} color={colors.warning} />
-      case 'mention':
+      case 'user':
         return <User size={20} color={colors.accent} />
       default:
         return <Bell size={20} color={colors.primary} />
@@ -106,32 +67,62 @@ const NotificationItem = ({ notification, onPress }: NotificationItemProps) => {
       <View style={styles.iconContainer}>{getIcon()}</View>
 
       <View style={styles.contentContainer}>
-        <Text style={styles.notificationTitle}>{notification.title}</Text>
-        <Text style={styles.notificationMessage}>{notification.message}</Text>
-        <Text style={styles.notificationTime}>{notification.time}</Text>
+        <Text style={styles.notificationTitle}>
+          {getNotiTitle(notification.type)}
+        </Text>
+        <Text style={styles.notificationMessage}>
+          {notification.receive_message}
+        </Text>
+        <Text style={styles.notificationTime}>
+          {getTimeAgo(notification.created_at)}
+        </Text>
       </View>
-
-      {notification.user && (
-        <View style={styles.avatarContainer}>
-          <Avatar
-            uri={notification.user.avatar}
-            name={notification.user.name}
-            size={40}
-          />
-        </View>
-      )}
     </Pressable>
   )
+}
+
+export const getNotiTitle = (key: NotificationType): string => {
+  return NotificationTitle[key]
 }
 
 export default function NotificationsScreen() {
   const router = useRouter()
 
-  const handleNotificationPress = (notification: (typeof notifications)[0]) => {
-    if (notification.taskId) {
-      router.push(`/task/${notification.taskId}`)
+  const navigation = useNavigation()
+
+  const currentUser = useSelector((state: RootState) => state.user.currentUser)
+
+  const {
+    data: notifications,
+    isLoading: isLoadingNotifications,
+    isFetching: isFetchingNotification,
+  } = useGetNotificationByUserIdQuery(currentUser?.id ?? 0, {
+    refetchOnMountOrArgChange: true,
+  })
+
+  const [markIsRead, { isLoading: isMarkLoading }] = useMarkIsReadMutation()
+
+  console.log('Get Notifications', notifications)
+
+  const handleNotificationPress = async (notification: Notification) => {
+    await markIsRead(notification.id)
+
+    switch (notification.type) {
+      case 'user': {
+        var data = JSON.parse(notification.data ?? '')
+
+        if (data && data?.projectId) {
+          // @ts-ignore
+          navigation.navigate('Tasks', {
+            screen: 'ProjectDetail',
+            params: { project_id: data?.projectId },
+          })
+        }
+      }
     }
   }
+
+  const isLoading = isLoadingNotifications || isFetchingNotification
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -141,7 +132,7 @@ export default function NotificationsScreen() {
 
       <FlatList
         data={notifications}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
           <NotificationItem
             notification={item}
@@ -151,6 +142,7 @@ export default function NotificationsScreen() {
         contentContainerStyle={styles.notificationsList}
         showsVerticalScrollIndicator={false}
       />
+      {isLoading && <Loading />}
     </SafeAreaView>
   )
 }

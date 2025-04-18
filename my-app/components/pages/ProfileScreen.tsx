@@ -150,10 +150,10 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Tài khoản</Text>
 
           <View style={styles.infoCard}>
-            <Pressable 
+            <Pressable
               style={({ pressed }) => [
                 styles.infoItem,
-                pressed && styles.infoItemPressed
+                pressed && styles.infoItemPressed,
               ]}
               onPress={() => {}}
             >
@@ -166,10 +166,10 @@ export default function ProfileScreen() {
               <ChevronRight size={20} color={colors.textLight} />
             </Pressable>
 
-            <Pressable 
+            <Pressable
               style={({ pressed }) => [
                 styles.infoItem,
-                pressed && styles.infoItemPressed
+                pressed && styles.infoItemPressed,
               ]}
               onPress={() => {}}
             >
@@ -182,10 +182,10 @@ export default function ProfileScreen() {
               <ChevronRight size={20} color={colors.textLight} />
             </Pressable>
 
-            <Pressable 
+            <Pressable
               style={({ pressed }) => [
                 styles.infoItem,
-                pressed && styles.infoItemPressed
+                pressed && styles.infoItemPressed,
               ]}
               onPress={() => {}}
             >
@@ -265,7 +265,9 @@ export default function ProfileScreen() {
                 <LogOut size={20} color={colors.danger} />
               </View>
               <View style={styles.infoTextContainer}>
-                <Text style={[styles.infoTitle, { color: colors.danger }]}>Logout</Text>
+                <Text style={[styles.infoTitle, { color: colors.danger }]}>
+                  Logout
+                </Text>
               </View>
               <ChevronRight size={20} color={colors.textLight} />
             </Pressable>
@@ -274,7 +276,6 @@ export default function ProfileScreen() {
       </ScrollView>
       {user && (
         <BaseModel
-          title="Cập nhật thông tin"
           open={isOpenUpdateModel}
           onClose={() => setIsOpenUpdateModel(false)}
         >

@@ -187,9 +187,6 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
             <Avatar name={getUserName(user)} size={80} />
           )}
           <Text style={styles.uploadText}>Upload Photo</Text>
-          <Text style={styles.hintText}>
-            Format .jpg, .png, .jpeg. Max size: 1MB
-          </Text>
         </View>
       </Pressable>
 

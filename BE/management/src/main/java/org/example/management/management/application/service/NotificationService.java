@@ -8,9 +8,14 @@ import org.example.management.management.application.model.notification.Notifica
 import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.application.service.user.UserService;
 import org.example.management.management.domain.event.Notification;
+import org.example.management.management.infastructure.exception.ConstrainViolationException;
+import org.example.management.management.infastructure.persistance.NotificationRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -24,6 +29,8 @@ public class NotificationService {
     private final UserService userService;
 
     private final SimpMessagingTemplate messagingTemplate;
+
+    private final NotificationRepository notificationRepository;
 
     public void sendNotificationToUser(int userId, NotificationResponse response) {
         String destination = "/topic/notification/" + userId;
@@ -57,6 +64,41 @@ public class NotificationService {
                 .receiveMessage(notification.getReceiveMessage())
                 .isRead(notification.isRead())
                 .createdAt(notification.getCreatedAt())
+                .type(notification.getType())
+                .data(notification.getData())
                 .build();
+    }
+
+    public List<NotificationResponse> getByUserId(int userId) {
+        var user = this.userService.getUserById(userId);
+
+        List<Notification> notifications = this.notificationRepository.findByReceiveIdIn(List.of(userId));
+
+        if (CollectionUtils.isEmpty(notifications)) {
+            return Collections.emptyList();
+        }
+
+        return notifications.stream()
+                .sorted(Comparator.comparing(Notification::getCreatedAt).reversed())
+                .map(noti -> this.toResponse(noti, user))
+                .toList();
+    }
+
+    @Transactional
+    public void markIsRead(int id) {
+        var notification = this.notificationRepository.findById(id)
+                .orElseThrow(() ->
+                        new ConstrainViolationException(
+                                "notification",
+                                "Không tìm thấy thông báo với id là " + id
+                        ));
+
+        notification.setRead(true);
+
+        this.notificationRepository.save(notification);
+    }
+
+    public int countUnRead(int userId) {
+        return this.notificationRepository.countByReceiveIdAndIsRead(userId, false);
     }
 }

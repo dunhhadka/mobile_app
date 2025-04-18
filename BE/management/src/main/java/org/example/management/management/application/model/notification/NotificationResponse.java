@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.management.management.application.model.user.response.UserResponse;
+import org.example.management.management.domain.event.Notification;
 
 import java.time.Instant;
 
@@ -22,5 +23,9 @@ public class NotificationResponse {
 
     private boolean isRead;
 
+    private Notification.Type type;
+
     private Instant createdAt;
+
+    private String data;
 }

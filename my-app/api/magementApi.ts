@@ -4,6 +4,8 @@ import {
   FetchArgs,
   fetchBaseQuery,
   FetchBaseQueryError,
+  FetchBaseQueryMeta,
+  QueryReturnValue,
 } from '@reduxjs/toolkit/query/react'
 import {
   ChatMember,
@@ -11,6 +13,7 @@ import {
   LoginRequest,
   LogResponse,
   Message,
+  Notification,
   Project,
   ProjectRequest,
   ProjectSearchRequest,
@@ -21,14 +24,14 @@ import {
   UserRequest,
 } from '../types/management'
 
-export const URL = 'http://172.11.166.43:8080'
+export const URL = 'http://172.11.175.254:8080'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',
   baseQuery: fetchBaseQuery({
     baseUrl: URL,
   }),
-  tagTypes: ['project'],
+  tagTypes: ['project', 'notification', 'task'],
   endpoints: (builder) => ({
     createUser: builder.mutation<User, UserRequest>({
       query: (request) => ({
@@ -159,6 +162,74 @@ export const managementApi = createApi({
         method: 'GET',
       }),
     }),
+    getNotificationByUserId: builder.query<Notification[], number>({
+      query: (id) => ({
+        url: `/api/notifications/${id}`,
+        method: 'GET',
+      }),
+      providesTags: (result) =>
+        result && result.length > 0
+          ? [
+              ...result.map((r) => ({
+                type: 'notification' as const,
+                id: r.id,
+              })),
+              { type: 'notification' as const, id: 'LIST' },
+            ]
+          : [{ type: 'notification' as const, id: 'LIST' }],
+    }),
+    markIsRead: builder.mutation<void, number>({
+      query: (id) => ({
+        url: `/api/notifications/${id}/mark-as-read`,
+        method: 'PUT',
+      }),
+      invalidatesTags: (result, error, arg, meta) => [
+        { type: 'notification', id: 'LIST' },
+      ],
+    }),
+    getMessageAndNotificationUnread: builder.query<
+      { unReadMessage: number; unReadNotification: number },
+      number
+    >({
+      queryFn: async (arg, api, extraOptions, baseQuery) => {
+        const [msgResult, notiResult] = await Promise.all([
+          baseQuery({ url: `/api/messages/${arg}/un-read` }),
+          baseQuery({ url: `/api/notifications/${arg}/un-read` }),
+        ])
+
+        if (msgResult.error || notiResult.error) {
+          return {
+            error: msgResult.error || notiResult.error,
+          } as QueryReturnValue<
+            { unReadMessage: number; unReadNotification: number },
+            FetchBaseQueryError,
+            FetchBaseQueryMeta
+          >
+        }
+
+        return {
+          data: {
+            unReadMessage: msgResult.data as number,
+            unReadNotification: notiResult.data as number,
+          },
+        } as QueryReturnValue<
+          { unReadMessage: number; unReadNotification: number },
+          FetchBaseQueryError,
+          FetchBaseQueryMeta
+        >
+      },
+    }),
+    getTasksByUserId: builder.query<Task[], number>({
+      query: (id) => ({ url: `/api/tasks/${id}/current-tasks`, method: 'GET' }),
+      providesTags: (result) => {
+        return result && result.length
+          ? [
+              ...result.map((r) => ({ type: 'task' as const, id: r.id })),
+              { type: 'task' as const, id: 'LIST' },
+            ]
+          : [{ type: 'task' as const, id: 'LIST' }]
+      },
+    }),
   }),
 })
 
@@ -179,4 +250,8 @@ export const {
   useGetChatMemberByUserIdQuery,
   useGetRoomByIdQuery,
   useGetMessageByRoomIdQuery,
+  useGetNotificationByUserIdQuery,
+  useMarkIsReadMutation,
+  useGetMessageAndNotificationUnreadQuery,
+  useGetTasksByUserIdQuery,
 } = managementApi

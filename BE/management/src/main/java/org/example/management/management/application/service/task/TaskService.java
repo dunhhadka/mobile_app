@@ -165,6 +165,21 @@ public class TaskService {
         this.taskRepository.save(task);
     }
 
+    public List<TaskResponse> getByUserId(int userId) {
+        var tasks = this.taskRepository.findByProcessIdIn(List.of(userId));
+
+        if (CollectionUtils.isEmpty(tasks)) {
+            return Collections.emptyList();
+        }
+
+        var taskIds = tasks.stream()
+                .map(Task::getId)
+                .distinct()
+                .toList();
+
+        return this.getByIds(taskIds);
+    }
+
     public record TaskDeletedEvent(int taskId, int projectId, int userId) {
     }
 
