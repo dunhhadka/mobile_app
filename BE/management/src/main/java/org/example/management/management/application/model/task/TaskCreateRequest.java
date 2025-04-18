@@ -1,6 +1,7 @@
 package org.example.management.management.application.model.task;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -8,6 +9,7 @@ import lombok.Setter;
 import org.example.management.management.domain.task.Task;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.List;
 
 @Getter
@@ -37,4 +39,20 @@ public class TaskCreateRequest {
     private BigDecimal processValue;
 
     private List<@Valid TaskImageRequest> images;
+
+    private List<Task.Tag> tags;
+
+    @NotNull
+    private LocalTime startDate;
+
+    @NotNull
+    private LocalTime dueDate;
+
+    private LocalTime completedAt;
+
+    private BigDecimal estimatedTime;
+
+    private BigDecimal actualTime;
+
+    private List<String> attachments;
 }

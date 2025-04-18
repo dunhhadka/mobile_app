@@ -12,13 +12,12 @@ import org.example.management.management.application.model.task.TaskResponse;
 import org.example.management.management.application.model.task.TaskUpdateRequest;
 import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.application.service.images.ImageProcessService;
-import org.example.management.management.application.service.projectmanagement.ProjectManagementService;
 import org.example.management.management.application.service.user.UserMapper;
 import org.example.management.management.application.utils.NumberUtils;
 import org.example.management.management.domain.profile.User;
 import org.example.management.management.domain.task.Image;
-import org.example.management.management.domain.task.ProjectManagement;
 import org.example.management.management.domain.task.Task;
+import org.example.management.management.domain.task.TaskTimeInfo;
 import org.example.management.management.infastructure.exception.ConstrainViolationException;
 import org.example.management.management.infastructure.persistance.ImageRepository;
 import org.example.management.management.infastructure.persistance.JpaUserRepositoryInterface;
@@ -34,7 +33,6 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -77,7 +75,10 @@ public class TaskService {
                 request.getPriority(),
                 request.getDifficulty(),
                 request.getStatus(),
-                request.getProcessValue()
+                request.getProcessValue(),
+                buildTimeInfo(new TaskTimeInfo(), request),
+                request.getTags(),
+                request.getAttachments()
         );
 
         task.setImages(images);
@@ -87,6 +88,18 @@ public class TaskService {
         eventPublisher.publishEvent(new CreateTaskManagement(project.getId(), task.getProcessId(), task));
 
         return task.getId();
+    }
+
+    private TaskTimeInfo buildTimeInfo(TaskTimeInfo taskTimeInfo, TaskCreateRequest request) {
+        if (taskTimeInfo == null) taskTimeInfo = new TaskTimeInfo();
+
+        return taskTimeInfo.toBuilder()
+                .startDate(request.getStartDate())
+                .dueDate(request.getDueDate())
+                .completedAt(request.getCompletedAt())
+                .estimatedTime(request.getEstimatedTime())
+                .actualTime(request.getActualTime())
+                .build();
     }
 
     private List<Image> buildImages(List<StoredImageResult> storeImages) {
@@ -180,6 +193,24 @@ public class TaskService {
         return this.getByIds(taskIds);
     }
 
+    public void changeStatus(int taskId, Task.Status status) {
+        if (status == null) {
+            throw new ConstrainViolationException(
+                    "status",
+                    "Trạng thái không được để trống"
+            );
+        }
+
+        var task = this.taskRepository.findById(taskId)
+                .orElseThrow(() ->
+                        new ConstrainViolationException(
+                                "task",
+                                "task not found with id " + taskId
+                        ));
+
+        task.updateStatus(status);
+    }
+
     public record TaskDeletedEvent(int taskId, int projectId, int userId) {
     }
 
@@ -236,6 +267,12 @@ public class TaskService {
         this.updateTaskUser(request, task);
 
         task.update(request.getPriority(), request.getDifficulty(), request.getStatus());
+
+        task.updateTimeInfo(buildTimeInfo(task.getTimeInfo(), request));
+
+        task.updateTags(request.getTags());
+
+        task.upAttachments(request.getAttachments());
 
         task.updateProcessValue(request.getProcessValue());
 

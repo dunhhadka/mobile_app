@@ -48,7 +48,7 @@ public class ProjectManagement {
         var task = this.managements.stream()
                 .filter(taskManagement -> taskManagement.getId() == taskId)
                 .findFirst()
-                .orElseThrow(null);
+                .orElse(null);
         if (task == null) {
             return;
         }

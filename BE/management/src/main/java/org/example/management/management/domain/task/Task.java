@@ -1,7 +1,25 @@
 package org.example.management.management.domain.task;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.Table;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -9,13 +27,20 @@ import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.example.management.management.application.converter.IntListConverter;
 import org.example.management.management.application.model.task.TaskImageRequest;
+import org.example.management.management.domain.comment.Comment;
 import org.example.management.management.domain.leaves.Leave;
+import org.example.management.management.infastructure.exception.ConstrainViolationException;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Getter
 @Entity
@@ -74,6 +99,22 @@ public class Task {
 
     private BigDecimal processValue;
 
+    @Embedded
+    @JsonUnwrapped
+    private @Valid TaskTimeInfo timeInfo;
+
+    @Convert(converter = IntListConverter.class)
+    private List<String> attachments = new ArrayList<>();
+
+    @Type(JsonType.class)
+    private List<Tag> tags = new ArrayList<>();
+
+    @OneToMany(mappedBy = "task", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private List<Comment> comments = new ArrayList<>();
+
+    @Convert(converter = IntListConverter.class)
+    private List<Integer> dependencies = new ArrayList<>();
+
     protected Task() {
     }
 
@@ -86,7 +127,10 @@ public class Task {
             Priority priority,
             Difficulty difficulty,
             Status status,
-            BigDecimal processValue) {
+            BigDecimal processValue,
+            TaskTimeInfo taskTimeInfo,
+            List<Tag> tags,
+            List<String> attachments) {
         this.title = title;
         this.description = description;
 
@@ -100,6 +144,87 @@ public class Task {
         this.status = status;
 
         this.processValue = processValue;
+
+        this.timeInfo = taskTimeInfo;
+
+        this.internalAddTags(tags);
+
+        this.internalAddAttachments(attachments);
+    }
+
+    private void internalAddAttachments(List<String> attachments) {
+        this.attachments = attachments;
+    }
+
+    private void internalAddTags(List<Tag> tags) {
+        this.tags = tags;
+    }
+
+    public void updateTimeInfo(TaskTimeInfo taskTimeInfo) {
+        this.timeInfo = taskTimeInfo;
+    }
+
+    public void updateTags(List<Tag> tags) {
+        this.internalAddTags(tags);
+    }
+
+    public void upAttachments(List<String> attachments) {
+        this.internalAddAttachments(attachments);
+    }
+
+    public void updateStatus(Status status) {
+        this.status = status;
+    }
+
+    public void addComment(Comment comment) {
+        if (CollectionUtils.isEmpty(this.comments)) this.comments = new ArrayList<>();
+
+        this.comments.add(comment);
+
+        comment.setTask(this);
+    }
+
+    public void deleteComment(int commentId) {
+        var comment = this.comments.stream()
+                .filter(c -> c.getId() == commentId)
+                .findFirst()
+                .orElseThrow(() ->
+                        new ConstrainViolationException(
+                                "comment",
+                                "Comment not found"
+                        ));
+
+        comment.setTask(null);
+        this.comments.remove(comment);
+    }
+
+    public enum Status {
+        to_do,
+        in_process,
+        finish
+    }
+
+    public enum Difficulty {
+        very_easy,
+        easy // TODO: Thêm
+    }
+
+    public enum Priority {
+        low,
+        medium,
+        high
+    }
+
+    public enum Tag {
+        front_end,
+        back_end,
+        database,
+        architecture,
+        security,
+        performance,
+        design,
+        test,
+        other;
     }
 
     public void updateUser(Integer assignId, Integer processId) {
@@ -197,20 +322,4 @@ public class Task {
         this.processValue = processValue;
     }
 
-    public enum Status {
-        to_do,
-        in_process,
-        finish
-    }
-
-    public enum Difficulty {
-        very_easy,
-        easy // TODO: Thêm
-    }
-
-    public enum Priority {
-        low,
-        medium,
-        high
-    }
 }

@@ -2,6 +2,7 @@ package org.example.management.management.domain.attendace;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -10,6 +11,7 @@ import java.time.LocalTime;
 
 @Getter
 @Entity
+@NoArgsConstructor
 @Table(name = "attendances")
 public class Attendance {
 

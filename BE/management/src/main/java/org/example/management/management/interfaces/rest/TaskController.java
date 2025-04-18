@@ -6,6 +6,7 @@ import org.example.management.management.application.model.task.TaskCreateReques
 import org.example.management.management.application.model.task.TaskResponse;
 import org.example.management.management.application.model.task.TaskUpdateRequest;
 import org.example.management.management.application.service.task.TaskService;
+import org.example.management.management.domain.task.Task;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -52,5 +53,10 @@ public class TaskController {
     @GetMapping("/{userId}/current-tasks")
     public List<TaskResponse> getTaskByUserId(@PathVariable int userId) {
         return this.taskService.getByUserId(userId);
+    }
+
+    @PutMapping("/{taskId}/change-status")
+    public void changeStatus(@RequestBody Task.Status status, @PathVariable int taskId) {
+        this.taskService.changeStatus(taskId, status);
     }
 }
