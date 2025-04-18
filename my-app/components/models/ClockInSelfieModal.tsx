@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView 
 import * as ImagePicker from 'expo-image-picker';
 import { useDispatch } from 'react-redux';
 import { useToast } from 'react-native-toast-notifications';
-import { useClockInMutation } from '../../api/magementApi'; // Đường dẫn đúng của mutation
+import { useUploadLogMutation } from '../../api/magementApi'; // Đường dẫn đúng của mutation
 import { User } from '../../types/management';
 import * as Location from 'expo-location'
 import MapView, { Circle, Marker } from 'react-native-maps';
@@ -17,7 +17,7 @@ interface Props {
 const ClockInSelfieModal: React.FC<Props> = ({ user, clockInState, onClose }) => {
     const [note, setNote] = useState('');
     const [photo, setPhoto] = useState<string | null>(null);
-    const [clockIn] = useClockInMutation();
+    const [clockIn] = useUploadLogMutation();
     const dispatch = useDispatch();
     const toast = useToast();
     const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null)
@@ -62,33 +62,41 @@ const ClockInSelfieModal: React.FC<Props> = ({ user, clockInState, onClose }) =>
     };
 
     const handleClockIn = async () => {
-        /* To Do call api  
+        /* To Do call api */
         if (!photo) {
             toast.show('Please take a photo before clocking in', { type: 'warning' });
             return;
         }
 
         const formData = new FormData();
-        formData.append('checkIn', new Date().toISOString());
-        formData.append('type', 'in');
-        formData.append('logImage', {
-            uri: photo,
-            type: 'image/jpeg',
-            name: 'photo.jpg',
-        } as any);
-        formData.append('imageId', '123');
-        formData.append('note', note);
-        formData.append('latitude', '12.9716'); // Thay giá trị latitude thực tế
-        formData.append('longitude', '77.5946'); // Thay giá trị longitude thực tế
-        formData.append('userId', user.id.toString())
         try {
-            const response = await clockIn(formData).unwrap();
-            toast.show('Clock In successful!', { type: 'success' });
-            onClose?.();
+            if (user.avatar === undefined) throw new Error("Người dùng chưa cập nhật avatar");
+            formData.append('checkIn', new Date().toISOString());
+            formData.append('type', 'in');
+            formData.append('logImage', {
+                uri: photo,
+                type: 'image/jpeg',
+                name: 'photo.jpg',
+            } as any);
+            formData.append('imageId', user.avatar.id.toString());
+            formData.append('note', note);
+            if(location == undefined){
+                throw new Error("Xin chờ cập nhật vị trí");
+            }
+            formData.append('latitude', location.latitude.toString());
+            formData.append('longitude', location.longitude.toString());
+            formData.append('userId', user.id.toString());
+            try {
+                const response = await clockIn(formData).unwrap();
+                toast.show('Clock In successful!', { type: 'success' });
+                onClose?.();
+            } catch (error) {
+                // console.error('Clock In failed:', error);
+                toast.show('Clock In failed', { type: 'danger' });
+            }
         } catch (error) {
-            console.error('Clock In failed:', error);
-            toast.show('Clock In failed', { type: 'danger' });
-        }*/
+            toast.show('Bạn chưa cập nhật avatar');
+        }
     };
 
     return (
@@ -144,7 +152,7 @@ const ClockInSelfieModal: React.FC<Props> = ({ user, clockInState, onClose }) =>
                     multiline
                 />
 
-                <BaseButton title='Điểm danh' onPress={handleClockIn} key='clockInButton'/>
+                <BaseButton title='Điểm danh' onPress={handleClockIn} key='clockInButton' />
             </View>
         </ScrollView>
     );

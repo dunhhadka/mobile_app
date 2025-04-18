@@ -8,6 +8,8 @@ import {
   QueryReturnValue,
 } from '@reduxjs/toolkit/query/react'
 import {
+  AggregateLogRequest,
+  AttendanceResponse,
   ChatMember,
   ChatRoom,
   LoginRequest,
@@ -24,14 +26,14 @@ import {
   UserRequest,
 } from '../types/management'
 
-export const URL = 'http://172.11.175.254:8080'
+export const URL = 'http://192.168.31.117:8080'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',
   baseQuery: fetchBaseQuery({
     baseUrl: URL,
   }),
-  tagTypes: ['project', 'notification', 'task'],
+  tagTypes: ['project', 'notification', 'task', 'attendances'],
   endpoints: (builder) => ({
     createUser: builder.mutation<User, UserRequest>({
       query: (request) => ({
@@ -57,7 +59,7 @@ export const managementApi = createApi({
         body: formData,
       }),
     }),
-    clockIn: builder.mutation<LogResponse, FormData>({
+    uploadLog: builder.mutation<LogResponse, FormData>({
       query: (formData) => ({
         url: `/api/attendances/logs`,
         method: 'POST',
@@ -95,9 +97,9 @@ export const managementApi = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: 'project' as const, id })),
-              { type: 'project', id: 'LIST' },
-            ]
+            ...result.map(({ id }) => ({ type: 'project' as const, id })),
+            { type: 'project', id: 'LIST' },
+          ]
           : [{ type: 'project', id: 'LIST' }],
     }),
     updateProject: builder.mutation<Project, ProjectRequest>({
@@ -170,12 +172,12 @@ export const managementApi = createApi({
       providesTags: (result) =>
         result && result.length > 0
           ? [
-              ...result.map((r) => ({
-                type: 'notification' as const,
-                id: r.id,
-              })),
-              { type: 'notification' as const, id: 'LIST' },
-            ]
+            ...result.map((r) => ({
+              type: 'notification' as const,
+              id: r.id,
+            })),
+            { type: 'notification' as const, id: 'LIST' },
+          ]
           : [{ type: 'notification' as const, id: 'LIST' }],
     }),
     markIsRead: builder.mutation<void, number>({
@@ -224,12 +226,31 @@ export const managementApi = createApi({
       providesTags: (result) => {
         return result && result.length
           ? [
-              ...result.map((r) => ({ type: 'task' as const, id: r.id })),
-              { type: 'task' as const, id: 'LIST' },
-            ]
+            ...result.map((r) => ({ type: 'task' as const, id: r.id })),
+            { type: 'task' as const, id: 'LIST' },
+          ]
           : [{ type: 'task' as const, id: 'LIST' }]
       },
     }),
+    getLogsByCurrentDay: builder.query<LogResponse[], number>({
+      query: (userId) => {
+        const today = new Date().toISOString().split('T')[0];
+        return ({
+
+          url: `/api/attendances/logs/${userId}?date=${today}`,
+          method: 'GET',
+        })
+      }
+    }),
+    uploadAggregateLogRequest: builder.mutation<AttendanceResponse, AggregateLogRequest>(
+      {
+        query: (request) => ({
+          url: `/api/attendances/aggregate`,
+          method: 'POST',
+          body: request
+        })
+      }
+    )
   }),
 })
 
@@ -237,7 +258,9 @@ export const {
   useCreateUserMutation,
   useUpdateUserMutation,
   useUploadUserAvatarMutation,
-  useClockInMutation,
+  useUploadLogMutation,
+  useGetLogsByCurrentDayQuery,
+  useUploadAggregateLogRequestMutation,
   useSignInMutation,
   useFilterUserQuery,
   useCreateProjectMutation,

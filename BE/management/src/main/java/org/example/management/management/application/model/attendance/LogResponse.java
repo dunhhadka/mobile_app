@@ -6,13 +6,15 @@ import org.example.management.management.application.model.images.ImageResponse;
 import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.domain.attendace.Log;
 
+import java.time.Instant;
+
 @Getter
 @Setter
 public class LogResponse {
     private int id;
 
     private Log.Type type;
-
+    private Instant checkIn;
     private ImageResponse image;
 
     private String note;
@@ -20,5 +22,5 @@ public class LogResponse {
     private String latitude;
     private String longitude;
 
-    private UserResponse user;
+    private int userId;
 }
