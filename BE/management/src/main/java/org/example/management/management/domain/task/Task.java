@@ -115,6 +115,9 @@ public class Task {
     @Convert(converter = IntListConverter.class)
     private List<Integer> dependencies = new ArrayList<>();
 
+    @OneToMany(mappedBy = "task", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private List<DailyReport> reports = new ArrayList<>();
+
     protected Task() {
     }
 
