@@ -225,7 +225,7 @@ export interface ImageRequest {
 
 export interface AggregateLogRequest{
   date: string,
-  userId: number,
+  user_id: number,
   note: string,
 }
 

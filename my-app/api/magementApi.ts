@@ -232,12 +232,10 @@ export const managementApi = createApi({
           : [{ type: 'task' as const, id: 'LIST' }]
       },
     }),
-    getLogsByCurrentDay: builder.query<LogResponse[], number>({
-      query: (userId) => {
-        const today = new Date().toISOString().split('T')[0];
+    getLogsByDate: builder.query<LogResponse[], {userId: number, date: string}>({
+      query: ({userId, date}) => {
         return ({
-
-          url: `/api/attendances/logs/${userId}?date=${today}`,
+          url: `/api/attendances/logs/${userId}?date=${date}`,
           method: 'GET',
         })
       }
@@ -249,6 +247,13 @@ export const managementApi = createApi({
           method: 'POST',
           body: request
         })
+      }),
+    getAttendanceByUserId: builder.query<AttendanceResponse[], number>(
+      {
+        query: (userId) => ({
+          url: `/api/attendances/${userId}`,
+          method: 'GET',
+        })
       }
     )
   }),
@@ -259,8 +264,9 @@ export const {
   useUpdateUserMutation,
   useUploadUserAvatarMutation,
   useUploadLogMutation,
-  useGetLogsByCurrentDayQuery,
+  useGetLogsByDateQuery,
   useUploadAggregateLogRequestMutation,
+  useGetAttendanceByUserIdQuery,
   useSignInMutation,
   useFilterUserQuery,
   useCreateProjectMutation,

@@ -16,38 +16,26 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { useUserStore } from '../../store/user-store';
 import colors from '../../constants/colors';
-import { useGetLogsByCurrentDayQuery, useUploadLogMutation } from '../../api/magementApi';
-import { useFocusEffect } from '@react-navigation/native';
+import { useGetAttendanceByUserIdQuery, useGetLogsByDateQuery, useUploadAggregateLogRequestMutation, useUploadLogMutation } from '../../api/magementApi';
+import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Toast } from 'react-native-toast-notifications';
-import { Type } from '../../types/management';
+import { AttendanceResponse, Type } from '../../types/management';
 import * as Location from 'expo-location'
 import WorkButton from '../models/WorkButton';
-const data = [
-  { date: '27 September 2024', hours: '08:00:00 hrs', in: '09:00 AM', out: '05:00 PM' },
-  { date: '26 September 2024', hours: '08:00:00 hrs', in: '09:00 AM', out: '05:00 PM' },
-  { date: '25 September 2024', hours: '08:00:00 hrs', in: '09:00 AM', out: '05:00 PM' },
-];
+import ClockOutModal from '../models/ClockOutComfirmModal';
+import { AttendanceStackParam } from '../../App';
+
 
 
 export default function ClockInScreen() {
   const { currentUser } = useUserStore()
+  const navigation = useNavigation<NavigationProp<AttendanceStackParam>>();
   const user = useSelector((state: RootState) => state.user.currentUser)
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [uploadLog] = useUploadLogMutation();
   const [refresh, setRefresh] = useState(false);
-  useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        console.log('Permission denied');
-        return;
-      }
-
-      const location = await Location.getCurrentPositionAsync({});
-      setLocation(location.coords);
-    })();
-  }, []);
-
+  const [data, setData] = useState<AttendanceResponse[]>([])
+  const [makeAttendance] = useUploadAggregateLogRequestMutation();
   if (!currentUser || !user) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
@@ -65,7 +53,9 @@ export default function ClockInScreen() {
   const [workState, setWorkState] = useState<Type>('in')
   const [activeButton, setActiveButton] = useState(true)
   const [isOpenClockInModel, setOpenClockInModel] = useState(clockIn)
-  const { data: logs, isLoading, isError, refetch } = useGetLogsByCurrentDayQuery(user.id);
+  const [isOpenClockOutModel, setOpenClockOutModel] = useState(false)
+  const { data: logs, isLoading, isError, refetch } = useGetLogsByDateQuery({ userId: user.id, date: new Date().toISOString().slice(0, 10) });
+  const { error: attendancesError, refetch: attendancesRefetch } = useGetAttendanceByUserIdQuery(user.id);
   useFocusEffect(
     useCallback(
       () => {
@@ -74,32 +64,39 @@ export default function ClockInScreen() {
           try {
             const logs = [...response].sort((a, b) => (new Date(a.check_in).getTime() - new Date(b.check_in).getTime()));
             // console.log(logs)
-            const last_log = logs[logs.length - 1]
-            console.log(last_log)
-            console.log(last_log.type)
             if (logs.length == 0) {
               setWorkState('in')
-            } else if (last_log.type == 'out') {
-              setWorkState('out')
-            } else if (last_log.type == 'in') {
-              setWorkState('break_work')
-            } else if (last_log.type == 'back_work') {
-              setWorkState('break_work')
-            } else if (last_log.type == 'break_work') {
-              setWorkState('back_work')
+            } else {
+              const last_log = logs[logs.length - 1]
+              console.log(last_log)
+              console.log(last_log.type)
+              if (last_log.type == 'out') {
+                setWorkState('out')
+              } else if (last_log.type == 'in') {
+                setWorkState('break_work')
+              } else if (last_log.type == 'back_work') {
+                setWorkState('break_work')
+              } else if (last_log.type == 'break_work') {
+                setWorkState('back_work')
+              }
             }
             console.log(workState)
           } catch (error: any) {
             Toast.hide(error.message)
           }
         }
-          fetchLogs()
+        const fetchAttendances = async () => {
+          const attendances = await attendancesRefetch().unwrap();
+          console.log(attendances)
+          setData([...attendances])
+        }
+        fetchLogs()
+        fetchAttendances()
       }, [refetch, refresh]
     )
   )
   const handleClockInButton = () => {
     setOpenClockInModel(true)
-    setRefresh(prev => !prev);
   }
   const handleWorkButton = async () => {
     const formData = new FormData()
@@ -112,30 +109,44 @@ export default function ClockInScreen() {
     }
     try {
       const response = await uploadLog(formData).unwrap();
-      if(workState === "break_work") Toast.show('Đã giải lao', { type: 'success' });
+      if (workState === "break_work") Toast.show('Đã giải lao', { type: 'success' });
       else Toast.show('Tiếp tục làm việc', { type: 'success' });
       setRefresh(prev => !prev);
     } catch (error) {
     }
   }
 
-  const handleClockOutButton = async () => {
-    const formData = new FormData()
-    try {
-      formData.append('checkIn', new Date().toISOString());
-      formData.append('type', 'out');
-      formData.append('userId', user.id.toString())
-    } catch (error: any) {
-      Toast.show(error.message)
+  const handleClockOutButton = (note: string) => {
+    const makeAggregateLogsRequest = async () => {
+      const formData = new FormData()
+      try {
+        formData.append('checkIn', new Date().toISOString());
+        formData.append('type', 'out');
+        formData.append('userId', user.id.toString());
+        try {
+          const aggregateLogsRequest = {
+            date: (new Date()).toISOString(),
+            user_id: user.id,
+            note: note,
+          }
+          const response = await uploadLog(formData).unwrap();
+          console.log(response)
+          if (response.type === 'out') {
+            const attendaceResponse = await makeAttendance(aggregateLogsRequest).unwrap();
+            console.log(attendaceResponse)
+          }
+          setRefresh(prev => !prev);
+          setOpenClockOutModel(false);
+          setWorkState('out')
+        } catch (error: any) {
+          Toast.show(error.message)
+        }
+      } catch (error: any) {
+        Toast.show(error.message)
+      }
+
     }
-    try {
-      const response = await uploadLog(formData).unwrap();
-      Toast.show('Check out thành công', { type: 'success' });
-      setRefresh(prev => !prev);
-    } catch (error) {
-      console.error('Clock In failed:', error);
-      Toast.show('Clock In failed', { type: 'danger' });
-    }
+    makeAggregateLogsRequest();
   }
 
 
@@ -168,13 +179,24 @@ export default function ClockInScreen() {
               (<BaseButton title={"Điểm danh"} onPress={handleClockInButton} isActive={activeButton} />)
               : (workState == 'back_work' || workState == 'break_work') ?
                 (
-                  <View style={{ flexDirection: "row" }}>
+                  <View style={{ flexDirection: "row", alignItems: 'center', justifyContent: 'center' }}>
                     {
                       (workState == "back_work") ?
-                        <WorkButton title={"Quay lại"} onPress={handleWorkButton} />
-                        : <WorkButton title={"Giải lao"} onPress={handleWorkButton} />
+                        <WorkButton title={"Quay lại"}
+                          onPress={handleWorkButton}
+                          colorBorder={colors.white}
+                        />
+                        : <WorkButton title={"Giải lao"}
+                          onPress={handleWorkButton}
+                          colorButtonEnd={colors.white}
+                          colorButtonStart={colors.white}
+                          colorText={colors.primary} />
                     }
-                    <WorkButton title={"Check out"} onPress={handleClockOutButton} />
+                    <WorkButton title={"Check out"} onPress={() => setOpenClockOutModel(true)}
+                      colorButtonStart='#404040'
+                      colorButtonEnd='#282828'
+                      colorBorder='#414141'
+                    />
                   </View>
                 )
                 : (
@@ -189,27 +211,57 @@ export default function ClockInScreen() {
 
         {/* History */}
         {data.map((item, index) => (
-          <View key={index} style={styles.historyCard}>
+          <TouchableOpacity
+            key={index}
+            style={styles.historyCard}
+            onPress={() => navigation.navigate('AttendanceDetail', { attendance: item, user_id: user.id })}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Calendar size={18} color="#880ED4" />
               <Text style={styles.historyDate}>{item.date}</Text>
             </View>
             <View style={styles.historyDetail}>
-              <Text>Total Hours{'\n'}<Text style={styles.bold}>{item.hours}</Text></Text>
-              <Text>Clock In & Out{'\n'}<Text style={styles.bold}>{item.in} — {item.out}</Text></Text>
+              <Text>Số giờ làm việc{'\n'}<Text style={styles.bold}>{item.total_hours}</Text></Text>
+              <Text>Giờ vào{'\n'}<Text style={styles.bold}>{item.clock_in}</Text></Text>
+              <Text>Giờ về{'\n'}<Text style={styles.bold}>{item.clock_out}</Text></Text>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
+
       <BaseModel
-        title="Cập nhật thông tin"
+        title="Điểm danh"
         open={isOpenClockInModel}
-        onClose={() => setOpenClockInModel(false)}
+        onClose={() => {
+          setOpenClockInModel(false)
+          setRefresh(prev => !prev)
+        }
+        }
       >
         <ClockInSelfieModal
           user={user}
-          onClose={() => setOpenClockInModel(false)}
-          clockInState={clockIn}
+          onClose={
+            () => {
+              Toast.show('Clock In successful!', { type: 'success' });              
+              console.log("Đ d")
+              setRefresh(prev => !prev)
+              console.log(refresh)
+              setOpenClockInModel(false)
+            }
+          }
+        />
+      </BaseModel>
+
+      <BaseModel
+        title='Xác nhận check out'
+        open={isOpenClockOutModel}
+        onClose={() => { setOpenClockOutModel(false) }}
+      >
+        <ClockOutModal
+          onConfirm={handleClockOutButton}
+          onClose={() => {
+            setOpenClockOutModel(false)
+            setRefresh(prev => !prev)
+          }}
         />
       </BaseModel>
     </SafeAreaView>
@@ -296,6 +348,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     marginBottom: 16,
+    elevation: 2,
   },
   historyDate: {
     fontWeight: 'bold',
@@ -317,17 +370,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 16, // Giả sử layout.spacing.xl = 16, có thể thay bằng giá trị từ constants nếu có
+    paddingHorizontal: 16,
   },
   emptyStateTitle: {
-    fontSize: 20, // Giả sử typography.fontSizes.xl = 20, thay bằng giá trị thực nếu có
-    fontWeight: '600', // Giả sử typography.fontWeights.semibold = '600'
-    color: colors.textPrimary, // Sử dụng colors.textPrimary (#1E1E2D)
-    marginBottom: 8, // Giả sử layout.spacing.sm = 8
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: 8,
   },
   emptyStateDescription: {
-    fontSize: 16, // Giả sử typography.fontSizes.md = 16
-    color: colors.textSecondary, // Sử dụng colors.textSecondary (#6E6B7B)
+    fontSize: 16,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
 });

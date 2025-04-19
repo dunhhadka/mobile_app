@@ -26,6 +26,12 @@ public class AttendanceController {
         return  this.attendanceService.getLogsByDayAndUserId(userId, date);
     }
 
+    @GetMapping("/{userId}")
+    public List<AttendanceResponse> getAttendance(@PathVariable int userId){
+        log.info("attendances get");
+        return this.attendanceService.getAttendanceByUserId(userId);
+    }
+
     @PostMapping("/logs")
     public LogResponse createLog(@ModelAttribute @Valid LogRequest request) throws IOException {
         var logId = this.attendanceService.createLog(request);

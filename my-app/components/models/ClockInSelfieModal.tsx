@@ -10,11 +10,10 @@ import MapView, { Circle, Marker } from 'react-native-maps';
 import BaseButton from './BaseButton';
 interface Props {
     user: User
-    clockInState: boolean;
-    onClose?: () => void;
+    onClose: ()=>void
 }
 
-const ClockInSelfieModal: React.FC<Props> = ({ user, clockInState, onClose }) => {
+const ClockInSelfieModal: React.FC<Props> = ({ user, onClose }) => {
     const [note, setNote] = useState('');
     const [photo, setPhoto] = useState<string | null>(null);
     const [clockIn] = useUploadLogMutation();
@@ -88,8 +87,7 @@ const ClockInSelfieModal: React.FC<Props> = ({ user, clockInState, onClose }) =>
             formData.append('userId', user.id.toString());
             try {
                 const response = await clockIn(formData).unwrap();
-                toast.show('Clock In successful!', { type: 'success' });
-                onClose?.();
+                onClose()
             } catch (error) {
                 // console.error('Clock In failed:', error);
                 toast.show('Clock In failed', { type: 'danger' });

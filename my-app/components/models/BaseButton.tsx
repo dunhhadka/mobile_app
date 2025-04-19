@@ -11,6 +11,7 @@ import {
 interface Props {
   isActive?: boolean
   isLoading?: boolean
+  color?: string
   onPress?: () => void
   title: string
 }
@@ -18,6 +19,7 @@ interface Props {
 export default function BaseButton({
   isActive = true,
   isLoading = false,
+  color='#7B5AFF',
   title,
   onPress,
 }: Props) {
@@ -28,7 +30,7 @@ export default function BaseButton({
         onPress={onPress}
         disabled={isLoading}
       >
-        <LinearGradient colors={['#7B5AFF', '#4D66F4']} style={styles.button}>
+        <LinearGradient colors={[color, '#4D66F4']} style={styles.button}>
           {isLoading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (

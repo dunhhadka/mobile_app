@@ -2,7 +2,6 @@ package org.example.management.management.domain.attendace;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -31,6 +30,7 @@ public class Log {
     private String longitude;
 
     private int userId;
+    private int attendanceId;
 
     public Log(
             Instant checkIn,
@@ -39,7 +39,8 @@ public class Log {
             String note,
             String latitude,
             String longitude,
-            int userId
+            int userId,
+            Integer attendanceId
     ) {
         this.checkIn = checkIn;
         this.type = type;
@@ -48,6 +49,11 @@ public class Log {
         this.latitude = latitude;
         this.longitude = longitude;
         this.userId = userId;
+    }
+
+
+    public void setAttendance(int attendanceId){
+        this.attendanceId = attendanceId;
     }
 
     public enum Type {

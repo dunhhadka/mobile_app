@@ -14,8 +14,8 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public abstract class LogMapper {
 
-    @Mapping(target = "id", source = "log.id")
     public abstract LogResponse toResponse(Log log);
     public abstract List<LogResponse> toResponses(List<Log> logs);
     public abstract AttendanceResponse toResponse(Attendance attendance);
+    public abstract List<AttendanceResponse> toResponse(List<Attendance> attendances);
 }
