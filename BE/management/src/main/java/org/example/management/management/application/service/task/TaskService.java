@@ -99,6 +99,7 @@ public class TaskService {
                 .completedAt(request.getCompletedAt())
                 .estimatedTime(request.getEstimatedTime())
                 .actualTime(request.getActualTime())
+                .actualStartDate(request.getActualStartDate())
                 .build();
     }
 
@@ -209,6 +210,64 @@ public class TaskService {
                         ));
 
         task.updateStatus(status);
+    }
+
+    public void start(int taskId, int userId) {
+        var taskInfo = this.validate(taskId, userId);
+
+        var task = taskInfo.task;
+
+        if (task.getTimeInfo().getActualStartDate() != null) {
+            throw new ConstrainViolationException(
+                    "task",
+                    "Công việc đã bắt đầu"
+            );
+        }
+
+        task.start();
+
+        taskRepository.save(task);
+    }
+
+    public void finish(int taskId, int userId) {
+        var taskInfo = this.validate(taskId, userId);
+        var task = taskInfo.task;
+        if (task.getTimeInfo().getCompletedAt() != null) {
+            throw new ConstrainViolationException(
+                    "task",
+                    "Công việc đã được hoàn thành"
+            );
+        }
+
+        task.finish();
+
+        taskRepository.save(task);
+    }
+
+    private TaskInfo validate(int taskId, int userId) {
+        var task = this.taskRepository.findById(taskId)
+                .orElseThrow(() ->
+                        new ConstrainViolationException(
+                                "task",
+                                "Task not found"
+                        ));
+        var user = this.userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new ConstrainViolationException(
+                                "user",
+                                "User not found"
+                        ));
+        if (user.getId() != task.getProcessId()) {
+            throw new ConstrainViolationException(
+                    "task",
+                    "Công việc không được thực hiện bởi " + user.getUserName() + " nên không thể bắt đầu"
+            );
+        }
+
+        return new TaskInfo(task, user);
+    }
+
+    record TaskInfo(Task task, User user) {
     }
 
     public record TaskDeletedEvent(int taskId, int projectId, int userId) {

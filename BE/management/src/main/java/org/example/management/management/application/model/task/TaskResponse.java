@@ -1,6 +1,5 @@
 package org.example.management.management.application.model.task;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.management.management.application.model.images.ImageResponse;
@@ -9,7 +8,7 @@ import org.example.management.management.domain.task.Task;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -42,11 +41,13 @@ public class TaskResponse {
 
     private BigDecimal processValue;
 
-    private LocalTime startDate;
+    private LocalDate startDate;
 
-    private LocalTime dueDate;
+    private LocalDate dueDate;
 
-    private LocalTime completedAt;
+    private LocalDate actualStartDate;
+
+    private LocalDate completedAt;
 
     private BigDecimal estimatedTime;
 

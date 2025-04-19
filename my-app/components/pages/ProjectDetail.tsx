@@ -21,6 +21,8 @@ import {
 import { TaskItem } from '../card/TaskItem'
 import { Task } from '../../types/management'
 import Loading from '../loading/Loading'
+import CommentPage from '../layouts/Comment'
+import DailyReportList from '../layouts/DailyReportList'
 
 // Types
 
@@ -76,6 +78,12 @@ export default function ProjectDetail() {
   const [taskSelectedInForm, setTaskSelectedInForm] = useState<
     Task | undefined
   >()
+  const [showComment, setShowComment] = useState(false)
+  const [showTaskComment, setShowTaskComment] = useState<Task | undefined>(
+    undefined
+  )
+
+  const [showDailyReport, setShowDailyReport] = useState(false)
 
   useEffect(() => {
     if (taskSelected) {
@@ -175,6 +183,14 @@ export default function ProjectDetail() {
               task={task}
               onDelete={() => {}}
               onView={(id) => getTask(id)}
+              showComment={() => {
+                setShowComment(true)
+                setShowTaskComment(task)
+              }}
+              showDailyReports={() => {
+                setShowDailyReport(true)
+                setShowTaskComment(task)
+              }}
             />
           </View>
         ))}
@@ -205,6 +221,28 @@ export default function ProjectDetail() {
               setTaskSelectedInForm(undefined)
             }}
           />
+        </BaseModel>
+      )}
+      {showComment && showTaskComment && (
+        <BaseModel
+          open={showComment}
+          onClose={() => {
+            setShowComment(false)
+            setShowTaskComment(undefined)
+          }}
+        >
+          <CommentPage taskId={showTaskComment.id} />
+        </BaseModel>
+      )}
+      {showDailyReport && showTaskComment && (
+        <BaseModel
+          open={showDailyReport}
+          onClose={() => {
+            setShowDailyReport(false)
+            setShowTaskComment(undefined)
+          }}
+        >
+          <DailyReportList taskId={showTaskComment.id} />
         </BaseModel>
       )}
       {isLoading && <Loading />}

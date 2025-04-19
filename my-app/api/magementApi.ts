@@ -10,6 +10,9 @@ import {
 import {
   ChatMember,
   ChatRoom,
+  Comment,
+  DailyReport,
+  DailyReportRequest,
   LoginRequest,
   LogResponse,
   Message,
@@ -24,7 +27,7 @@ import {
   UserRequest,
 } from '../types/management'
 
-export const URL = 'http://172.11.175.254:8080'
+export const URL = 'http://192.168.100.8:8080'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',
@@ -230,6 +233,37 @@ export const managementApi = createApi({
           : [{ type: 'task' as const, id: 'LIST' }]
       },
     }),
+    getCommentsByTaskId: builder.query<Comment[], number>({
+      query: (id) => ({
+        url: `/api/comments/${id}/comments`,
+        method: 'GET',
+      }),
+    }),
+    startTaskById: builder.mutation<void, { taskId: number; userId: number }>({
+      query: ({ taskId, userId }) => ({
+        url: `/api/tasks/${taskId}/current-user/${userId}/start`,
+        method: 'PUT',
+      }),
+    }),
+    finishTaskById: builder.mutation<void, { taskId: number; userId: number }>({
+      query: ({ taskId, userId }) => ({
+        url: `/api/tasks/${taskId}/current-user/${userId}/finish`,
+        method: 'PUT',
+      }),
+    }),
+    createDailyReport: builder.mutation<DailyReport, DailyReportRequest>({
+      query: (request) => ({
+        url: `/api/daily-reports`,
+        method: 'POST',
+        body: request,
+      }),
+    }),
+    getDailyReportByTaskId: builder.query<DailyReport[], number>({
+      query: (id) => ({
+        url: `/api/daily-reports/task/${id}`,
+        method: 'GET',
+      }),
+    }),
   }),
 })
 
@@ -254,4 +288,9 @@ export const {
   useMarkIsReadMutation,
   useGetMessageAndNotificationUnreadQuery,
   useGetTasksByUserIdQuery,
+  useGetCommentsByTaskIdQuery,
+  useStartTaskByIdMutation,
+  useFinishTaskByIdMutation,
+  useCreateDailyReportMutation,
+  useGetDailyReportByTaskIdQuery,
 } = managementApi

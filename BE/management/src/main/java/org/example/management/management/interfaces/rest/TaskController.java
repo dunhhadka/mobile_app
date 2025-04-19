@@ -59,4 +59,14 @@ public class TaskController {
     public void changeStatus(@RequestBody Task.Status status, @PathVariable int taskId) {
         this.taskService.changeStatus(taskId, status);
     }
+
+    @PutMapping("/{taskId}/current-user/{userId}/start")
+    public void start(@PathVariable int taskId, @PathVariable int userId) {
+        this.taskService.start(taskId, userId);
+    }
+
+    @PutMapping("/{taskId}/current-user/{userId}/finish")
+    public void finish(@PathVariable int taskId, @PathVariable int userId) {
+        this.taskService.finish(taskId, userId);
+    }
 }

@@ -17,41 +17,43 @@ import {
   TextInput,
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
-import { StatusBar } from 'expo-status-bar'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useRouter } from 'expo-router'
 import {
+  Calendar,
   ChevronDown,
   FileText,
   Percent,
+  Play,
   UserCircle,
-  Users,
 } from 'lucide-react-native'
 import colors from '../../constants/colors'
 import {
-  useCreateProjectMutation,
   useCreateTaskMutation,
   useFilterUserQuery,
-  useUpdateProjectMutation,
+  useFinishTaskByIdMutation,
+  useStartTaskByIdMutation,
   useUpdateTaskMutation,
 } from '../../api/magementApi'
 import {
+  ActionType,
   Project,
-  ProjectRequest,
-  ProjectSearchRequest,
+  Tag,
+  tagLabelMap,
+  tagWithLabel,
   Task,
   TaskRequest,
   User,
   UserFilterRequest,
 } from '../../types/management'
-import { CheckBox } from 'react-native-elements'
-import { formatDate } from '../models/UpdateProfileModal'
-import { handleApiError } from '../../utils/errorHandler'
 import { useToast } from 'react-native-toast-notifications'
 import BaseModel from '../models/BaseModel'
 import SelectOption, { Item } from './SelectOption'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store/store'
+import CustomDateTimePicker from './DateTimePicker'
+import { formatDate, formatDateTime } from '../models/UpdateProfileModal'
+import { TaskActionButton } from '../buttons/TaskActionButton'
+import DailyReportCreateForm from './DailyReportCreateForm'
 
 interface Props {
   onClose?: () => void
@@ -160,13 +162,21 @@ export default function CreateOrUpdateTaskFrom({
     project?.users?.map((u) => u.id) ?? []
   )
 
-  console.log(task)
-
   const [openAssignTo, setOpenAssignTo] = useState(false)
   const [openPriority, setOpenPriority] = useState(false)
   const [openDifficulty, setOpenDifficulty] = useState(false)
+  const [openSelectStartDate, setOpenSelectStartDate] = useState(false)
+  const [openSelectDueDate, setOpenSelectDueDate] = useState(false)
+  const [openSelectTags, setOpenSelectTags] = useState(false)
+
+  const [startDate, setStartDate] = useState<Date | undefined>(task?.start_date)
+  const [dueDate, setDueDate] = useState<Date | undefined>(task?.due_date)
+  const [tagSelected, setTagSelected] = useState(task?.tags ?? [])
 
   const isCreate = !task
+
+  const taskId = task?.id
+  const currentUser = useSelector((state: RootState) => state.user)
 
   const [assignToId, setAssignToId] = useState<number | undefined>(
     isCreate ? undefined : task.assign_id
@@ -197,6 +207,11 @@ export default function CreateOrUpdateTaskFrom({
     isFetching: isUserFetching,
   } = useFilterUserQuery(userFilter, { refetchOnMountOrArgChange: true })
 
+  const [startTask, { isLoading: isStartTaskLoading }] =
+    useStartTaskByIdMutation()
+  const [finishTask, { isLoading: isFinishTaskLoading }] =
+    useFinishTaskByIdMutation()
+
   // options
 
   const getAssignDescription = (user: User | undefined): string => {
@@ -224,7 +239,6 @@ export default function CreateOrUpdateTaskFrom({
   const [description, setDescription] = useState(
     isCreate ? '' : task.description
   )
-  const [showPicker, setShowPicker] = useState(false)
   const [error, setError] = useState<string | null>('')
 
   const [createTask, { isLoading: isCreateTaskLoading }] =
@@ -233,7 +247,7 @@ export default function CreateOrUpdateTaskFrom({
   const [updateTask, { isLoading: isUpdateTaskLoading }] =
     useUpdateTaskMutation()
 
-  const currentUser = useSelector((state: RootState) => state.user)
+  const [openShowDailyReport, setOpenShowDailyReport] = useState(false)
 
   const toast = useToast()
 
@@ -249,6 +263,9 @@ export default function CreateOrUpdateTaskFrom({
       difficulty: difficulty,
       status: 'to_do',
       process_value: processValue ?? 0,
+      tags: tagSelected ?? [],
+      start_date: startDate,
+      due_date: dueDate,
     } as TaskRequest
     try {
       console.log('TaskRequest', request)
@@ -270,11 +287,49 @@ export default function CreateOrUpdateTaskFrom({
     }
   }
 
+  const handleStartTask = async () => {
+    try {
+      if (task?.id && currentUser.currentUser?.id && actionButton === 'start') {
+        await startTask({
+          taskId: task?.id,
+          userId: currentUser.currentUser?.id,
+        }).unwrap()
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const tagKeys = Object.keys(tagLabelMap) as Tag[]
+
+  const actionButton = useMemo((): ActionType => {
+    if (isCreate) return 'create'
+
+    const currentUserId = currentUser.currentUser?.id ?? 0
+    if (currentUserId == task?.assign_id) return 'update'
+
+    if (currentUserId == task.process_id) {
+      if (!task.actual_start_date) {
+        return 'start'
+      } else if ((task.process_value ?? 0) <= 100) {
+        return 'update_process'
+      } else if (!task.completed_at) {
+        return 'finish'
+      }
+    }
+
+    return 'no_action'
+  }, [isCreate, currentUser, task])
+
+  console.log('ACTION', actionButton)
+
   const isLoading =
     isUserLoading ||
     isUserFetching ||
     isCreateTaskLoading ||
-    isUpdateTaskLoading
+    isUpdateTaskLoading ||
+    isStartTaskLoading ||
+    isFinishTaskLoading
 
   return (
     <KeyboardAvoidingView
@@ -368,6 +423,92 @@ export default function CreateOrUpdateTaskFrom({
               <ChevronDown size={20} color={colors.light.textLight} />
             </Pressable>
 
+            <View style={styles.chooseDate}>
+              <Text style={styles.label}>Ngày bắt đầu dự kiến:</Text>
+              <Pressable
+                style={styles.selectorDateButton}
+                onPress={() => setOpenSelectStartDate(true)}
+              >
+                <Calendar size={20} color={colors.light.primaryPurple} />
+                <Text style={styles.selectorDateValue}>
+                  {startDate ? formatDateTime(startDate) : 'Chọn ngày'}
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.chooseDate}>
+              <Text style={styles.label}>Ngày kết thúc dự kiến:</Text>
+              <Pressable
+                style={styles.selectorDateButton}
+                onPress={() => setOpenSelectDueDate(true)}
+              >
+                <Calendar size={20} color={colors.light.primaryPurple} />
+                <Text style={styles.selectorDateValue}>
+                  {dueDate ? formatDateTime(dueDate) : 'Chọn ngày'}
+                </Text>
+              </Pressable>
+            </View>
+            {openSelectStartDate && (
+              <CustomDateTimePicker
+                value={startDate}
+                onClose={() => setOpenSelectStartDate(false)}
+                onChange={(date) => setStartDate(date)}
+              />
+            )}
+            {openSelectDueDate && (
+              <CustomDateTimePicker
+                value={dueDate}
+                onClose={() => setOpenSelectDueDate(false)}
+                onChange={(date) => setDueDate(date)}
+              />
+            )}
+
+            <View style={{ marginTop: 30 }}>
+              <Text style={styles.label}>Tags</Text>
+              <Pressable
+                style={styles.selectorButton}
+                onPress={() => setOpenSelectTags(true)}
+              >
+                {tagSelected && tagSelected?.length ? (
+                  <View style={styles.tagContainer}>
+                    {tagSelected.map((tag, index) => (
+                      <View key={index} style={styles.tagChip}>
+                        <Text style={styles.tagText}>{tagLabelMap[tag]}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.selectorText}>{'Chọn Tags'}</Text>
+                )}
+              </Pressable>
+            </View>
+
+            {openSelectTags && (
+              <BaseModel
+                open={openSelectTags}
+                onClose={() => setOpenSelectTags(false)}
+                height={450}
+              >
+                <SelectOption
+                  title="Chọn thẻ liên quan"
+                  subtitle="Bạn có thể chọn nhiều thẻ"
+                  data={tagWithLabel}
+                  multiple
+                  multipleSelected={
+                    tagSelected?.map((tag) => tagKeys.indexOf(tag)) ?? []
+                  }
+                  onMultipleSelected={(selectedIndexes) => {
+                    const selectedTags = selectedIndexes.map(
+                      (index) => tagKeys[index]
+                    )
+                    setTagSelected(selectedTags)
+                    setOpenSelectTags(false)
+                  }}
+                  onCancel={() => setOpenSelectTags(false)}
+                />
+              </BaseModel>
+            )}
+
             {!isCreate && task && (
               <View>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -389,37 +530,48 @@ export default function CreateOrUpdateTaskFrom({
               </View>
             )}
 
-            {showPicker && (
-              <DateTimePicker
-                value={startedOn || new Date()}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={(event, selectedDate) => {
-                  setShowPicker(false)
-                  if (selectedDate) setStartedOn(selectedDate)
-                }}
+            {/* Submit Button */}
+            {(actionButton === 'create' || actionButton === 'update') && (
+              <TouchableOpacity
+                style={styles.buttonWrapper}
+                disabled={isLoading} // Disable nút khi đang submit
+                onPress={handleCreateProject}
+              >
+                <LinearGradient
+                  colors={['#7B5AFF', '#4D66F4']}
+                  style={styles.button}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : isCreate ? (
+                    <Text style={styles.buttonText}>Tạo công việc</Text>
+                  ) : (
+                    <Text style={styles.buttonText}>Cập nhật công việc</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+            {actionButton === 'start' && (
+              <TaskActionButton
+                onClick={handleStartTask}
+                action={'Bắt đầu'}
+                isLoading={isLoading}
               />
             )}
-
-            {/* Submit Button */}
-            <TouchableOpacity
-              style={styles.buttonWrapper}
-              disabled={isLoading} // Disable nút khi đang submit
-              onPress={handleCreateProject}
-            >
-              <LinearGradient
-                colors={['#7B5AFF', '#4D66F4']}
-                style={styles.button}
-              >
-                {isLoading ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : isCreate ? (
-                  <Text style={styles.buttonText}>Tạo công việc</Text>
-                ) : (
-                  <Text style={styles.buttonText}>Cập nhật công việc</Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
+            {actionButton === 'finish' && (
+              <TaskActionButton
+                onClick={handleStartTask}
+                action={'Hoàn thành'}
+                isLoading={isLoading}
+              />
+            )}
+            {actionButton === 'update_process' && (
+              <TaskActionButton
+                onClick={() => setOpenShowDailyReport(true)}
+                action={`Báo cáo ngày ${formatDateTime(new Date())}`}
+                isLoading={isLoading}
+              />
+            )}
           </View>
         </ScrollView>
       </TouchableWithoutFeedback>
@@ -547,6 +699,17 @@ export default function CreateOrUpdateTaskFrom({
           />
         </BaseModel>
       )}
+      {openShowDailyReport && (
+        <BaseModel
+          open={openShowDailyReport}
+          onClose={() => setOpenShowDailyReport(false)}
+        >
+          <DailyReportCreateForm
+            task={task}
+            onClose={() => setOpenShowDailyReport(false)}
+          />
+        </BaseModel>
+      )}
     </KeyboardAvoidingView>
   )
 }
@@ -557,6 +720,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.light.background,
     width: 420,
     marginTop: 10,
+    position: 'relative',
   },
   scrollView: { flex: 1 },
   scrollContent: { flexGrow: 1 },
@@ -656,8 +820,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.light.backgroundLight,
     marginBottom: 12,
   },
+  selectorDateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors.light.borderColor,
+    borderRadius: 8,
+    backgroundColor: colors.light.backgroundLight,
+    width: 200,
+  },
   selectorText: {
     flex: 1,
+    marginLeft: 8,
+    color: colors.light.textLight,
+    fontWeight: '500',
+  },
+  selectorDateValue: {
     marginLeft: 8,
     color: colors.light.textLight,
     fontWeight: '500',
@@ -731,4 +911,45 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   icon: {},
+  chooseDate: {
+    marginTop: 20,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  chooseDateInput: {},
+  tagContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  tagChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#F4F0FC',
+    borderColor: colors.light.primaryPurple,
+    borderWidth: 1,
+    borderRadius: 16,
+  },
+  tagText: {
+    color: colors.light.primaryPurple,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  buttonStart: {
+    flexDirection: 'row',
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
 })

@@ -11,10 +11,8 @@ import {
   User,
 } from 'lucide-react-native'
 import colors from '../../constants/colors'
-import Avatar from '../layouts/Avatar'
 import layout from '../../constants/layout'
 import typography from '../../constants/typography'
-import users from '../../mocks/users'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store/store'
 import {
@@ -28,7 +26,7 @@ import {
   NotificationType,
 } from '../../types/management'
 import { getTimeAgo } from '../../utils/timeUtils'
-import { NavigationProp, useNavigation } from '@react-navigation/native'
+import { useNavigation } from '@react-navigation/native'
 
 interface NotificationItemProps {
   notification: Notification

@@ -8,21 +8,23 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalTime;
+import java.time.LocalDate;
 
 @Getter
 @Builder(toBuilder = true)
 @Embeddable
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskTimeInfo {
+public class  TaskTimeInfo {
     @NotNull
-    private LocalTime startDate;
+    private LocalDate startDate;
+
+    private LocalDate actualStartDate;
 
     @NotNull
-    private LocalTime dueDate;
+    private LocalDate dueDate;
 
-    private LocalTime completedAt;
+    private LocalDate completedAt;
 
     private BigDecimal estimatedTime;
 

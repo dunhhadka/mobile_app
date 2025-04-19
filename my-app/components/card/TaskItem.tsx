@@ -6,25 +6,35 @@ import {
   TouchableOpacity,
   Pressable,
 } from 'react-native'
-import { Calendar, Hash, Trash2 } from 'lucide-react-native'
+import {
+  Calendar,
+  ClipboardMinus,
+  Hash,
+  MessageSquareText,
+  Trash2,
+} from 'lucide-react-native'
 import colors from '../../constants/colors'
 import { PriorityTag } from './PriorityTag'
 import ProgressBar from '../layouts/ProgressBar'
 import { Task } from '../../types/management'
 import Avatar from '../layouts/Avatar'
-import BaseModel from '../models/BaseModel'
 import ConfirmModal from './ConfirmModal'
+import BaseModel from '../models/BaseModel'
 
 interface TaskItemProps {
   task: Task
   onDelete?: (id: number) => void
   onView?: (id: number) => void
+  showComment?: (id: number) => void
+  showDailyReports?: (id: number) => void
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
   task,
   onDelete,
   onView,
+  showComment,
+  showDailyReports,
 }) => {
   const { id, title, priority, assign, process, due_date } = task
   const assignedUsers = [assign, process].filter(Boolean)
@@ -46,6 +56,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             <View style={styles.idContainer}>
               <Hash size={16} color={colors.primary} />
               <Text style={styles.idText}>{id}</Text>
+              <Pressable
+                style={{ marginLeft: 10 }}
+                onPress={() => showComment?.(task.id)}
+              >
+                <MessageSquareText color={colors.primary} />
+              </Pressable>
+              <Pressable
+                style={{ marginLeft: 10 }}
+                onPress={() => showDailyReports?.()}
+              >
+                <ClipboardMinus color={colors.primary} />
+              </Pressable>
             </View>
             <Text style={styles.title}>{title}</Text>
           </View>
