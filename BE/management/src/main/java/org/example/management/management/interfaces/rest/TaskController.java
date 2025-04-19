@@ -3,6 +3,7 @@ package org.example.management.management.interfaces.rest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.management.management.application.model.task.TaskCreateRequest;
+import org.example.management.management.application.model.task.TaskFilterRequest;
 import org.example.management.management.application.model.task.TaskResponse;
 import org.example.management.management.application.model.task.TaskUpdateRequest;
 import org.example.management.management.application.service.task.TaskService;
@@ -65,8 +66,18 @@ public class TaskController {
         this.taskService.start(taskId, userId);
     }
 
+    @PutMapping("/{taskId}/current-user/{userId}/reopen")
+    public void reOpen(@PathVariable int taskId, @PathVariable int userId) {
+        this.taskService.reopen(taskId, userId);
+    }
+
     @PutMapping("/{taskId}/current-user/{userId}/finish")
     public void finish(@PathVariable int taskId, @PathVariable int userId) {
         this.taskService.finish(taskId, userId);
+    }
+
+    @GetMapping("/filter")
+    public List<TaskResponse> filter(TaskFilterRequest request) {
+        return this.taskService.filter(request);
     }
 }

@@ -21,6 +21,7 @@ import {
   ProjectRequest,
   ProjectSearchRequest,
   Task,
+  TaskFilterRequest,
   TaskRequest,
   User,
   UserFilterRequest,
@@ -135,6 +136,8 @@ export const managementApi = createApi({
         url: `/api/tasks/${id}`,
         method: 'GET',
       }),
+      providesTags: (result) =>
+        result ? [{ type: 'task', id: result.id }] : [],
     }),
     updateTask: builder.mutation<Task, TaskRequest>({
       query: (request) => ({
@@ -244,12 +247,18 @@ export const managementApi = createApi({
         url: `/api/tasks/${taskId}/current-user/${userId}/start`,
         method: 'PUT',
       }),
+      invalidatesTags: (result, error, arg, meta) => {
+        return !error ? [{ type: 'task', id: arg.taskId }] : []
+      },
     }),
     finishTaskById: builder.mutation<void, { taskId: number; userId: number }>({
       query: ({ taskId, userId }) => ({
         url: `/api/tasks/${taskId}/current-user/${userId}/finish`,
         method: 'PUT',
       }),
+      invalidatesTags: (result, error, arg, meta) => {
+        return !error ? [{ type: 'task', id: arg.taskId }] : []
+      },
     }),
     createDailyReport: builder.mutation<DailyReport, DailyReportRequest>({
       query: (request) => ({
@@ -257,12 +266,42 @@ export const managementApi = createApi({
         method: 'POST',
         body: request,
       }),
+      invalidatesTags: (result, error, arg, meta) => {
+        return !error ? [{ type: 'task', id: arg.task_id }] : []
+      },
     }),
     getDailyReportByTaskId: builder.query<DailyReport[], number>({
       query: (id) => ({
         url: `/api/daily-reports/task/${id}`,
         method: 'GET',
       }),
+    }),
+    reOpenTaskById: builder.mutation<void, { taskId: number; userId: number }>({
+      query: ({ taskId, userId }) => ({
+        url: `/api/tasks/${taskId}/current-user/${userId}/reopen`,
+        method: 'PUT',
+      }),
+      invalidatesTags: (result, error, arg, meta) => {
+        return !error ? [{ type: 'task', id: arg.taskId }] : []
+      },
+    }),
+    filterTasks: builder.query<Task[], TaskFilterRequest>({
+      query: (request) => {
+        console.log(request)
+        return {
+          url: `/api/tasks/filter`,
+          method: 'GET',
+          params: { ...request },
+        }
+      },
+      providesTags: (result, error, arg, meta) => {
+        return result && result.length
+          ? [
+              ...result.map((r) => ({ type: 'task' as const, id: r.id })),
+              { type: 'task' as const, id: 'LIST' },
+            ]
+          : [{ type: 'task' as const, id: 'LIST' }]
+      },
     }),
   }),
 })
@@ -293,4 +332,7 @@ export const {
   useFinishTaskByIdMutation,
   useCreateDailyReportMutation,
   useGetDailyReportByTaskIdQuery,
+  useGetTaskByIdQuery,
+  useReOpenTaskByIdMutation,
+  useFilterTasksQuery,
 } = managementApi

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import {
   View,
   Text,
@@ -16,14 +16,13 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native'
-import DateTimePicker from '@react-native-community/datetimepicker'
 import { LinearGradient } from 'expo-linear-gradient'
 import {
   Calendar,
   ChevronDown,
+  ClipboardList,
   FileText,
   Percent,
-  Play,
   UserCircle,
 } from 'lucide-react-native'
 import colors from '../../constants/colors'
@@ -31,6 +30,9 @@ import {
   useCreateTaskMutation,
   useFilterUserQuery,
   useFinishTaskByIdMutation,
+  useGetProjectByIdQuery,
+  useGetTaskByIdQuery,
+  useReOpenTaskByIdMutation,
   useStartTaskByIdMutation,
   useUpdateTaskMutation,
 } from '../../api/magementApi'
@@ -45,18 +47,23 @@ import {
   User,
   UserFilterRequest,
 } from '../../types/management'
-import { useToast } from 'react-native-toast-notifications'
 import BaseModel from '../models/BaseModel'
 import SelectOption, { Item } from './SelectOption'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store/store'
 import CustomDateTimePicker from './DateTimePicker'
-import { formatDate, formatDateTime } from '../models/UpdateProfileModal'
+import { formatDateTime } from '../models/UpdateProfileModal'
 import { TaskActionButton } from '../buttons/TaskActionButton'
 import DailyReportCreateForm from './DailyReportCreateForm'
+import {
+  RouteProp,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native'
+import ConfirmModal from '../card/ConfirmModal'
 
 interface Props {
-  onClose?: () => void
   project?: Project
   task?: Task
 }
@@ -152,11 +159,31 @@ export const getLabelDifficulty = (difficulty?: DifficultyType): string => {
   }
 }
 
-export default function CreateOrUpdateTaskFrom({
-  onClose,
-  project,
-  task,
-}: Props) {
+type TaskScreenProps = RouteProp<
+  {
+    params: { project_id: number; task_id: number }
+  },
+  'params'
+>
+
+export default function CreateOrUpdateTaskFrom() {
+  const route = useRoute<TaskScreenProps>()
+
+  const { project_id, task_id } = route.params
+
+  const {
+    data: project,
+    isLoading: isProjectLoading,
+    isFetching: isProjectFetching,
+  } = useGetProjectByIdQuery(project_id)
+
+  const {
+    data: task,
+    isLoading: isTaskLoading,
+    isFetching: isTaskFetching,
+    refetch,
+  } = useGetTaskByIdQuery(task_id, { skip: !task_id })
+
   const [userFilter, setUserFilter] = useState<UserFilterRequest>({})
   const [selectedUsers, setSelectedUser] = useState<number[]>(
     project?.users?.map((u) => u.id) ?? []
@@ -175,11 +202,10 @@ export default function CreateOrUpdateTaskFrom({
 
   const isCreate = !task
 
-  const taskId = task?.id
   const currentUser = useSelector((state: RootState) => state.user)
 
   const [assignToId, setAssignToId] = useState<number | undefined>(
-    isCreate ? undefined : task.assign_id
+    isCreate ? undefined : task.process_id
   )
   const [priority, setPriority] = useState<
     'low' | 'medium' | 'high' | undefined
@@ -211,6 +237,8 @@ export default function CreateOrUpdateTaskFrom({
     useStartTaskByIdMutation()
   const [finishTask, { isLoading: isFinishTaskLoading }] =
     useFinishTaskByIdMutation()
+  const [reOpenTask, { isLoading: isReOpenTaskLoading }] =
+    useReOpenTaskByIdMutation()
 
   // options
 
@@ -221,9 +249,9 @@ export default function CreateOrUpdateTaskFrom({
 
   const assignItems = useMemo((): Item[] => {
     if (!users) return []
-    return users.map(
-      (u) => ({ label: getAssignDescription(u), value: u.id } as Item)
-    )
+    return users
+      .filter((u) => u.id !== currentUser.currentUser?.id)
+      .map((u) => ({ label: getAssignDescription(u), value: u.id } as Item))
   }, [])
 
   const [modalVisible, setModalVisible] = useState(false)
@@ -249,7 +277,7 @@ export default function CreateOrUpdateTaskFrom({
 
   const [openShowDailyReport, setOpenShowDailyReport] = useState(false)
 
-  const toast = useToast()
+  const navigation = useNavigation()
 
   const handleCreateProject = async () => {
     const request = {
@@ -261,7 +289,7 @@ export default function CreateOrUpdateTaskFrom({
       process_id: assignToId,
       priority: priority,
       difficulty: difficulty,
-      status: 'to_do',
+      status: task?.status ?? 'to_do',
       process_value: processValue ?? 0,
       tags: tagSelected ?? [],
       start_date: startDate,
@@ -274,7 +302,9 @@ export default function CreateOrUpdateTaskFrom({
       else response = await updateTask(request).unwrap()
       console.log('Task Created: ', response)
       setError(null)
-      onClose?.()
+
+      // @ts-ignore
+      navigation.navigate('ProjectDetail', { project_id })
     } catch (err: any) {
       console.log('Create project Error', err)
       let message: string | null = null
@@ -294,9 +324,46 @@ export default function CreateOrUpdateTaskFrom({
           taskId: task?.id,
           userId: currentUser.currentUser?.id,
         }).unwrap()
+        refetch()
       }
     } catch (err) {
       console.log(err)
+    }
+  }
+
+  const handleFinishTask = async () => {
+    try {
+      if (
+        task?.id &&
+        currentUser.currentUser?.id &&
+        actionButton === 'finish'
+      ) {
+        await finishTask({
+          taskId: task?.id,
+          userId: currentUser.currentUser?.id,
+        }).unwrap()
+        refetch()
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const [showConfirmReOpen, setShowComfirmReOpen] = useState(false)
+  const handleReopenTask = async () => {
+    try {
+      if (
+        task?.id &&
+        currentUser.currentUser?.id &&
+        actionButton === 'reopen'
+      ) {
+        await reOpenTask({
+          taskId: task?.id,
+          userId: currentUser.currentUser?.id,
+        }).unwrap()
+      }
+    } catch (err) {
+      console.error(err)
     }
   }
 
@@ -306,16 +373,28 @@ export default function CreateOrUpdateTaskFrom({
     if (isCreate) return 'create'
 
     const currentUserId = currentUser.currentUser?.id ?? 0
-    if (currentUserId == task?.assign_id) return 'update'
+    if (
+      currentUserId == task?.assign_id &&
+      task &&
+      ((task.process_value ?? 0) != 100 || task.status == 'in_process')
+    )
+      return 'update'
 
     if (currentUserId == task.process_id) {
       if (!task.actual_start_date) {
         return 'start'
-      } else if ((task.process_value ?? 0) <= 100) {
-        return 'update_process'
-      } else if (!task.completed_at) {
+      } else if (!task.completed_at && (task.process_value ?? 0) >= 100) {
         return 'finish'
+      } else if (
+        (task.process_value ?? 0) < 100 ||
+        task.status == 'in_process'
+      ) {
+        return 'update_process'
       }
+    }
+
+    if (currentUserId === task?.assign_id) {
+      return 'reopen'
     }
 
     return 'no_action'
@@ -323,13 +402,25 @@ export default function CreateOrUpdateTaskFrom({
 
   console.log('ACTION', actionButton)
 
+  useFocusEffect(
+    useCallback(() => {
+      if (task_id) {
+        refetch()
+      }
+    }, [task_id])
+  )
+
   const isLoading =
     isUserLoading ||
     isUserFetching ||
     isCreateTaskLoading ||
     isUpdateTaskLoading ||
     isStartTaskLoading ||
-    isFinishTaskLoading
+    isFinishTaskLoading ||
+    isProjectLoading ||
+    isProjectFetching ||
+    isTaskLoading ||
+    isTaskFetching
 
   return (
     <KeyboardAvoidingView
@@ -337,6 +428,19 @@ export default function CreateOrUpdateTaskFrom({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
+      <LinearGradient colors={['#7B5CFF', '#5E3FD9']}>
+        <View style={styles.headerTask}>
+          <View>
+            <Text style={styles.title}>
+              {task ? `Task ${task.title}` : 'Tạo task'}
+            </Text>
+            <Text style={styles.subtitle}>{`Dự án ${project?.title}`}</Text>
+          </View>
+          <View style={styles.iconContainer}>
+            <ClipboardList size={24} color="white" />
+          </View>
+        </View>
+      </LinearGradient>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
           style={styles.scrollView}
@@ -377,7 +481,7 @@ export default function CreateOrUpdateTaskFrom({
               />
             </View>
 
-            <Text style={styles.label}>Assign To</Text>
+            <Text style={styles.label}>Người thực hiện</Text>
             <Pressable
               style={styles.selectorButton}
               onPress={() => {
@@ -393,7 +497,7 @@ export default function CreateOrUpdateTaskFrom({
                         ? getAssignDescription(user)
                         : 'User not found'
                     })()
-                  : 'Chọn Assign To'}
+                  : 'Chọn người thực hiện'}
               </Text>
 
               <ChevronDown size={20} color={colors.light.textLight} />
@@ -509,27 +613,6 @@ export default function CreateOrUpdateTaskFrom({
               </BaseModel>
             )}
 
-            {!isCreate && task && (
-              <View>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={styles.label}>Tiến độ công việc</Text>
-                  <Percent
-                    color="#999"
-                    size={15}
-                    style={[styles.icon, { marginLeft: 5, marginBottom: 2 }]}
-                  />
-                </View>
-                <TextInput
-                  value={processValue + ''}
-                  onChangeText={(value) => setProcessValue(Number(value))}
-                  placeholder="Nhập số"
-                  keyboardType="numeric"
-                  style={styles.selectorButton}
-                  placeholderTextColor="#aaa"
-                />
-              </View>
-            )}
-
             {/* Submit Button */}
             {(actionButton === 'create' || actionButton === 'update') && (
               <TouchableOpacity
@@ -560,7 +643,7 @@ export default function CreateOrUpdateTaskFrom({
             )}
             {actionButton === 'finish' && (
               <TaskActionButton
-                onClick={handleStartTask}
+                onClick={handleFinishTask}
                 action={'Hoàn thành'}
                 isLoading={isLoading}
               />
@@ -569,6 +652,13 @@ export default function CreateOrUpdateTaskFrom({
               <TaskActionButton
                 onClick={() => setOpenShowDailyReport(true)}
                 action={`Báo cáo ngày ${formatDateTime(new Date())}`}
+                isLoading={isLoading}
+              />
+            )}
+            {actionButton === 'reopen' && (
+              <TaskActionButton
+                onClick={() => setShowComfirmReOpen(true)}
+                action={'Mở lại Task'}
                 isLoading={isLoading}
               />
             )}
@@ -706,9 +796,22 @@ export default function CreateOrUpdateTaskFrom({
         >
           <DailyReportCreateForm
             task={task}
-            onClose={() => setOpenShowDailyReport(false)}
+            onClose={() => {
+              setOpenShowDailyReport(false)
+              refetch()
+            }}
           />
         </BaseModel>
+      )}
+      {showConfirmReOpen && (
+        <ConfirmModal
+          open={showConfirmReOpen}
+          onCancel={() => setShowComfirmReOpen(false)}
+          onConfirm={() => {
+            handleReopenTask()
+            setShowComfirmReOpen(false)
+          }}
+        />
       )}
     </KeyboardAvoidingView>
   )
@@ -719,7 +822,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.light.background,
     width: 420,
-    marginTop: 10,
     position: 'relative',
   },
   scrollView: { flex: 1 },
@@ -951,5 +1053,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 4,
+  },
+  headerTask: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
   },
 })

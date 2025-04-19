@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -65,7 +66,10 @@ public class DailyReportService {
 
 
     public List<DailyReportResponse> getByIds(List<Integer> dailyReportIds) {
-        var dailyReports = this.dailyReportRepository.findByIdIn(dailyReportIds);
+        var dailyReports = this.dailyReportRepository.findByIdIn(dailyReportIds)
+                .stream()
+                .sorted(Comparator.comparingInt(DailyReport::getId).reversed())
+                .toList();
 
         if (CollectionUtils.isEmpty(dailyReports)) return List.of();
 

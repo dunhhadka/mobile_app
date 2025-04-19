@@ -61,7 +61,8 @@ export const formatDate = (date: Date | string | undefined | null): string => {
   })
 }
 
-export function formatDateTime(date: Date | string): string {
+export function formatDateTime(date: Date | string | undefined): string {
+  if (!date) return ''
   const parsedDate = typeof date === 'string' ? new Date(date) : date
 
   if (isNaN(parsedDate.getTime())) {

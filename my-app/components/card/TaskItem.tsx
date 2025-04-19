@@ -20,6 +20,7 @@ import { Task } from '../../types/management'
 import Avatar from '../layouts/Avatar'
 import ConfirmModal from './ConfirmModal'
 import BaseModel from '../models/BaseModel'
+import { formatDateTime } from '../models/UpdateProfileModal'
 
 interface TaskItemProps {
   task: Task
@@ -36,17 +37,25 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   showComment,
   showDailyReports,
 }) => {
-  const { id, title, priority, assign, process, due_date } = task
+  const { id, title, priority, assign, process, due_date, start_date } = task
   const assignedUsers = [assign, process].filter(Boolean)
 
   const [openDeleteModal, setOpenDeleteModal] = useState(false)
 
-  const formattedDate = due_date
-    ? new Date(due_date).toLocaleDateString('en-US', {
-        day: '2-digit',
-        month: 'short',
-      })
-    : 'No date'
+  const startDate = formatDateTime(start_date)
+  const formattedDate = formatDateTime(due_date)
+
+  const getStatus = (task: Task): string => {
+    if (!task.status) return 'Chưa bắt đầu'
+    switch (task.status) {
+      case 'in_process':
+        return 'Đang thực hiện'
+      case 'finish':
+        return 'Hoàn thành'
+      default:
+        return 'Chưa bắt đầu'
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -64,7 +73,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               </Pressable>
               <Pressable
                 style={{ marginLeft: 10 }}
-                onPress={() => showDailyReports?.()}
+                onPress={() => showDailyReports?.(id)}
               >
                 <ClipboardMinus color={colors.primary} />
               </Pressable>
@@ -77,11 +86,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         </View>
 
         <View style={styles.statusRow}>
-          <Text style={styles.statusText}>In Progress</Text>
+          <Text style={styles.statusText}>{getStatus(task)}</Text>
           {priority && <PriorityTag priority={priority} />}
         </View>
 
-        <ProgressBar progress={80} color={colors.primary} height={4} />
+        <ProgressBar
+          progress={task.process_value || 0}
+          color={colors.primary}
+          height={4}
+        />
 
         <View style={styles.footer}>
           <View style={styles.avatarsContainer}>

@@ -72,15 +72,13 @@ const DailyReportList = ({ taskId }: Props) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
-        <Text style={styles.title}>Báo cáo hàng ngày</Text>
-        <FlatList
-          data={taskReports}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 24 }}
-        />
-      </ScrollView>
+      <Text style={styles.title}>Báo cáo hàng ngày</Text>
+      <FlatList
+        data={taskReports}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderItem}
+        contentContainerStyle={{ paddingBottom: 24 }}
+      />
       {isLoading && <Loading />}
     </SafeAreaView>
   )

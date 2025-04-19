@@ -17,6 +17,7 @@ import org.example.management.management.domain.comment.Comment;
 import org.example.management.management.domain.leaves.Leave;
 import org.example.management.management.domain.task.events.DailyReportCreateEvent;
 import org.example.management.management.domain.task.events.TaskFinishEvent;
+import org.example.management.management.domain.task.events.TaskReOpenEvent;
 import org.example.management.management.domain.task.events.TaskStartEvent;
 import org.example.management.management.infastructure.exception.ConstrainViolationException;
 import org.hibernate.annotations.CreationTimestamp;
@@ -190,6 +191,7 @@ public class Task extends AggregateRoot<Task> {
         this.timeInfo = this.timeInfo.toBuilder()
                 .actualStartDate(LocalDate.now())
                 .build();
+        this.status = Status.in_process;
 
         this.addDomainEvent(new TaskStartEvent(this.assignId, this.processId, this.id));
     }
@@ -198,6 +200,7 @@ public class Task extends AggregateRoot<Task> {
         this.timeInfo = this.timeInfo.toBuilder()
                 .completedAt(LocalDate.now())
                 .build();
+        this.status = Status.finish;
 
         this.addDomainEvent(new TaskFinishEvent(this.assignId, this.processId, this.id));
     }
@@ -209,6 +212,12 @@ public class Task extends AggregateRoot<Task> {
         dailyReport.setTask(this);
 
         this.addDomainEvent(new DailyReportCreateEvent(this.assignId, this.processId, this.processValue, dailyReport.getDate()));
+    }
+
+    public void reOpen() {
+        this.status = Status.in_process;
+
+        this.addDomainEvent(new TaskReOpenEvent(this.processId, this.assignId, this.id));
     }
 
     public enum Status {

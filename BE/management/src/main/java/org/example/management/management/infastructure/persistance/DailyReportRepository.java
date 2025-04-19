@@ -10,6 +10,6 @@ public interface DailyReportRepository extends JpaRepository<DailyReport, Intege
 
     List<DailyReport> findByIdIn(List<Integer> ids);
 
-    @Query("SELECT d FROM DailyReport d WHERE d.task.id = :taskId ORDER BY d.createdAt DESC")
+    @Query("SELECT d FROM DailyReport d WHERE d.task.id = :taskId ORDER BY d.id DESC")
     List<DailyReport> findByTaskId(int taskId);
 }

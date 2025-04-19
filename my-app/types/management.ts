@@ -343,6 +343,7 @@ export type ActionType =
   | 'finish'
   | 'no_action'
   | 'update_process'
+  | 'reopen'
 
 export interface DailyReportRequest {
   note: string
@@ -359,4 +360,13 @@ export interface DailyReport {
   updated_at?: string
   reporter: User
   date: Date
+}
+
+export interface TaskFilterRequest {
+  title?: string
+  ids?: number[]
+  processId?: number
+  assignId?: number
+  projectId?: number
+  status?: StatusType
 }
