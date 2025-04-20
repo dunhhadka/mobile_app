@@ -14,6 +14,7 @@ import {
   HelpCircle,
   LogOut,
   ChevronRight,
+  BookText
 } from 'lucide-react-native'
 import Avatar from '../layouts/Avatar'
 import colors from '../../constants/colors'
@@ -27,14 +28,17 @@ import { RootState } from '../../store/store'
 import { getUserName } from '../../utils/userUtils'
 import BaseModel from '../models/BaseModel'
 import UpdateProfileModal from '../models/UpdateProfileModal'
+import { NavigationProp, useNavigation } from '@react-navigation/native'
+import { RootStackParamList } from '../../App';
 
 export default function ProfileScreen() {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const router = useRouter()
   const { currentUser } = useUserStore()
   const { tasks } = useTaskStore()
   const [isOpenUpdateModel, setIsOpenUpdateModel] = useState(false)
   const user = useSelector((state: RootState) => state.user.currentUser)
-
+ 
   if (!currentUser || !user) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
@@ -195,6 +199,27 @@ export default function ProfileScreen() {
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoTitle}>Bảng Lương</Text>
               </View>
+            
+              <ChevronRight size={20} color={colors.textLight} />
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.infoItem,
+                pressed && styles.infoItemPressed,
+              ]}
+              onPress={() => { 
+                // Sửa lại điều hướng đúng cách
+                navigation.navigate('LeaveStack');
+              }}
+            >
+              <View style={styles.infoIconContainer}>
+                <BookText size={20} color={colors.primary} />
+              </View>
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoTitle}>Tạo Đơn Nghỉ</Text>
+              </View>
+          
               <ChevronRight size={20} color={colors.textLight} />
             </Pressable>
           </View>

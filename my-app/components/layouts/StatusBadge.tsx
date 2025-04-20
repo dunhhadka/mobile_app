@@ -10,13 +10,13 @@ interface StatusBadgeProps {
 }
 
 const statusLabels: Record<TaskStatus, string> = {
-  completed: 'Completed',
-  inProgress: 'In Progress',
-  pending: 'To Do',
-  cancelled: 'Cancelled',
-  review: 'In Review',
-  todo: 'To Do',
-  done: 'Done',
+  completed: 'Hoàn thành',
+  inProgress: 'Đang thực hiện',
+  pending: 'Chờ xử lý',
+  cancelled: 'Đã hủy',
+  review: 'Đang xem xét',
+  todo: 'Cần làm',
+  done: 'Xong',
 }
 
 export default function StatusBadge({

@@ -247,23 +247,22 @@ export interface ImageRequest {
   file?: File
 }
 
-export interface AggregateLogRequest{
-  date: string,
-  user_id: number,
-  note: string,
+export interface AggregateLogRequest {
+  date: string
+  user_id: number
+  note: string
 }
 
 export interface AttendanceResponse {
-  id: number;
-  date: string;
-  clock_in: string | null;
-  clock_out: string | null;
-  actual_clock_in: string | null;
-  actual_clock_out: string | null;
-  total_hours: string | null;
-  note: string | null;
+  id: number
+  date: string
+  clock_in: string | null
+  clock_out: string | null
+  actual_clock_in: string | null
+  actual_clock_out: string | null
+  total_hours: string | null
+  note: string | null
 }
-
 
 export interface LogResponse {
   id: number
@@ -276,8 +275,6 @@ export interface LogResponse {
   user: number
 }
 export type Type = 'in' | 'out' | 'break_work' | 'back_work'
-
-
 
 export interface ChatRoom {
   id: number
@@ -334,6 +331,7 @@ export type NotificationType =
   | 'comment'
   | 'deadline'
   | 'user'
+  | 'leave'
 
 export const NotificationTitle = {
   messenger: 'Tin nhắn',
@@ -341,6 +339,7 @@ export const NotificationTitle = {
   comment: 'Bình luận',
   deadline: 'Hạn chót',
   user: 'Người dùng',
+  leave: 'Yêu cầu nghỉ phép',
 }
 
 export interface CommentRequest {
@@ -389,4 +388,24 @@ export interface TaskFilterRequest {
   assignId?: number
   projectId?: number
   status?: StatusType
+}
+export interface LeaveRequest {
+  category: string
+  start_leave: string // ISO date string, ví dụ: "2025-04-02"
+  end_leave: string // ISO date string, ví dụ: "2025-04-05"
+  contact_phone: string
+  description: string
+}
+
+export interface LeaveResponse {
+  id: number
+  category: string
+  start_leave: string // ISO date string
+  end_leave: string // ISO date string, fixed typo from end_eave
+  contact_phone: string
+  description: string
+  status: 'review' | 'approved' | 'rejected'
+  created_by: number
+  created_on: string // ISO date-time string
+  total_leave: number // Số ngày nghỉ
 }

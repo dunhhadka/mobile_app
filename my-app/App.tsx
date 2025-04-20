@@ -37,6 +37,8 @@ import NotificationProvider from './provider/NotificationProvider'
 import Toast from 'react-native-toast-message'
 import CustomNotificationToast from './components/CustomNotificationToast'
 import CreateOrUpdateTaskFrom from './components/form/CreateOrUpdateTaskFrom'
+import LeaveScreen from './components/pages/LeaveScreen'
+import LeaveDetailScreen from './components/pages/LeaveDetailScreen'
 
 // Param types for Task stack
 export type TasksStackParamList = {
@@ -46,11 +48,24 @@ export type TasksStackParamList = {
 }
 import { AttendanceResponse } from './types/management'
 
+export type LeaveStackParamList = {
+  LeaveScreen: undefined
+  LeaveDetail: { leave_id: number }
+}
+
 export type HomeStackParamList = {
   Home: undefined
   Notification: undefined
   ChatList: undefined
   ChatRoom: { room_id: number; member_id: number }
+}
+
+export type RootStackParamList = {
+  Onboarding: undefined
+  SignIn: undefined
+  SignUp: undefined
+  Main: undefined
+  LeaveStack: undefined
 }
 
 const HomeStack = createNativeStackNavigator<HomeStackParamList>()
@@ -102,6 +117,16 @@ function TasksStack() {
         component={CreateOrUpdateTaskFrom}
       />
     </TaskStack.Navigator>
+  )
+}
+
+const LeaveStack = createNativeStackNavigator<LeaveStackParamList>()
+function LeaveStackNavigator() {
+  return (
+    <LeaveStack.Navigator screenOptions={{ headerShown: false }}>
+      <LeaveStack.Screen name="LeaveScreen" component={LeaveScreen} />
+      <LeaveStack.Screen name="LeaveDetail" component={LeaveDetailScreen} />
+    </LeaveStack.Navigator>
   )
 }
 
@@ -174,6 +199,11 @@ export default function App() {
               <RootStack.Screen name="SignIn" component={SignInScreen} />
               <RootStack.Screen name="SignUp" component={SignUpScreen} />
               <RootStack.Screen name="Main" component={MainTabs} />
+              <RootStack.Screen
+                name="LeaveStack"
+                component={LeaveStackNavigator}
+                options={{ headerShown: false }}
+              />
             </RootStack.Navigator>
           </NavigationContainer>
         </ToastProvider>

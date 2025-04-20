@@ -9,6 +9,7 @@ import org.example.management.management.infastructure.exception.ConstrainViolat
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
@@ -18,25 +19,22 @@ import java.util.Objects;
 @Table(name = "leaves")
 @Setter
 public class Leave {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
-    @NotNull
-    @Enumerated(value = EnumType.STRING)
-    private Category category;
+    private String category;
 
     @NotNull
     private BigDecimal totalLeave;
 
     @NotNull
-    private Instant startLeave;
+    private LocalDate startLeave;
 
     @NotNull
-    private Instant endLeave;
+    private LocalDate endLeave;
 
-
-    private String taskName;
 
     private String contactPhone;
 
@@ -46,21 +44,14 @@ public class Leave {
 
     private Instant modifiedOn;
 
-    private Instant approvedAt;
+    private Instant decidedAt;
 
-    private Instant rejectedAt;
+    private Integer createdBy;
 
-    private Integer approveId;
+    private Integer decidedBy;
 
-    private Integer rejectId;
 
-    private Integer delegateId; //NOTE: người được giao lại task
-
-    @OneToOne
-    @MapsId
-    @JoinColumn(name = "currentTaskId")
-    private Task task;
-
+    private Integer currentTaskId;
 
     @NotNull
     @Enumerated(value = EnumType.STRING)
@@ -69,102 +60,55 @@ public class Leave {
     protected Leave() {
     }
 
-
-    public void setTaskWithCurrentTaskId(Task task) {
-        Objects.requireNonNull(task);
-        this.task = task;
-    }
-
-    public Leave(Category category,
-                 Instant startLeave,
-                 Instant endLeave,
-                 Integer delegateId,
+    public Leave(String category,
+                 LocalDate startLeave,
+                 LocalDate endLeave,
                  String contactPhone,
                  String description,
+                 Integer createdBy,
                  Integer currentTaskId
     ) {
         this.category = category;
         this.startLeave = startLeave;
         this.endLeave = endLeave;
-        this.delegateId = delegateId;
         this.contactPhone = contactPhone;
         this.description = description;
         this.status = Status.review;
+        this.createdBy = createdBy;
         this.createdOn = Instant.now();
+        this.calculateTotalLeave();
+        this.currentTaskId = currentTaskId;
     }
 
-    public void approve(Integer approveId, Instant approvedAt) {
-        if (this.status != Status.review) {
-            throw new ConstrainViolationException(this.status.toString(),
-                    "Cannot approve a leave that is not in review status");
-        }
-        this.status = Status.approved;
-        this.approveId = approveId;
-        this.approvedAt = approvedAt;
-        this.modifiedOn = Instant.now();
-        // TODO: Bổ sung event để gửi thông báo
-    }
-
-    public void reject(Integer rejectId, Instant rejectedAt) {
-        if (this.status != Status.review) {
-            throw new ConstrainViolationException(this.status.toString(),
-                    "Cannot reject a leave that is not in review status");
-        }
-        this.status = Status.rejected;
-        this.rejectId = rejectId;
-        this.rejectedAt = rejectedAt;
-        this.modifiedOn = Instant.now();
-        // TODO: Bổ sung event để gửi thông báo
-    }
-
-    //NOTE: Cập nhật thông tin nghỉ phép
-    public void update(Category category,
-                       Instant startLeave,
-                       Instant endLeave,
-                       Integer delegateId,
-                       String contactPhone,
-                       String description
-    ) {
-        if (this.status != Status.review) {
-            throw new ConstrainViolationException(this.status.toString(),
-                    "Cannot update field leave that is not in review status");
-        }
-        this.internalSetCategory(category);
-        this.internalSetDates(startLeave, endLeave);
-        this.internalSetContactPhone(contactPhone);
-        this.description = description;
-        this.internalSetDelegateId(delegateId);
-        this.modifiedOn = Instant.now();
-    }
-
-    public void updateTask(Integer currentTaskId,
-                           String taskName,
-                           Integer delegateId
-    ) {
-        //
-        if (!Objects.equals(this.taskName, taskName)) {
-            this.internalSetTaskName(taskName);
-        }
-        if (!Objects.equals(this.delegateId, delegateId)) {
-            this.internalSetDelegateId(delegateId);
-        }
-        this.modifiedOn = Instant.now();
-
-    }
-
-    private void internalSetCategory(Category category) {
-        if (Objects.equals(this.category, category)) {
+    public void updateLeaveStatus(Integer userId, Status status) {
+        if(this.status != Status.review) {
             return;
         }
-        this.category = category;
+        this.status = status;
+        this.decidedAt = Instant.now();
+        this.decidedBy = userId;
+        this.modifiedOn = Instant.now();
+        // Gửi thông báo
     }
 
-    private void internalSetDelegateId(Integer delegateId) {
-        this.delegateId = delegateId;
-        //TODO: Gửi thông báo đến người được giao lại task
+    public void approve(Integer userId, Instant now) {
+        this.status = Status.approved;
+        this.decidedBy = userId;
+        this.decidedAt = Instant.now();
+        this.modifiedOn = Instant.now();
+        // TODO: Gửi thông báo phê duyệt và người được giao lại task
     }
 
-    private void internalSetDates(Instant startLeave, Instant endLeave) {
+    public void reject(Integer userId, Instant now) {
+        this.status = Status.rejected;
+        this.decidedBy = userId;
+        this.decidedAt = now;
+        this.modifiedOn = Instant.now();
+        // TODO: Gửi thông báo bị từ chối
+    }
+
+
+    private void internalSetDates(LocalDate startLeave, LocalDate endLeave) {
         if (!Objects.equals(this.startLeave, startLeave) || !Objects.equals(this.endLeave, endLeave)) {
             this.startLeave = startLeave;
             this.endLeave = endLeave;
@@ -173,52 +117,26 @@ public class Leave {
     }
 
     private void calculateTotalLeave() {
-        if (startLeave == null || endLeave == null) {
+        if (this.startLeave == null || this.endLeave == null) {
             throw new ConstrainViolationException(null, "startLeave and endLeave must not be null");
         }
-        if (endLeave.isBefore(startLeave)) {
-            throw new ConstrainViolationException("startLeave" + startLeave + ",endLeave" + endLeave, "endLeave must be after startLeave");
+        if (this.endLeave.isBefore(this.startLeave)) {
+            throw new ConstrainViolationException("startLeave=" + startLeave + ", endLeave=" + endLeave,
+                    "endLeave must be after startLeave");
         }
-        long days = ChronoUnit.DAYS.between(startLeave.atZone(ZoneId.systemDefault()).toLocalDate(),
-                endLeave.atZone(ZoneId.systemDefault()).toLocalDate()
-        ) + 1;
-        this.totalLeave = new BigDecimal(days);
-    }
-
-    private void updateDates(Instant startLeave, Instant endLeave) {
-        if (!Objects.equals(this.startLeave, startLeave) || !Objects.equals(this.endLeave, endLeave)) {
-            if (endLeave.isBefore(startLeave)) {
-                throw new ConstrainViolationException("dates", "endLeave must be after startLeave");
-            }
-            this.startLeave = startLeave;
-            this.endLeave = endLeave;
-            calculateTotalLeave();
-        }
+        long days = ChronoUnit.DAYS.between(startLeave, endLeave) + 1;
+        this.totalLeave = BigDecimal.valueOf(days);
     }
 
     private void internalSetContactPhone(String contactPhone) {
-        if (Objects.equals(this.contactPhone, contactPhone)) {
-            return;
+        if (!Objects.equals(this.contactPhone, contactPhone)) {
+            this.contactPhone = contactPhone;
         }
-        this.contactPhone = contactPhone;
-    }
-
-
-    private void internalSetTaskName(String taskName) {
-        this.taskName = taskName;
-
     }
 
     public enum Status {
         review,
         approved,
         rejected
-    }
-
-    public enum Category {
-        sick,
-        personal, //TODO: Thêm
-        vacation,
-        bereavement,
     }
 }

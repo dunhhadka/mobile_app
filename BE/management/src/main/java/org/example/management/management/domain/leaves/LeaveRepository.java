@@ -5,7 +5,8 @@ import java.util.Optional;
 
 
 public interface LeaveRepository {
-    Optional<Leave> findById(int leaveId);
+    Optional<Leave> findById(Integer leaveId);
     Leave save(Leave leave);
     List<Leave> findByIdIn(List<Integer> leaveIds);
+    List<Leave> findByCreatedBy(Integer createdBy);
 }
