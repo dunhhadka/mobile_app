@@ -5,9 +5,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.example.management.management.application.model.task.ProjectManagementResponse;
 import org.example.management.management.application.model.task.TaskResponse;
 import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.application.service.projects.ProjectCreatedEvent;
+import org.example.management.management.application.service.projects.ProjectMapper;
+import org.example.management.management.application.service.projects.ProjectService;
 import org.example.management.management.application.service.task.TaskService;
 import org.example.management.management.application.service.user.UserService;
 import org.example.management.management.application.utils.ArrayUtils;
@@ -41,6 +44,8 @@ public class ProjectManagementService {
 
     private final UserService userService;
     private final TaskService taskService;
+
+    private final ProjectMapper projectMapper;
 
     public List<ProjectManagement> handleProjectCreated(ProjectCreatedEvent event) {
         int projectId = event.projectId();
@@ -279,6 +284,34 @@ public class ProjectManagementService {
         if (CollectionUtils.isNotEmpty(allTaskIds)) {
             this.taskRepository.deleteAllById(allTaskIds);
         }
+    }
+
+    public ProjectManagementResponse getByProjectIdAndUserId(int projectId, int userId) {
+        var projectFind = this.projectRepository.findById(projectId)
+                .orElseThrow(() ->
+                        new ConstrainViolationException(
+                                "Project",
+                                "Project not found"
+                        ));
+        var project = this.projectMapper.toResponse(projectFind);
+
+        var user = this.userService.getUserById(userId);
+
+        var projectManagements = this.projectManagementRepository.findByProjectIdAndUserIdIn(projectId, Set.of(userId));
+        if (CollectionUtils.isEmpty(projectManagements)) {
+            return null;
+        }
+
+        var management = projectManagements.get(0);
+        return ProjectManagementResponse.builder()
+                .id(management.getId())
+                .project(project)
+                .user(user)
+                .totalToDo(management.getTotalToDo())
+                .totalInProgress(management.getTotalInProgress())
+                .totalFinish(management.getTotalFinish())
+                .progress(management.getProgress())
+                .build();
     }
 
     public record TaskManagementInfo(int projectId, List<UserResponse> users, List<TaskResponse> tasks) {

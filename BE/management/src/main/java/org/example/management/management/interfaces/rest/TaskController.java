@@ -2,10 +2,8 @@ package org.example.management.management.interfaces.rest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.management.management.application.model.task.TaskCreateRequest;
-import org.example.management.management.application.model.task.TaskFilterRequest;
-import org.example.management.management.application.model.task.TaskResponse;
-import org.example.management.management.application.model.task.TaskUpdateRequest;
+import org.example.management.management.application.model.task.*;
+import org.example.management.management.application.service.projectmanagement.ProjectManagementService;
 import org.example.management.management.application.service.task.TaskService;
 import org.example.management.management.domain.task.Task;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +18,8 @@ import java.util.List;
 public class TaskController {
 
     private final TaskService taskService;
+
+    private final ProjectManagementService projectManagementService;
 
     @PostMapping
     public TaskResponse createTask(@Valid @RequestBody TaskCreateRequest request) throws IOException {
@@ -79,5 +79,10 @@ public class TaskController {
     @GetMapping("/filter")
     public List<TaskResponse> filter(TaskFilterRequest request) {
         return this.taskService.filter(request);
+    }
+
+    @GetMapping("/{userId}/project-managements/{projectId}")
+    public ProjectManagementResponse getByProjectIdAndUserId(@PathVariable int userId, @PathVariable int projectId) {
+        return this.projectManagementService.getByProjectIdAndUserId(projectId, userId);
     }
 }
