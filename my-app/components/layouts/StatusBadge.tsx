@@ -11,12 +11,12 @@ interface StatusBadgeProps {
 
 const statusLabels: Record<TaskStatus, string> = {
   completed: 'Completed',
-  inProgress: 'In Progress',
+  inProgress: 'Đang thực hiện',
   pending: 'To Do',
   cancelled: 'Cancelled',
   review: 'In Review',
-  todo: 'To Do',
-  done: 'Done',
+  todo: 'Chưa bắt đầu',
+  done: 'Hoàn thành',
 }
 
 export default function StatusBadge({

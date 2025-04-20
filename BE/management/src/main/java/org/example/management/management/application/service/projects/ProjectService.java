@@ -114,7 +114,7 @@ public class ProjectService {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .companyId(request.getCompanyId())
-                .status(request.getStatus())
+                .status(Optional.ofNullable(request.getStatus()).orElse(Project.Status.to_do))
                 .createdId(request.getCreatedId())
                 .startedOn(request.getStartedOn());
 
@@ -191,6 +191,18 @@ public class ProjectService {
         this.projectManagementService.deleteProject(project.getId());
 
         this.projectRepository.delete(project);
+    }
+
+    @Transactional
+    public void changeStatus(ProjectRequest.ChangeStatusRequest request) {
+        var project = this.projectRepository.findById(request.getProjectId())
+                .orElseThrow(() ->
+                        new ConstrainViolationException(
+                                "Project",
+                                "Không tìm thấy dự án"
+                        ));
+
+        project.updateStatus(request.getStatus());
     }
 
     // region read

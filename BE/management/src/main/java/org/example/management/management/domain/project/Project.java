@@ -9,8 +9,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.management.ddd.AggregateRoot;
+import org.example.management.management.jobs.ProjectHandleEventService;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -51,15 +53,36 @@ public class Project extends AggregateRoot<Project> {
 
     private int createdId;
 
+    private int totalToDo;
+    private int totalInProgress;
+    private int totalFinish;
+    private int totalTask;
+
+    private BigDecimal progress;
+
     public void addEvents(int createdId, List<Integer> memberIds) {
         var projectCreatedEvent = new ProjectCreatedEvent(Instant.now(), this.id, createdId, memberIds);
         this.addDomainEvent(projectCreatedEvent);
     }
 
+    public void update(ProjectHandleEventService.UpdateProjectModal updateModal) {
+        this.totalToDo = updateModal.getTotalToDo();
+        this.totalInProgress = updateModal.getTotalInProgress();
+        this.totalFinish = updateModal.getTotalFinish();
+        this.totalTask = updateModal.getTotalTask();
+
+        this.progress = updateModal.calculateProgress();
+    }
+
+    public void updateStatus(Status status) {
+        this.status = status;
+
+        this.modifiedOn = Instant.now();
+    }
+
     public enum Status {
         in_process,
-        done,
-        reject,
-        none
+        finish,
+        to_do,
     }
 }

@@ -3,6 +3,8 @@ import { View, Text, StyleSheet } from 'react-native'
 import { Circle } from 'lucide-react-native'
 import colors from '../../constants/colors'
 
+interface Props {}
+
 export const ProjectSummary = () => {
   const inProgressCount = 8
   const doneCount = 5

@@ -22,5 +22,7 @@ public class ProjectManagementResponse {
     private int totalInProgress;
     private int totalFinish;
 
+    private int totalTask;
+
     private BigDecimal progress;
 }

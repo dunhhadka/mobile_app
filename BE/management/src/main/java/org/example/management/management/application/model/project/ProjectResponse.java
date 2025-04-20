@@ -6,6 +6,7 @@ import org.example.management.management.application.model.task.TaskResponse;
 import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.domain.project.Project;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -29,4 +30,11 @@ public class ProjectResponse {
     private List<UserResponse> users;
 
     private List<TaskResponse> tasks;
+
+    private int totalToDo;
+    private int totalInProgress;
+    private int totalFinish;
+    private int totalTask;
+
+    private BigDecimal progress;
 }

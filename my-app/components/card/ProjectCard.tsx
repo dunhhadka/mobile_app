@@ -10,7 +10,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import colors from '../../constants/colors'
 import { Project } from '../../types/management'
-import { formatDate } from '../models/UpdateProfileModal'
+import { formatDate, formatDateTime } from '../models/UpdateProfileModal'
 
 export type ProjectStatus = 'in_progress' | 'done'
 
@@ -31,10 +31,7 @@ export const ProjectCard = ({ project, onEdit }: ProjectCardProps) => {
   const statusText = isInProgress ? 'In Progress' : 'Done'
 
   return (
-    <LinearGradient
-      colors={['rgba(239, 245, 245, 0.9)', 'rgba(239, 245, 245, 0.7)']}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>{title}</Text>
         <View
@@ -60,8 +57,8 @@ export const ProjectCard = ({ project, onEdit }: ProjectCardProps) => {
 
         <View style={styles.detailRow}>
           <Calendar size={16} color={colors.textSecondary} />
-          <Text style={styles.detailText}>Start Date:</Text>
-          <Text style={styles.detailValue}>{formatDate(started_on)}</Text>
+          <Text style={styles.detailText}>Ngày bắt đầu:</Text>
+          <Text style={styles.detailValue}>{formatDateTime(started_on)}</Text>
         </View>
 
         <View style={styles.detailRow}>
@@ -72,7 +69,7 @@ export const ProjectCard = ({ project, onEdit }: ProjectCardProps) => {
               {tasksCompleted}/{totalTasks}
             </Text>
             <Text style={[styles.taskStatus, { color: colors.success }]}>
-              Completed
+              Đã hoàn thành
             </Text>
           </View>
         </View>
@@ -93,7 +90,7 @@ export const ProjectCard = ({ project, onEdit }: ProjectCardProps) => {
           <Edit size={18} color={colors.primary} />
         </TouchableOpacity>
       </View>
-    </LinearGradient>
+    </View>
   )
 }
 
@@ -104,14 +101,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: 'white',
 
-    // iOS Shadow
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-
-    // Android Shadow
-    elevation: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   header: {
     flexDirection: 'row',

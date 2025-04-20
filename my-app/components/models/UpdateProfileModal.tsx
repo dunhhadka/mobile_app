@@ -30,7 +30,7 @@ import { useDispatch } from 'react-redux'
 import { useToast } from 'react-native-toast-notifications'
 import { setUser } from '../../redux/slices/userSlice'
 import { getUserName } from '../../utils/userUtils'
-import Avatar from '../layouts/Avatar'
+import Avatar, { getRandomColor } from '../layouts/Avatar'
 import { launchCamera } from 'react-native-image-picker'
 import * as ImagePicker from 'expo-image-picker'
 import typography from '../../constants/typography'
@@ -115,6 +115,7 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
         district_name: districtName,
         country_name: country,
       },
+      default_color: user?.default_color ?? getRandomColor(),
     } as UserRequest
     try {
       const res = await updateUser(data).unwrap()

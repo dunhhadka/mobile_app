@@ -6,36 +6,28 @@ import {
   TouchableOpacity,
   Pressable,
 } from 'react-native'
-import {
-  Calendar,
-  ClipboardMinus,
-  Hash,
-  MessageSquareText,
-  Trash2,
-} from 'lucide-react-native'
+import { Calendar, ClipboardMinus, Hash, Trash2 } from 'lucide-react-native'
 import colors from '../../constants/colors'
 import { PriorityTag } from './PriorityTag'
 import ProgressBar from '../layouts/ProgressBar'
-import { Task } from '../../types/management'
+import { Position, Task } from '../../types/management'
 import Avatar from '../layouts/Avatar'
 import ConfirmModal from './ConfirmModal'
 import BaseModel from '../models/BaseModel'
 import { formatDateTime } from '../models/UpdateProfileModal'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../store/store'
 
 interface TaskItemProps {
   task: Task
   onDelete?: (id: number) => void
   onView?: (id: number) => void
-  showComment?: (id: number) => void
-  showDailyReports?: (id: number) => void
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
   task,
   onDelete,
   onView,
-  showComment,
-  showDailyReports,
 }) => {
   const { id, title, priority, assign, process, due_date, start_date } = task
   const assignedUsers = [assign, process].filter(Boolean)
@@ -43,7 +35,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   const [openDeleteModal, setOpenDeleteModal] = useState(false)
 
   const startDate = formatDateTime(start_date)
-  const formattedDate = formatDateTime(due_date)
+  const dueDate = formatDateTime(due_date)
 
   const getStatus = (task: Task): string => {
     if (!task.status) return 'Chưa bắt đầu'
@@ -57,6 +49,11 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     }
   }
 
+  const currentUser = useSelector((state: RootState) => state.user.currentUser)
+  const isManager = !currentUser?.position
+    ? false
+    : Position[currentUser.position] === 'Quản lý'
+
   return (
     <View style={styles.container}>
       <Pressable onPress={() => onView && onView(id)}>
@@ -65,24 +62,14 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             <View style={styles.idContainer}>
               <Hash size={16} color={colors.primary} />
               <Text style={styles.idText}>{id}</Text>
-              <Pressable
-                style={{ marginLeft: 10 }}
-                onPress={() => showComment?.(task.id)}
-              >
-                <MessageSquareText color={colors.primary} />
-              </Pressable>
-              <Pressable
-                style={{ marginLeft: 10 }}
-                onPress={() => showDailyReports?.(id)}
-              >
-                <ClipboardMinus color={colors.primary} />
-              </Pressable>
             </View>
             <Text style={styles.title}>{title}</Text>
           </View>
-          <TouchableOpacity onPress={() => setOpenDeleteModal(true)}>
-            <Trash2 size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+          {isManager && (
+            <TouchableOpacity onPress={() => setOpenDeleteModal(true)}>
+              <Trash2 size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.statusRow}>
@@ -113,9 +100,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
           <View style={styles.dateContainer}>
             <Calendar size={14} color={colors.textSecondary} />
-            <Text style={styles.dateText}>{formattedDate}</Text>
-            <Hash size={14} color={colors.textSecondary} />
-            <Text style={styles.dateText}>{id}</Text>
+            <Text style={styles.dateText}>{startDate}</Text>
+            <Text>-</Text>
+            <Calendar size={14} color={colors.textSecondary} />
+            <Text style={styles.dateText}>{dueDate}</Text>
           </View>
         </View>
         {openDeleteModal && (

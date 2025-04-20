@@ -22,7 +22,7 @@ import {
   ChevronDown,
   ClipboardList,
   FileText,
-  Percent,
+  MessageSquareText,
   UserCircle,
 } from 'lucide-react-native'
 import colors from '../../constants/colors'
@@ -62,6 +62,8 @@ import {
   useRoute,
 } from '@react-navigation/native'
 import ConfirmModal from '../card/ConfirmModal'
+import DailyReportList from '../layouts/DailyReportList'
+import CommentPage from '../layouts/Comment'
 
 interface Props {
   project?: Project
@@ -189,6 +191,8 @@ export default function CreateOrUpdateTaskFrom() {
     project?.users?.map((u) => u.id) ?? []
   )
 
+  const [showDailyReport, setShowDailyReport] = useState(false)
+
   const [openAssignTo, setOpenAssignTo] = useState(false)
   const [openPriority, setOpenPriority] = useState(false)
   const [openDifficulty, setOpenDifficulty] = useState(false)
@@ -225,6 +229,10 @@ export default function CreateOrUpdateTaskFrom() {
 
   const [startedOn, setStartedOn] = useState<Date | undefined>(
     project?.started_on
+  )
+  const [showComment, setShowComment] = useState(false)
+  const [showTaskComment, setShowTaskComment] = useState<Task | undefined>(
+    undefined
   )
 
   const {
@@ -365,6 +373,7 @@ export default function CreateOrUpdateTaskFrom() {
     } catch (err) {
       console.error(err)
     }
+    setShowComfirmReOpen(false)
   }
 
   const tagKeys = Object.keys(tagLabelMap) as Tag[]
@@ -430,14 +439,30 @@ export default function CreateOrUpdateTaskFrom() {
     >
       <LinearGradient colors={['#7B5CFF', '#5E3FD9']}>
         <View style={styles.headerTask}>
-          <View>
+          <View style={{ maxWidth: 300 }}>
             <Text style={styles.title}>
               {task ? `Task ${task.title}` : 'Tạo task'}
             </Text>
             <Text style={styles.subtitle}>{`Dự án ${project?.title}`}</Text>
           </View>
-          <View style={styles.iconContainer}>
-            <ClipboardList size={24} color="white" />
+          <View
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              marginRight: 10,
+              gap: 10,
+            }}
+          >
+            <Pressable onPress={() => setShowComment(true)}>
+              <View style={styles.iconContainer}>
+                <MessageSquareText size={24} color="white" />
+              </View>
+            </Pressable>
+            <Pressable onPress={() => setShowDailyReport(true)}>
+              <View style={styles.iconContainer}>
+                <ClipboardList size={24} color="white" />
+              </View>
+            </Pressable>
           </View>
         </View>
       </LinearGradient>
@@ -803,14 +828,33 @@ export default function CreateOrUpdateTaskFrom() {
           />
         </BaseModel>
       )}
+      {showComment && (
+        <BaseModel
+          open={showComment}
+          onClose={() => {
+            setShowComment(false)
+            setShowTaskComment(undefined)
+          }}
+        >
+          <CommentPage taskId={task_id} />
+        </BaseModel>
+      )}
+      {showDailyReport && (
+        <BaseModel
+          open={showDailyReport}
+          onClose={() => {
+            setShowDailyReport(false)
+            setShowTaskComment(undefined)
+          }}
+        >
+          <DailyReportList taskId={task_id} />
+        </BaseModel>
+      )}
       {showConfirmReOpen && (
         <ConfirmModal
           open={showConfirmReOpen}
           onCancel={() => setShowComfirmReOpen(false)}
-          onConfirm={() => {
-            handleReopenTask()
-            setShowComfirmReOpen(false)
-          }}
+          onConfirm={handleReopenTask}
         />
       )}
     </KeyboardAvoidingView>

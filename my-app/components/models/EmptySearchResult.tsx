@@ -1,13 +1,19 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 
-const EmptySearchResult = () => {
+interface Props {
+  title?: string
+  subtitle?: string
+}
+
+const EmptySearchResult = ({
+  title = 'Không có kết quả nào',
+  subtitle = 'Hãy thử thay đổi từ khóa hoặc bộ lọc tìm kiếm nhé!',
+}: Props) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Không có kết quả nào</Text>
-      <Text style={styles.subtitle}>
-        Hãy thử thay đổi từ khóa hoặc bộ lọc tìm kiếm nhé!
-      </Text>
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.subtitle}>{subtitle}</Text>
     </View>
   )
 }

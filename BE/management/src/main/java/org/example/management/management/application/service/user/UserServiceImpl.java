@@ -71,6 +71,7 @@ public class UserServiceImpl implements UserService {
         user.setUserName(name);
         user.setPassword(request.getPassword());
         user.setRole(User.Role.member);
+        user.setDefaultColor(request.getDefaultColor());
         userRepository.save(user);
         return this.getByIds(List.of(user.getId())).get(0);
     }
@@ -91,6 +92,7 @@ public class UserServiceImpl implements UserService {
         userMapper.updateUser(user, request);
 
         user.updateAddress(request.getAddress());
+        user.setDefaultColor(request.getDefaultColor());
 
         userRepository.save(user);
         return this.getByIds(List.of(user.getId())).get(0);

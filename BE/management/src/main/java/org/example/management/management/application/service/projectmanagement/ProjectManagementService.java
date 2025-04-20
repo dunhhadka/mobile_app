@@ -311,6 +311,7 @@ public class ProjectManagementService {
                 .totalInProgress(management.getTotalInProgress())
                 .totalFinish(management.getTotalFinish())
                 .progress(management.getProgress())
+                .totalTask(management.getTotalTasks())
                 .build();
     }
 

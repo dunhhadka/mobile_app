@@ -16,6 +16,8 @@ public class ProjectSearchRequest {
 
     private List<Integer> createdIds;
 
+    private List<Integer> processIds;
+
     private String title;
     private String description;
 

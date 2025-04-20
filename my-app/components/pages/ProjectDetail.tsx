@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import {
   View,
   Text,
@@ -8,33 +8,36 @@ import {
   TouchableOpacity,
   Pressable,
 } from 'react-native'
-import { Circle, SlidersHorizontal } from 'lucide-react-native'
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'
+import { SlidersHorizontal } from 'lucide-react-native'
+import {
+  useNavigation,
+  useRoute,
+  RouteProp,
+  useFocusEffect,
+} from '@react-navigation/native'
 import colors from '../../constants/colors'
 import StatusBadge from '../layouts/StatusBadge'
 import ProgressBar from '../layouts/ProgressBar'
-import BaseModel from '../models/BaseModel'
-import CreateOrUpdateTaskForm from '../form/CreateOrUpdateTaskFrom'
 import {
+  useChangProjectStatusMutation,
   useFilterTasksQuery,
   useGetProjectByIdQuery,
-  useLazyGetTaskByIdQuery,
+  useGetProjectMamagementByProjectIdAndUserIdQuery,
 } from '../../api/magementApi'
 import { TaskItem } from '../card/TaskItem'
 import {
+  ChangeProjectStatusRequest,
   Position,
-  StatusType,
-  Task,
   TaskFilterRequest,
 } from '../../types/management'
 import Loading from '../loading/Loading'
-import CommentPage from '../layouts/Comment'
-import DailyReportList from '../layouts/DailyReportList'
-import SearchInput from '../card/SearchInput'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store/store'
-import { useDebounce } from 'use-debounce'
 import EmptySearchResult from '../models/EmptySearchResult'
+import SlideInModal from '../models/SlideInModal'
+import TaskFilterForm from '../form/TaskFilterForm'
+import { TaskActionButton } from '../buttons/TaskActionButton'
+import ConfirmModal from '../card/ConfirmModal'
 
 // Types
 
@@ -48,23 +51,10 @@ interface Sprint {
   advice: string
 }
 
-interface TaskSummary {
-  todo: number
-  inProgress: number
-  done: number
-}
-
 type ProjectDetailRouteProp = RouteProp<
   { params: { project_id: number } },
   'params'
 >
-
-// Helper
-const getTaskSummary = (tasks: Task[]): TaskSummary => ({
-  todo: tasks.filter((t) => t.status === 'to_do').length,
-  inProgress: tasks.filter((t) => t.status === 'in_process').length,
-  done: tasks.filter((t) => t.status === 'finish').length,
-})
 
 const getSprintStatus = (status: Sprint['status']) => {
   switch (status) {
@@ -84,17 +74,39 @@ export default function ProjectDetail() {
   const { project_id } = route.params
   const navigation = useNavigation()
   const currentUser = useSelector((state: RootState) => state.user.currentUser)
-  const [status, setStatus] = useState<StatusType | undefined>(undefined)
+  const [openFilterModal, setOpenFitlerModal] = useState<boolean>(false)
+  const [showStartConfirmModal, sethowStartConfirmModal] = useState(false)
+  const [showFinishConfirmModal, setShowFinishConfirmModal] = useState(false)
 
-  const { data: project, isLoading: isProjectLoading } = useGetProjectByIdQuery(
-    project_id,
+  const isManager =
+    currentUser?.position && Position[currentUser.position] === 'Quản lý'
+
+  const {
+    data: projectManagement,
+    isLoading: isLoadingProjectManagement,
+    isFetching: isFetchingProjectManagement,
+    refetch: refechProjectManagement,
+  } = useGetProjectMamagementByProjectIdAndUserIdQuery(
     {
-      refetchOnMountOrArgChange: true,
-    }
+      projectId: project_id,
+      userId: currentUser?.id ?? 0,
+    },
+    { refetchOnMountOrArgChange: true }
   )
 
-  const [query, setQuery] = useState<string>('')
-  const [debouncedTitle] = useDebounce(query, 500)
+  const {
+    data: project,
+    isLoading: isProjectLoading,
+    refetch: refetchProject,
+  } = useGetProjectByIdQuery(project_id, {
+    refetchOnMountOrArgChange: true,
+  })
+
+  console.log(project)
+
+  const isShowForManager = !currentUser?.position
+    ? false
+    : Position[currentUser.position] === 'Quản lý'
 
   const [taskFilter, setTaskFilter] = useState<TaskFilterRequest>({
     projectId: project_id,
@@ -104,29 +116,21 @@ export default function ProjectDetail() {
         : currentUser?.id ?? 0,
   })
 
-  const fullTaskFilter: TaskFilterRequest = {
-    ...taskFilter,
-    title: debouncedTitle,
-    status: status,
-  }
+  const fullTaskFilter = useMemo(
+    () => ({
+      ...taskFilter,
+    }),
+    [taskFilter]
+  )
 
   const {
     data: tasks,
     isLoading: isFilterTaskLoading,
     isFetching: isTaskFetching,
-    refetch: refetchTasks,
   } = useFilterTasksQuery(fullTaskFilter, { refetchOnMountOrArgChange: true })
 
-  const [showComment, setShowComment] = useState(false)
-  const [showTaskComment, setShowTaskComment] = useState<Task | undefined>(
-    undefined
-  )
-
-  const [showDailyReport, setShowDailyReport] = useState(false)
-
-  const summary = tasks
-    ? getTaskSummary(tasks || [])
-    : { todo: 0, inProgress: 0, done: 0 }
+  const [changeProjectStatus, { isLoading: isProjectStatusLoading }] =
+    useChangProjectStatusMutation()
 
   const sprint: Sprint = {
     id: '1',
@@ -142,7 +146,43 @@ export default function ProjectDetail() {
     sprint.status
   )
 
-  const isLoading = isFilterTaskLoading || isTaskFetching
+  const handleStartProject = async () => {
+    try {
+      const changeRequest: ChangeProjectStatusRequest = {
+        project_id: project_id,
+        status: 'in_process',
+      }
+      await changeProjectStatus(changeRequest).unwrap()
+    } catch (err) {}
+
+    sethowStartConfirmModal(false)
+  }
+
+  const handleFinishProject = async () => {
+    try {
+      const changeRequest: ChangeProjectStatusRequest = {
+        project_id: project_id,
+        status: 'finish',
+      }
+      await changeProjectStatus(changeRequest).unwrap()
+    } catch (err) {}
+    setShowFinishConfirmModal(false)
+  }
+
+  useFocusEffect(
+    useCallback(() => {
+      refechProjectManagement()
+      refetchProject()
+    }, [refechProjectManagement, refetchProject])
+  )
+
+  const isLoading =
+    isFilterTaskLoading ||
+    isTaskFetching ||
+    isLoadingProjectManagement ||
+    isFetchingProjectManagement ||
+    isProjectLoading ||
+    isProjectStatusLoading
 
   return (
     <SafeAreaView style={styles.container}>
@@ -152,50 +192,123 @@ export default function ProjectDetail() {
       >
         {/* Summary Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Summary of Your Work</Text>
-          <Text style={styles.cardSubtitle}>Your current task progress</Text>
+          <View style={{ display: 'flex', flexDirection: 'row' }}>
+            {isShowForManager ? (
+              <Text style={styles.cardTitle}>{`Tóm tắt tiến độ trong dự án ${
+                project?.title ?? ''
+              }`}</Text>
+            ) : (
+              <Text
+                style={styles.cardTitle}
+              >{`Tóm tắt tiến độ của bạn trong dự án ${
+                project?.title ?? ''
+              }`}</Text>
+            )}
+            <View style={{ flex: 1 }}>
+              <Pressable
+                style={styles.filterButtonActive}
+                onPress={() => setOpenFitlerModal(true)}
+              >
+                <SlidersHorizontal color={colors.white} />
+              </Pressable>
+            </View>
+          </View>
+          <Text style={styles.cardSubtitle}>Tiến độ hiện tại</Text>
           <View style={styles.statsContainer}>
             <Pressable style={styles.statItem}>
               <StatusBadge status="todo" />
-              <Text style={styles.statValue}>{summary.todo}</Text>
+              <Text style={styles.statValue}>
+                {isShowForManager
+                  ? project?.total_to_do ?? 0
+                  : projectManagement?.total_to_do ?? 0}
+              </Text>
             </Pressable>
             <View style={styles.divider} />
             <View style={styles.statItem}>
               <StatusBadge status="inProgress" />
-              <Text style={styles.statValue}>{summary.inProgress}</Text>
+              <Text style={styles.statValue}>
+                {isShowForManager
+                  ? project?.total_in_progress ?? 0
+                  : projectManagement?.total_in_progress ?? 0}
+              </Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.statItem}>
               <StatusBadge status="done" />
-              <Text style={styles.statValue}>{summary.done}</Text>
+              <Text style={styles.statValue}>
+                {isShowForManager
+                  ? project?.total_finish ?? 0
+                  : projectManagement?.total_finish ?? 0}
+              </Text>
             </View>
           </View>
         </View>
         {/* Sprint Stats */}
         <View style={styles.card}>
           <View style={styles.headerRow}>
-            <Text style={styles.cardTitle}>Tống số tasks của bạn</Text>
+            <Text style={styles.cardTitle}>
+              {isShowForManager
+                ? 'Tổng số task hiện tại'
+                : 'Tống số tasks của bạn'}
+            </Text>
             <Pressable>
               <View
                 style={[styles.statusBadge, { backgroundColor: sprintColor }]}
               >
                 <Text style={styles.statusText}>{`${
-                  tasks && !!tasks.length ? tasks.length : 0
+                  isShowForManager
+                    ? project?.total_task ?? 0
+                    : projectManagement?.total_task ?? 0
                 } tasks`}</Text>
               </View>
             </Pressable>
           </View>
-          <Text style={styles.description}>
-            {`Tiến độ của bạn trong dự án ${project?.title} là 70% `}
-            <Text style={styles.highlight}>
-              {sprint.completedTasks} {sprint.comparisonText}
+          {isShowForManager ? (
+            <Text style={styles.description}>
+              {`Tiến độ dự án ${project?.title} là `}
+              <Text style={styles.highlight}>
+                {`${project?.progress ?? 0}%.`}
+              </Text>
             </Text>
-            , {sprint.advice}
-          </Text>
+          ) : (
+            <Text style={styles.description}>
+              {`Tiến độ của bạn trong dự án ${project?.title} là `}
+              <Text style={styles.highlight}>
+                {`${projectManagement?.progress ?? 0}%.`}
+              </Text>
+            </Text>
+          )}
+
           <View style={styles.progressContainer}>
-            <ProgressBar progress={70} color={colors.done} height={6} />
+            <ProgressBar
+              progress={
+                isShowForManager
+                  ? project?.progress ?? 0
+                  : projectManagement?.progress ?? 0
+              }
+              color={colors.done}
+              height={6}
+            />
           </View>
-          <View
+          {isManager && project?.status && (
+            <View>
+              {project.status === 'to_do' && (
+                <TaskActionButton
+                  onClick={() => sethowStartConfirmModal(true)}
+                  action="Bắt đầu dự án"
+                  showIcon={false}
+                />
+              )}
+              {project.status === 'in_process' && (
+                <TaskActionButton
+                  onClick={() => setShowFinishConfirmModal(true)}
+                  action="Kết thúc dự án"
+                  showIcon={false}
+                />
+              )}
+            </View>
+          )}
+          {/* <View
             style={{
               display: 'flex',
               flexDirection: 'row',
@@ -265,10 +378,10 @@ export default function ProjectDetail() {
                 Hoàn thành
               </Text>
             </Pressable>
-          </View>
+          </View> */}
         </View>
 
-        <SearchInput value={query} onChange={(value) => setQuery(value)} />
+        {/* <SearchInput value={query} onChange={(value) => setQuery(value)} /> */}
 
         <View style={{ marginTop: 20 }}></View>
 
@@ -286,14 +399,6 @@ export default function ProjectDetail() {
                     task_id: id,
                   })
                 }}
-                showComment={() => {
-                  setShowComment(true)
-                  setShowTaskComment(task)
-                }}
-                showDailyReports={() => {
-                  setShowDailyReport(true)
-                  setShowTaskComment(task)
-                }}
               />
             </View>
           ))
@@ -303,40 +408,50 @@ export default function ProjectDetail() {
       </ScrollView>
 
       {/* Create Task Button */}
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={() => {
-          // @ts-ignore
-          navigation.navigate('CreateOrUpdateTask', {
-            project_id,
-            task_id: null,
-          })
-        }}
-      >
-        <Text style={styles.floatingButtonText}>＋</Text>
-      </TouchableOpacity>
-
-      {showComment && showTaskComment && (
-        <BaseModel
-          open={showComment}
-          onClose={() => {
-            setShowComment(false)
-            setShowTaskComment(undefined)
+      {isManager && project?.status && project.status === 'in_process' && (
+        <TouchableOpacity
+          style={styles.floatingButton}
+          onPress={() => {
+            // @ts-ignore
+            navigation.navigate('CreateOrUpdateTask', {
+              project_id,
+              task_id: null,
+            })
           }}
         >
-          <CommentPage taskId={showTaskComment.id} />
-        </BaseModel>
+          <Text style={styles.floatingButtonText}>＋</Text>
+        </TouchableOpacity>
       )}
-      {showDailyReport && showTaskComment && (
-        <BaseModel
-          open={showDailyReport}
-          onClose={() => {
-            setShowDailyReport(false)
-            setShowTaskComment(undefined)
-          }}
+      {openFilterModal && (
+        <SlideInModal
+          open={openFilterModal}
+          onClose={() => setOpenFitlerModal(false)}
+          title=""
         >
-          <DailyReportList taskId={showTaskComment.id} />
-        </BaseModel>
+          <TaskFilterForm
+            filter={fullTaskFilter}
+            onFilter={(filter) => {
+              setTaskFilter(filter)
+              setOpenFitlerModal(false)
+            }}
+          />
+        </SlideInModal>
+      )}
+      {showStartConfirmModal && (
+        <ConfirmModal
+          open={showStartConfirmModal}
+          onCancel={() => sethowStartConfirmModal(false)}
+          onConfirm={handleStartProject}
+          message={`Bạn có chắc chắn bắt đầu dự án ${project?.title}`}
+        />
+      )}
+      {showFinishConfirmModal && (
+        <ConfirmModal
+          open={showFinishConfirmModal}
+          onCancel={() => setShowFinishConfirmModal(false)}
+          onConfirm={handleFinishProject}
+          message={`Bạn có chắc chắn kết thúc dự án ${project?.title}`}
+        />
       )}
       {isLoading && <Loading />}
     </SafeAreaView>
@@ -347,6 +462,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingTop: 35,
   },
   scrollContent: {
     padding: 16,
@@ -363,6 +479,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textPrimary,
     marginBottom: 4,
+    maxWidth: 280,
   },
   cardSubtitle: {
     fontSize: 12,
@@ -447,7 +564,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   filterButtonActive: {
-    backgroundColor: colors.divider,
+    backgroundColor: colors.primary,
+    alignSelf: 'flex-end',
+    padding: 5,
+    borderRadius: 5,
   },
   filterText: {
     color: colors.textSecondary,

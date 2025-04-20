@@ -37,6 +37,8 @@ public class ProjectFilterService {
 
     private final ProjectManagementService projectManagementService;
 
+    private final ProjectManagementRepository projectManagementRepository;
+
     //TODO: Phân trang
     public List<ProjectResponse> filter(ProjectSearchRequest request) {
 
@@ -111,6 +113,10 @@ public class ProjectFilterService {
 
         if (request.getModifiedOnMax() != null) {
             specification = specification.and(ProjectSpecification.hasModifiedOnLessThanOrEqualTo(request.getModifiedOnMax()));
+        }
+
+        if (CollectionUtils.isNotEmpty(request.getProcessIds())) {
+            specification = specification.and(ProjectSpecification.hasUserIdsIn(request.getProcessIds()));
         }
 
         return specification;

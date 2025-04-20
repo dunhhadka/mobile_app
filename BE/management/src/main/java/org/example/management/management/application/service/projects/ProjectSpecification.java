@@ -1,11 +1,16 @@
 package org.example.management.management.application.service.projects;
 
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import org.example.management.management.domain.project.Project;
 import org.example.management.management.domain.project.Project_;
+import org.example.management.management.domain.task.ProjectManagement;
+import org.example.management.management.domain.task.ProjectManagement_;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class ProjectSpecification {
     public static Specification<Project> hasCompanyId(Integer companyId) {
@@ -50,6 +55,18 @@ public class ProjectSpecification {
 
     public static Specification<Project> hasStatusIn(List<Project.Status> statuses) {
         return (root, query, cb) -> root.get(Project_.STATUS).in(statuses);
+    }
+
+    public static Specification<Project> hasUserIdsIn(List<Integer> userIds) {
+        return ((root, query, builder) -> {
+            Subquery<Integer> subquery = query.subquery(Integer.class);
+            Root<ProjectManagement> projectRoot = subquery.from(ProjectManagement.class);
+
+            subquery.select(projectRoot.get(ProjectManagement_.projectId))
+                    .where(projectRoot.get(ProjectManagement_.userId).in(userIds));
+
+            return root.get(Project_.id).in(subquery);
+        });
     }
 
 }

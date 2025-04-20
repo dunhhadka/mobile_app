@@ -3,7 +3,12 @@ import { StyleSheet, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Camera } from 'lucide-react-native'
 
-const SummaryCard = () => {
+interface Props {
+  title: string
+  subtitle?: string
+}
+
+const SummaryCard = ({ title, subtitle }: Props) => {
   return (
     <LinearGradient
       colors={['#6c5ce7', '#8e74f9']}
@@ -12,8 +17,8 @@ const SummaryCard = () => {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>My Work Summary</Text>
-        <Text style={styles.subtitle}>Today task & presence activity</Text>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.subtitle}>{subtitle}</Text>
       </View>
 
       <View style={styles.decorations}>

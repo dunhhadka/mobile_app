@@ -36,6 +36,8 @@ public class UserResponse {
 
     private ImageResponse avatar;
 
+    private String defaultColor;
+
     @Getter
     @Setter
     public static class AddressResponse {

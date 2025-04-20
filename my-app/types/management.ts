@@ -13,6 +13,7 @@ export interface UserRequest {
   position?: Position
   address?: AddressRequest
   confirm_password?: string
+  default_color?: string
 }
 
 export interface AddressRequest {
@@ -34,6 +35,7 @@ export interface User {
   role?: Role
   address?: AddressResponse
   avatar?: ImageResponse
+  default_color?: string
 }
 
 export interface AddressResponse {
@@ -78,7 +80,7 @@ export interface ProjectRequest {
   company_id?: number
   title?: string
   description?: string
-  status?: 'in_process' | 'done' | 'reject' | 'none'
+  status?: 'in_process' | 'to_do' | 'finish'
   user_ids?: number[]
   started_on: Date // Dạng ISO 8601 string, ví dụ: "2025-04-15T12:00:00Z"
   created_id: number
@@ -92,7 +94,7 @@ export interface Project {
   created_on: string // Dạng ISO 8601 string
   started_on: Date // Dạng ISO 8601 string
   modified_on: string // Dạng ISO 8601 string
-  status?: 'to_do' | 'in_process' | 'finish'
+  status?: 'in_process' | 'to_do' | 'finish'
   users: User[]
   tasks: Task[]
 }
@@ -158,7 +160,11 @@ export interface UserFilterRequest {
   ids?: number[]
 }
 
-export interface ProjectSearchRequest {}
+export interface ProjectSearchRequest {
+  processIds?: number[]
+  createdIds?: number[]
+  statuses?: string[]
+}
 
 export interface TaskRequest {
   id?: number
@@ -195,7 +201,7 @@ export interface ProjectRequest {
   company_id?: number
   title?: string
   description?: string
-  status?: 'in_process' | 'done' | 'reject' | 'none'
+  status?: 'to_do' | 'in_process' | 'finish'
   user_ids?: number[]
   started_on: Date // Dạng ISO 8601 string, ví dụ: "2025-04-15T12:00:00Z"
 }
@@ -211,6 +217,13 @@ export interface Project {
   status?: 'to_do' | 'in_process' | 'finish'
   users: User[]
   tasks: Task[]
+
+  total_to_do: number
+  total_in_progress: number
+  total_finish: number
+  total_task: number
+
+  progress: number
 }
 
 export interface UserFilterRequest {
@@ -369,4 +382,21 @@ export interface TaskFilterRequest {
   assignId?: number
   projectId?: number
   status?: StatusType
+}
+
+export interface ProjectManagement {
+  id: number
+  project: Project
+  user: User
+  total_to_do: number
+  total_in_progress: number
+  total_finish: number
+  progress: number
+  total_task: number
+}
+
+export interface ChangeProjectStatusRequest {
+  project_id: number
+  status: 'in_process' | 'to_do' | 'finish'
+  creator_id?: number
 }

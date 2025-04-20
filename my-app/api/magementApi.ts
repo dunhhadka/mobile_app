@@ -8,6 +8,7 @@ import {
   QueryReturnValue,
 } from '@reduxjs/toolkit/query/react'
 import {
+  ChangeProjectStatusRequest,
   ChatMember,
   ChatRoom,
   Comment,
@@ -18,6 +19,7 @@ import {
   Message,
   Notification,
   Project,
+  ProjectManagement,
   ProjectRequest,
   ProjectSearchRequest,
   Task,
@@ -35,7 +37,7 @@ export const managementApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: URL,
   }),
-  tagTypes: ['project', 'notification', 'task'],
+  tagTypes: ['project', 'notification', 'task', 'project-management'],
   endpoints: (builder) => ({
     createUser: builder.mutation<User, UserRequest>({
       query: (request) => ({
@@ -303,6 +305,28 @@ export const managementApi = createApi({
           : [{ type: 'task' as const, id: 'LIST' }]
       },
     }),
+    getProjectMamagementByProjectIdAndUserId: builder.query<
+      ProjectManagement,
+      { projectId: number; userId: number }
+    >({
+      query: ({ projectId, userId }) => ({
+        url: `/api/tasks/${userId}/project-managements/${projectId}`,
+        method: 'GET',
+      }),
+      providesTags: () => [{ type: 'project-management', id: 'LIST' }],
+    }),
+    changProjectStatus: builder.mutation<void, ChangeProjectStatusRequest>({
+      query: (request) => ({
+        url: `/api/projects/change-status`,
+        method: 'POST',
+        body: request,
+      }),
+      invalidatesTags(result, error, arg, meta) {
+        return error
+          ? [{ type: 'project', id: 'LIST' }]
+          : [{ type: 'project', id: arg.project_id }]
+      },
+    }),
   }),
 })
 
@@ -335,4 +359,6 @@ export const {
   useGetTaskByIdQuery,
   useReOpenTaskByIdMutation,
   useFilterTasksQuery,
+  useGetProjectMamagementByProjectIdAndUserIdQuery,
+  useChangProjectStatusMutation,
 } = managementApi

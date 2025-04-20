@@ -34,6 +34,7 @@ public class ProjectManagement {
     private int totalToDo;
     private int totalInProgress;
     private int totalFinish;
+    private int totalTasks;
 
     private BigDecimal progress;
 
@@ -59,6 +60,7 @@ public class ProjectManagement {
         this.totalToDo = totalToDo;
         this.totalInProgress = totalInProgress;
         this.totalFinish = totalFinish;
+        this.totalTasks = this.managements.size();
 
         this.progress = totalProgress.divide(BigDecimal.valueOf(this.managements.size()), RoundingMode.FLOOR);
     }
@@ -67,6 +69,7 @@ public class ProjectManagement {
         this.totalToDo = 0;
         this.totalInProgress = 0;
         this.totalFinish = 0;
+        this.totalTasks = 0;
 
         this.progress = BigDecimal.ZERO;
     }
@@ -82,6 +85,8 @@ public class ProjectManagement {
         tasks.forEach(m -> m.setAggRoot(this));
 
         this.managements.addAll(tasks);
+
+        this.reCalculateProgress();
     }
 
     public void deleteTask(int taskId) {
