@@ -5,33 +5,44 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  Pressable,
 } from 'react-native'
 import { Image } from 'expo-image'
 import { Bell, MessageSquare, CheckCircle } from 'lucide-react-native'
 import SummaryCard from '../card/SummaryCard'
-import EmptyCard from '../card/EmptyCard'
-import {
-  NavigationProp,
-  useFocusEffect,
-  useNavigation,
-} from '@react-navigation/native'
-import { HomeStackParamList } from '../../App'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import colors from '../../constants/colors'
 import {
   useGetMessageAndNotificationUnreadQuery,
-  useGetTasksByUserIdQuery,
+  useSearchProjectQuery,
 } from '../../api/magementApi'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store/store'
 import Loading from '../loading/Loading'
-import { TaskItem } from '../card/TaskItem'
+import { Position, ProjectSearchRequest } from '../../types/management'
+import ProjectCard from '../card/ProjectCard'
+import EmptySearchResult from '../models/EmptySearchResult'
 
 export default function HomeScreen() {
   const currentUser = useSelector((state: RootState) => state.user.currentUser)
 
   const [currentTime, setCurrentTime] = useState('')
 
-  const navigation = useNavigation<NavigationProp<HomeStackParamList>>()
+  const navigation = useNavigation()
+
+  const isManager =
+    currentUser?.position && Position[currentUser.position] === 'Quản lý'
+
+  const projectFilter: ProjectSearchRequest = {
+    createdIds: isManager ? [currentUser.id ?? 0] : [],
+    processIds: !isManager ? [currentUser?.id ?? 0] : [],
+  }
+
+  const {
+    data: projects,
+    isLoading: isProjectLoading,
+    isFetching: isProjectFetching,
+  } = useSearchProjectQuery(projectFilter, { refetchOnMountOrArgChange: true })
 
   const {
     data: countData,
@@ -40,12 +51,6 @@ export default function HomeScreen() {
   } = useGetMessageAndNotificationUnreadQuery(currentUser?.id ?? 0)
 
   const { unReadMessage, unReadNotification } = countData ?? {}
-
-  const {
-    data: tasks,
-    isLoading: isTasksLoading,
-    isFetching: isTasksFetching,
-  } = useGetTasksByUserIdQuery(currentUser?.id ?? 0, { skip: !currentUser?.id })
 
   useEffect(() => {
     const updateTime = () => {
@@ -66,7 +71,7 @@ export default function HomeScreen() {
     }, [refetch])
   )
 
-  const isLoading = isCountLoading || isTasksLoading || isTasksFetching
+  const isLoading = isCountLoading || isProjectLoading || isProjectFetching
 
   return (
     <View style={styles.container}>
@@ -104,6 +109,7 @@ export default function HomeScreen() {
           <View style={styles.actions}>
             <TouchableOpacity
               style={styles.iconButton}
+              // @ts-ignore
               onPress={() => navigation.navigate('ChatList')}
             >
               <MessageSquare size={20} color="#6c5ce7" />
@@ -117,6 +123,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => {
+                // @ts-ignore
                 navigation.navigate('Notification')
               }}
             >
@@ -136,43 +143,53 @@ export default function HomeScreen() {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header tích hợp ở đây luôn */}
-
-        <SummaryCard />
-
-        {/* <SummaryCard /> */}
-
-        {/* Meetings Section */}
+        <SummaryCard
+          title={`Chào mừng trở lại, ${currentUser?.user_name ?? ''}`}
+          subtitle="Cùng xem hôm nay bạn có cuộc họp và nhiệm vụ nào."
+        />
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Today task</Text>
+            <Text style={styles.sectionTitle}>
+              {!isManager
+                ? 'Các dự án bạn đang tham gia'
+                : 'Bạn đang quản lý các dự án sau'}
+            </Text>
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{2}</Text>
+              <Text style={styles.badgeText}>
+                {projects && projects.length}
+              </Text>
             </View>
           </View>
-          <Text style={styles.sectionSubtitle}>Your schedule for the day</Text>
-          {tasks?.map((t, index) => (
-            <View key={index} style={{ marginTop: 10 }}>
-              <TaskItem task={t} />
-            </View>
-          ))}
+          <Text style={styles.sectionSubtitle}>Danh sách dự án</Text>
+          {projects && projects.length ? (
+            projects?.map((project, index) => (
+              <Pressable
+                key={index}
+                style={{ marginTop: 10 }}
+                onPress={() => {
+                  // @ts-ignore
+                  navigation.navigate('Tasks', {
+                    screen: 'ProjectDetail',
+                    params: { project_id: project.id },
+                  })
+                }}
+              >
+                <ProjectCard project={project} onEdit={() => {}} />
+              </Pressable>
+            ))
+          ) : (
+            <EmptySearchResult
+              title={`${
+                isManager
+                  ? 'Bạn chưa quản lý dự án nào.'
+                  : 'Bạn chưa dược vào dự án nào.'
+              }`}
+              subtitle={`${
+                isManager ? 'Hãy tạo dự án dầu tiên' : 'Hãy tìm dự án phù hợp'
+              }`}
+            />
+          )}
           <View style={styles.meetingsContainer}></View>
-          <EmptyCard />
-        </View>
-
-        {/* Tasks Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Today Task</Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{2}</Text>
-            </View>
-          </View>
-          <Text style={styles.sectionSubtitle}>
-            The tasks assigned to you for today
-          </Text>
-
-          <View style={styles.tasksContainer}></View>
         </View>
 
         <View style={styles.bottomPadding} />
@@ -187,6 +204,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
     paddingHorizontal: 10,
+    paddingTop: 40,
   },
   scrollView: {
     flex: 1,

@@ -59,8 +59,8 @@ const TaskScreen = () => {
 
           <View style={styles.header}>
             <View>
-              <Text style={styles.title}>Project List</Text>
-              <Text style={styles.subtitle}>Your Projects, Your Vision</Text>
+              <Text style={styles.title}>Danh sách dự án</Text>
+              <Text style={styles.subtitle}>Hiển thị tẩt cả dự án của bạn</Text>
             </View>
             <View style={styles.iconContainer}>
               <ClipboardList size={24} color="white" />
@@ -110,7 +110,7 @@ const TaskScreen = () => {
                 colors={['#7B5AFF', '#4D66F4']}
                 style={styles.button}
               >
-                <Text style={styles.buttonText}>Create Project</Text>
+                <Text style={styles.buttonText}>Tạo dự án</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>

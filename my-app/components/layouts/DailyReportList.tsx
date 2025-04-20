@@ -13,6 +13,7 @@ import { useGetDailyReportByTaskIdQuery } from '../../api/magementApi'
 import Loading from '../loading/Loading'
 import { formatDateTime } from '../models/UpdateProfileModal'
 import { DailyReport } from '../../types/management'
+import EmptySearchResult from '../models/EmptySearchResult'
 
 const getStatusColor = (progress: number): string => {
   if (progress === 100) return statusColors.completed
@@ -78,6 +79,12 @@ const DailyReportList = ({ taskId }: Props) => {
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 24 }}
+        ListEmptyComponent={
+          <EmptySearchResult
+            title="Chưa có báo cáo ngày"
+            subtitle="Hiện tại nhân viên chưa có báo cáo ngày. Công việc chưa được bắt đầu"
+          />
+        }
       />
       {isLoading && <Loading />}
     </SafeAreaView>

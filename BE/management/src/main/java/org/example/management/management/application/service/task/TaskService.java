@@ -11,6 +11,7 @@ import org.example.management.management.application.model.images.StoredImageRes
 import org.example.management.management.application.model.task.*;
 import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.application.service.images.ImageProcessService;
+import org.example.management.management.application.service.projects.ProjectUpdated;
 import org.example.management.management.application.service.user.UserMapper;
 import org.example.management.management.application.utils.NumberUtils;
 import org.example.management.management.domain.profile.User;
@@ -89,6 +90,8 @@ public class TaskService {
 
         eventPublisher.publishEvent(new CreateTaskManagement(project.getId(), task.getProcessId(), task));
 
+        eventPublisher.publishEvent(new ProjectUpdated(project.getId()));
+
         return task.getId();
     }
 
@@ -156,6 +159,8 @@ public class TaskService {
         if (CollectionUtils.isNotEmpty(task.getImageIds())) {
             this.eventPublisher.publishEvent(new ImageDeletedEvent(task.getImageIds()));
         }
+
+        eventPublisher.publishEvent(new ProjectUpdated(task.getProjectId()));
 
         this.taskRepository.delete(task);
     }
@@ -229,6 +234,8 @@ public class TaskService {
         task.start();
 
         taskRepository.save(task);
+
+        eventPublisher.publishEvent(new ProjectUpdated(task.getProjectId()));
     }
 
     public void finish(int taskId, int userId) {
@@ -244,6 +251,8 @@ public class TaskService {
         task.finish();
 
         taskRepository.save(task);
+
+        eventPublisher.publishEvent(new ProjectUpdated(task.getProjectId()));
     }
 
     private TaskInfo validate(int taskId, int userId) {
@@ -286,6 +295,8 @@ public class TaskService {
         task.reOpen();
 
         this.taskRepository.save(task);
+
+        eventPublisher.publishEvent(new ProjectUpdated(task.getProjectId()));
     }
 
     public List<TaskResponse> filter(TaskFilterRequest request) {
@@ -404,6 +415,8 @@ public class TaskService {
         this.updateImages(task, request.getImages());
 
         this.eventPublisher.publishEvent(new UpdateTasKManagement(task.getProjectId(), oldProcessId, task.getProcessId(), task));
+
+        this.eventPublisher.publishEvent(new ProjectUpdated(task.getProjectId()));
 
         this.taskRepository.save(task);
     }

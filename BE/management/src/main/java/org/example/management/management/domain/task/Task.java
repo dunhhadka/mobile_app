@@ -191,6 +191,8 @@ public class Task extends AggregateRoot<Task> {
         this.status = Status.in_process;
 
         this.addDomainEvent(new TaskStartEvent(this.assignId, this.processId, this.id));
+
+        this.aggRoot.reCalculateProgress();
     }
 
     public void finish() {
@@ -200,6 +202,8 @@ public class Task extends AggregateRoot<Task> {
         this.status = Status.finish;
 
         this.addDomainEvent(new TaskFinishEvent(this.assignId, this.processId, this.id));
+
+        this.aggRoot.reCalculateProgress();
     }
 
     public void addDailyReport(DailyReport dailyReport) {
@@ -209,12 +213,16 @@ public class Task extends AggregateRoot<Task> {
         dailyReport.setTask(this);
 
         this.addDomainEvent(new DailyReportCreateEvent(this.assignId, this.processId, this.processValue, dailyReport.getDate()));
+
+        this.aggRoot.reCalculateProgress();
     }
 
     public void reOpen() {
         this.status = Status.in_process;
 
         this.addDomainEvent(new TaskReOpenEvent(this.processId, this.assignId, this.id));
+
+        this.aggRoot.reCalculateProgress();
     }
 
     public enum Status {

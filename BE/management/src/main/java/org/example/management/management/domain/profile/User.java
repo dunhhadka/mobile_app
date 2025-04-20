@@ -65,6 +65,8 @@ public class User extends AggregateRoot<User> {
 
     private String image;
 
+    private String defaultColor;
+
     public void updateAddress(int addressId, UserRequest.AddressRequest request) {
         if (CollectionUtils.isEmpty(this.addresses) || addressId == 0) {
             this.addAddress(request);

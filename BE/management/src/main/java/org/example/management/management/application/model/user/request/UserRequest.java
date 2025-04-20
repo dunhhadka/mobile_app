@@ -37,6 +37,8 @@ public class UserRequest {
 
     private AddressRequest address;
 
+    private String defaultColor;
+
     @Getter
     @Setter
     @NoArgsConstructor

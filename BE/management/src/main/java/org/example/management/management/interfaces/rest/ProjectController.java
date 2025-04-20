@@ -47,4 +47,9 @@ public class ProjectController {
     public void deleteProject(@PathVariable int projectId) {
         this.projectService.deleteProject(projectId);
     }
+
+    @PostMapping("/change-status")
+    public void changeStatus(@RequestBody ProjectRequest.ChangeStatusRequest request) {
+        this.projectService.changeStatus(request);
+    }
 }

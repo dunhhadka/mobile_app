@@ -98,7 +98,7 @@ export default function CreateOrUpdateProject({ onClose, project }: Props) {
       company_id: 1,
       title: title,
       description: description,
-      status: 'none',
+      status: 'to_do',
       user_ids: selectedUsers,
       started_on: startedOn,
       created_id: currentUser?.id ?? 0,

@@ -1,6 +1,7 @@
 package org.example.management.management.application.model.project;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,4 +33,15 @@ public class ProjectRequest {
     private LocalDate startedOn;
 
     private int createdId;
+
+    @Getter
+    @Setter
+    public static class ChangeStatusRequest {
+        @Positive
+        private int projectId;
+        @NotNull
+        private Project.Status status;
+
+        private int creatorId;
+    }
 }
