@@ -40,5 +40,6 @@ public class Notification {
         comment, // các thông báo liên quan đến người tạo recomment task,
         deadline, // thông báo liên quan đến nhắc nhở task,
         user, // thông báo liên quan đến người dùng VD: thêm vào project, tạp project
+        leave
     }
 }

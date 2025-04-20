@@ -15,7 +15,7 @@ public class JpaLeaveRepository implements LeaveRepository {
     private final LeaveJpaRepository leaveJpaRepository;
 
     @Override
-    public Optional<Leave> findById(int leaveId) {
+    public Optional<Leave> findById(Integer leaveId) {
         return leaveJpaRepository.findById(leaveId);
     }
 
@@ -27,5 +27,10 @@ public class JpaLeaveRepository implements LeaveRepository {
     @Override
     public List<Leave> findByIdIn(List<Integer> leaveIds) {
         return leaveJpaRepository.findByIdIn(leaveIds);
+    }
+
+    @Override
+    public List<Leave> findByCreatedBy(Integer createdBy) {
+        return leaveJpaRepository.findByCreatedBy(createdBy);
     }
 }

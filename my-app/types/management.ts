@@ -290,6 +290,7 @@ export type NotificationType =
   | 'comment'
   | 'deadline'
   | 'user'
+  | 'leave'
 
 export const NotificationTitle = {
   messenger: 'Tin nhắn',
@@ -297,4 +298,26 @@ export const NotificationTitle = {
   comment: 'Bình luận',
   deadline: 'Hạn chót',
   user: 'Người dùng',
+  leave: "Yêu cầu nghỉ phép",
+}
+
+export interface LeaveRequest {
+  category: string
+  start_leave: string // ISO date string, ví dụ: "2025-04-02"
+  end_leave: string // ISO date string, ví dụ: "2025-04-05"
+  contact_phone: string
+  description: string
+}
+
+export interface LeaveResponse {
+  id: number
+  category: string
+  start_leave: string // ISO date string
+  end_leave: string // ISO date string, fixed typo from end_eave
+  contact_phone: string
+  description: string
+  status: 'review' | 'approved' | 'rejected'
+  created_by: number
+  created_on: string // ISO date-time string
+  total_leave: number // Số ngày nghỉ
 }

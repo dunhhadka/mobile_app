@@ -5,9 +5,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.management.management.domain.leaves.Leave;
+import org.example.management.management.domain.profile.User;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -16,17 +18,16 @@ import java.time.Instant;
 public class LeaveResponse {
     private int id;
 
-    private Leave.Category category;
+    private String category;
 
     private BigDecimal totalLeave;
 
-    private Instant startLeave;
+    private LocalDate startLeave;
 
-    private Instant endLeave;
+    private LocalDate endLeave;
 
     private Integer currentTaskId;
 
-    private String taskName;
 
     private String contactPhone;
 
@@ -36,14 +37,17 @@ public class LeaveResponse {
 
     private Instant modifiedOn;
 
-    private Instant approvedAt;
+    private Integer createdBy;
 
-    private Instant rejectedAt;
+    private Integer decidedBy;
 
-    private Integer approveId;
-
-    private Integer rejectId;
-
-    private Integer delegateId; //NOTE: người được giao lại task
+    private Leave.Status status;
+    //TODO: Làm tiếp
+    public static class UserCreatedLeave {
+        private Integer id;
+        private String username;
+        private User.Position position;
+    }
 
 }
+

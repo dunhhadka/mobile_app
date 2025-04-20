@@ -118,6 +118,19 @@ export default function NotificationsScreen() {
             params: { project_id: data?.projectId },
           })
         }
+        break;
+      }
+      case 'leave': {
+        var data = JSON.parse(notification.data ?? '')
+
+        if (data && data?.leaveId) {
+          // @ts-ignore
+          navigation.navigate('LeaveStack', {
+            screen: 'LeaveDetail',
+            params: { leave_id: data?.leaveId },
+          })
+        }
+        break;
       }
     }
   }

@@ -28,11 +28,18 @@ import ChatRoomScreen from './components/pages/ChatRoomScreen'
 import NotificationProvider from './provider/NotificationProvider'
 import Toast from 'react-native-toast-message'
 import CustomNotificationToast from './components/CustomNotificationToast'
+import LeaveScreen from './components/pages/LeaveScreen'
+import LeaveDetailScreen from './components/pages/LeaveDetailScreen'
 
 // Param types for Task stack
 export type TasksStackParamList = {
   ProjectList: undefined
   ProjectDetail: { project_id: number }
+}
+
+export type LeaveStackParamList = {
+  LeaveScreen: undefined 
+  LeaveDetail: { leave_id: number }
 }
 
 export type HomeStackParamList = {
@@ -41,6 +48,15 @@ export type HomeStackParamList = {
   ChatList: undefined
   ChatRoom: { room_id: number; member_id: number }
 }
+
+export type RootStackParamList = {
+  Onboarding: undefined
+  SignIn: undefined
+  SignUp: undefined
+  Main: undefined
+  LeaveStack: undefined
+}
+
 const HomeStack = createNativeStackNavigator<HomeStackParamList>()
 function HomesStack() {
   return (
@@ -65,6 +81,16 @@ function TasksStack() {
       <TaskStack.Screen name="ProjectDetail" component={ProjectDetail} />
     </TaskStack.Navigator>
   )
+}
+
+const LeaveStack = createNativeStackNavigator<LeaveStackParamList>()
+function LeaveStackNavigator() {
+  return (
+    <LeaveStack.Navigator screenOptions={{ headerShown: false }}>
+      <LeaveStack.Screen name="LeaveScreen" component={LeaveScreen} />
+      <LeaveStack.Screen name="LeaveDetail" component={LeaveDetailScreen} />
+    </LeaveStack.Navigator>
+  );
 }
 
 function MainTabs() {
@@ -136,6 +162,7 @@ export default function App() {
               <RootStack.Screen name="SignIn" component={SignInScreen} />
               <RootStack.Screen name="SignUp" component={SignUpScreen} />
               <RootStack.Screen name="Main" component={MainTabs} />
+              <RootStack.Screen name="LeaveStack" component={LeaveStackNavigator} options={{ headerShown: false }} />
             </RootStack.Navigator>
           </NavigationContainer>
         </ToastProvider>
