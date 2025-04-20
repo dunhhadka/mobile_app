@@ -34,7 +34,8 @@ import {
   UserRequest,
 } from '../types/management'
 
-export const URL = 'http://192.168.100.8:8080'
+export const URL =
+  'https://4ac2-2405-4802-214-a790-a4e7-123-802e-d318.ngrok-free.app'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',

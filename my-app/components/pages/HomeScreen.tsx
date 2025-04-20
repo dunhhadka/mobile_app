@@ -102,7 +102,9 @@ export default function HomeScreen() {
                 />
               </View>
               <Text style={styles.role}>
-                {currentUser?.position ?? 'Chưa có vị trí'}
+                {currentUser?.position
+                  ? Position[currentUser.position]
+                  : 'Chưa có vị trí'}
               </Text>
             </View>
           </View>
