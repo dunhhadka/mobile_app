@@ -7,7 +7,14 @@ import {
   BottomTabNavigationOptions,
   createBottomTabNavigator,
 } from '@react-navigation/bottom-tabs'
-import { Bell, Calendar, Home, ListChecks, User } from 'lucide-react-native'
+import {
+  Bell,
+  Calendar,
+  CalendarCheck2,
+  Home,
+  ListChecks,
+  User,
+} from 'lucide-react-native'
 import { Provider } from 'react-redux'
 import { store } from './store/store'
 
@@ -15,6 +22,7 @@ import { store } from './store/store'
 import HomeScreen from './components/pages/HomeScreen'
 import TaskScreen from './components/pages/TaskScreen'
 import CalendarScreen from './components/pages/CalendarScreen'
+import AttendanceDetail from './components/pages/AttendanceDetail'
 import NotificationsScreen from './components/pages/NotificationScreen'
 import ProfileScreen from './components/pages/ProfileScreen'
 import SignInScreen from './components/pages/SignInScreen'
@@ -36,6 +44,7 @@ export type TasksStackParamList = {
   ProjectDetail: { project_id: number }
   CreateOrUpdateTask: { projectId: number; taskId?: number }
 }
+import { AttendanceResponse } from './types/management'
 
 export type HomeStackParamList = {
   Home: undefined
@@ -43,6 +52,7 @@ export type HomeStackParamList = {
   ChatList: undefined
   ChatRoom: { room_id: number; member_id: number }
 }
+
 const HomeStack = createNativeStackNavigator<HomeStackParamList>()
 function HomesStack() {
   return (
@@ -55,10 +65,32 @@ function HomesStack() {
   )
 }
 
+// Params types for Attendance stack
+export type AttendanceStackParam = {
+  AttendanceList: undefined
+  AttendanceDetail: { attendance: AttendanceResponse; user_id: number }
+}
+
 // Main navigators
 const RootStack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
 const TaskStack = createNativeStackNavigator<TasksStackParamList>()
+const AttendanceStack = createNativeStackNavigator<AttendanceStackParam>()
+
+function AttendancesStack() {
+  return (
+    <AttendanceStack.Navigator screenOptions={{ headerShown: false }}>
+      <AttendanceStack.Screen
+        name="AttendanceList"
+        component={CalendarScreen}
+      />
+      <AttendanceStack.Screen
+        name="AttendanceDetail"
+        component={AttendanceDetail}
+      />
+    </AttendanceStack.Navigator>
+  )
+}
 
 function TasksStack() {
   return (
@@ -84,8 +116,8 @@ function MainTabs() {
           switch (route.name) {
             case 'Home':
               return <Home size={size} color={color} />
-            case 'Calendar':
-              return <Calendar size={size} color={color} />
+            case 'Attendance':
+              return <CalendarCheck2 size={size} color={color} />
             case 'Notification':
               return <Bell size={size} color={color} />
             case 'Profile':
@@ -110,7 +142,7 @@ function MainTabs() {
         }
       />
       <Tab.Screen name="Tasks" component={TasksStack} />
-      <Tab.Screen name="Calendar" component={CalendarScreen} />
+      <Tab.Screen name="Attendance" component={AttendancesStack} />
       <Tab.Screen name="Notification" component={NotificationsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>

@@ -2,27 +2,38 @@ package org.example.management.management.interfaces.rest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.management.management.application.model.attendance.AggregateLogRequest;
-import org.example.management.management.application.model.attendance.AttendanceResponse;
-import org.example.management.management.application.model.attendance.LogRequest;
-import org.example.management.management.application.model.attendance.LogResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.example.management.management.application.model.attendance.*;
 import org.example.management.management.application.service.attendance.AttendanceService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/api/attendances")
 public class AttendanceController {
 
     private final AttendanceService attendanceService;
 
+    @GetMapping("/logs/{userId}")
+    public List<LogResponse> getLogs(@PathVariable(name="userId") int userId, @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date){
+        log.info(date.toString());
+        return  this.attendanceService.getLogsByDayAndUserId(userId, date);
+    }
+
+    @GetMapping("/{userId}")
+    public List<AttendanceResponse> getAttendance(@PathVariable int userId){
+        log.info("attendances get");
+        return this.attendanceService.getAttendanceByUserId(userId);
+    }
+
     @PostMapping("/logs")
-    public LogResponse createLog(@RequestBody @Valid LogRequest request) throws IOException {
+    public LogResponse createLog(@ModelAttribute @Valid LogRequest request) throws IOException {
         var logId = this.attendanceService.createLog(request);
         return this.attendanceService.getLogById(logId);
     }

@@ -4,10 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.example.management.management.application.model.attendance.AggregateLogRequest;
-import org.example.management.management.application.model.attendance.AttendanceResponse;
-import org.example.management.management.application.model.attendance.LogRequest;
-import org.example.management.management.application.model.attendance.LogResponse;
+import org.example.management.management.application.model.attendance.*;
 import org.example.management.management.application.service.images.ImageService;
 import org.example.management.management.domain.attendace.Attendance;
 import org.example.management.management.domain.attendace.Log;
@@ -44,6 +41,12 @@ public class AttendanceService {
     private static final LocalTime eightAM = LocalTime.of(8, 0);
     private static final LocalTime fiveAM = LocalTime.of(17, 0);
 
+
+    public List<LogResponse> getLogsByDayAndUserId(int userId, LocalDate date){
+        var alllogs = this.logRepository.findByUserIdAndDate(userId, date);
+        return this.logMapper.toResponses(alllogs);
+    }
+
     @Transactional
     public int createLog(LogRequest request) throws IOException {
         if (request.getType() == Log.Type.in
@@ -73,7 +76,8 @@ public class AttendanceService {
                 request.getNote(),
                 request.getLatitude(),
                 request.getLongitude(),
-                userId
+                userId,
+                null
         );
 
         var logSaved = logRepository.save(log);
@@ -119,7 +123,7 @@ public class AttendanceService {
                                 "Không tìm thấy User với Id là " + log.getUserId()
                         ));
 
-        return this.logMapper.toResponse(log, possiblyImage.orElse(null), user);
+        return this.logMapper.toResponse(log);
     }
 
     private Optional<Image> getImage(Integer logImageId) {
@@ -160,11 +164,14 @@ public class AttendanceService {
                 calculateModel.actualClockIn,
                 calculateModel.actualClockOut,
                 totalHours,
-                request.getNote()
+                request.getNote(),
+                userId
         );
-
         var saved = this.attendanceRepository.save(attendance);
-
+        allLogs.forEach(log->{
+            log.setAttendance(saved.getId());
+            this.logRepository.save(log);
+        });
         return saved.getId();
     }
 
@@ -209,7 +216,7 @@ public class AttendanceService {
             if (clockIn == null && logFromLeft.getType() == Log.Type.in && logFromLeft.getCheckIn() != null) {
                 clockIn = logFromLeft.getCheckIn();
                 left++;
-            } else if (clockIn == null) {
+            } else{
                 left++;
             }
 
@@ -217,7 +224,7 @@ public class AttendanceService {
             if (logFromRight.getType() == Log.Type.out && logFromRight.getCheckIn() != null) {
                 clockOut = logFromRight.getCheckIn();
                 right--;
-            } else if (clockOut == null) {
+            } else{
                 right--;
             }
         }
@@ -280,6 +287,11 @@ public class AttendanceService {
         ZonedDateTime zonedDateTime = instant.atZone(ZoneId.systemDefault());
 
         return zonedDateTime.toLocalTime();
+    }
+
+    public List<AttendanceResponse> getAttendanceByUserId(int userId){
+        var attendances = this.attendanceRepository.findAllByUserId(userId);
+        return  this.logMapper.toResponse(attendances);
     }
 
     public AttendanceResponse getAttendanceById(int attendanceId) {

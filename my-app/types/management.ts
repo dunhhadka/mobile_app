@@ -247,17 +247,36 @@ export interface ImageRequest {
   file?: File
 }
 
+export interface AggregateLogRequest{
+  date: string,
+  user_id: number,
+  note: string,
+}
+
+export interface AttendanceResponse {
+  id: number;
+  date: string;
+  clock_in: string | null;
+  clock_out: string | null;
+  actual_clock_in: string | null;
+  actual_clock_out: string | null;
+  total_hours: string | null;
+  note: string | null;
+}
+
+
 export interface LogResponse {
   id: number
   type: Type
-  image: ImageResponse | null
+  check_in: string
   note?: string
   latitude?: string
   longitude?: string
-
-  user: User
+  user: number
 }
 export type Type = 'in' | 'out' | 'break_work' | 'back_work'
+
+
 
 export interface ChatRoom {
   id: number

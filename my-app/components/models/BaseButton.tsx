@@ -9,30 +9,41 @@ import {
 } from 'react-native'
 
 interface Props {
+  isActive?: boolean
   isLoading?: boolean
+  color?: string
   onPress?: () => void
   title: string
 }
 
 export default function BaseButton({
+  isActive = true,
   isLoading = false,
+  color='#7B5AFF',
   title,
   onPress,
 }: Props) {
   return (
-    <TouchableOpacity
-      style={styles.buttonWrapper}
-      onPress={onPress}
-      disabled={isLoading}
-    >
-      <LinearGradient colors={['#7B5AFF', '#4D66F4']} style={styles.button}>
-        {isLoading ? (
-          <ActivityIndicator size="small" color="#fff" />
-        ) : (
+    isActive ?
+      (<TouchableOpacity
+        style={styles.buttonWrapper}
+        onPress={onPress}
+        disabled={isLoading}
+      >
+        <LinearGradient colors={[color, '#4D66F4']} style={styles.button}>
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>{title}</Text>
+          )}
+        </LinearGradient>
+      </TouchableOpacity>)
+      :
+      (
+        <LinearGradient colors={['#7B5AFF', '#4D66F4']} style={styles.inActiveButton}>
           <Text style={styles.buttonText}>{title}</Text>
-        )}
-      </LinearGradient>
-    </TouchableOpacity>
+        </LinearGradient>
+      )
   )
 }
 
@@ -51,6 +62,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
   } as ViewStyle,
+  inActiveButton: {
+    backgroundColor: '#ccc', // Màu xám để hiển thị button bị vô hiệu hóa
+    opacity: 0.6,             // Làm mờ một chút
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    borderRadius: 30,
+    overflow: 'hidden',
+  } as ViewStyle
+  ,
   buttonText: {
     color: '#fff',
     fontSize: 16,

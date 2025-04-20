@@ -8,6 +8,8 @@ import {
   QueryReturnValue,
 } from '@reduxjs/toolkit/query/react'
 import {
+  AggregateLogRequest,
+  AttendanceResponse,
   ChatMember,
   ChatRoom,
   Comment,
@@ -35,7 +37,7 @@ export const managementApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: URL,
   }),
-  tagTypes: ['project', 'notification', 'task'],
+  tagTypes: ['project', 'notification', 'task', 'attendances'],
   endpoints: (builder) => ({
     createUser: builder.mutation<User, UserRequest>({
       query: (request) => ({
@@ -61,7 +63,7 @@ export const managementApi = createApi({
         body: formData,
       }),
     }),
-    clockIn: builder.mutation<LogResponse, FormData>({
+    uploadLog: builder.mutation<LogResponse, FormData>({
       query: (formData) => ({
         url: `/api/attendances/logs`,
         method: 'POST',
@@ -303,6 +305,33 @@ export const managementApi = createApi({
           : [{ type: 'task' as const, id: 'LIST' }]
       },
     }),
+    getLogsByDate: builder.query<
+      LogResponse[],
+      { userId: number; date: string }
+    >({
+      query: ({ userId, date }) => {
+        return {
+          url: `/api/attendances/logs/${userId}?date=${date}`,
+          method: 'GET',
+        }
+      },
+    }),
+    uploadAggregateLogRequest: builder.mutation<
+      AttendanceResponse,
+      AggregateLogRequest
+    >({
+      query: (request) => ({
+        url: `/api/attendances/aggregate`,
+        method: 'POST',
+        body: request,
+      }),
+    }),
+    getAttendanceByUserId: builder.query<AttendanceResponse[], number>({
+      query: (userId) => ({
+        url: `/api/attendances/${userId}`,
+        method: 'GET',
+      }),
+    }),
   }),
 })
 
@@ -310,7 +339,10 @@ export const {
   useCreateUserMutation,
   useUpdateUserMutation,
   useUploadUserAvatarMutation,
-  useClockInMutation,
+  useUploadLogMutation,
+  useGetLogsByDateQuery,
+  useUploadAggregateLogRequestMutation,
+  useGetAttendanceByUserIdQuery,
   useSignInMutation,
   useFilterUserQuery,
   useCreateProjectMutation,

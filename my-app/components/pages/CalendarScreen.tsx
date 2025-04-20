@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import {
   AlarmClock,
@@ -9,31 +9,33 @@ import {
   Home,
 } from 'lucide-react-native';
 import BaseButton from '../models/BaseButton';
-import Button from '../layouts/Button';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BaseModel from '../models/BaseModel';
-import users from '../../mocks/users';
 import ClockInSelfieModal from '../models/ClockInSelfieModal';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { useUserStore } from '../../store/user-store';
-import layout from '../../constants/layout';
-import typography from '../../constants/typography';
 import colors from '../../constants/colors';
+import { useGetAttendanceByUserIdQuery, useGetLogsByDateQuery, useUploadAggregateLogRequestMutation, useUploadLogMutation } from '../../api/magementApi';
+import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { Toast } from 'react-native-toast-notifications';
+import { AttendanceResponse, Type } from '../../types/management';
+import * as Location from 'expo-location'
+import WorkButton from '../models/WorkButton';
+import ClockOutModal from '../models/ClockOutComfirmModal';
+import { AttendanceStackParam } from '../../App';
 
-const data = [
-  { date: '27 September 2024', hours: '08:00:00 hrs', in: '09:00 AM', out: '05:00 PM' },
-  { date: '26 September 2024', hours: '08:00:00 hrs', in: '09:00 AM', out: '05:00 PM' },
-  { date: '25 September 2024', hours: '08:00:00 hrs', in: '09:00 AM', out: '05:00 PM' },
-];
+
 
 export default function ClockInScreen() {
   const { currentUser } = useUserStore()
+  const navigation = useNavigation<NavigationProp<AttendanceStackParam>>();
   const user = useSelector((state: RootState) => state.user.currentUser)
-  const clockIn = false;
-  const [clockState, setClockState] = useState<String>("Điểm danh")
-  const [isOpenClockInModel, setOpenClockInModel] = useState(clockIn)
-
+  const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
+  const [uploadLog] = useUploadLogMutation();
+  const [refresh, setRefresh] = useState(false);
+  const [data, setData] = useState<AttendanceResponse[]>([])
+  const [makeAttendance] = useUploadAggregateLogRequestMutation();
   if (!currentUser || !user) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
@@ -46,71 +48,220 @@ export default function ClockInScreen() {
       </SafeAreaView>
     )
   }
-  const handleClockInButton = () => {
-    if (clockState === "Điểm danh") {
-      //TODO: call camera to capture
-      setOpenClockInModel(true)
-      //TODO: call api clockin
 
+  const [clockIn, setClockIn] = useState(false);
+  const [workState, setWorkState] = useState<Type>('in')
+  const [activeButton, setActiveButton] = useState(true)
+  const [isOpenClockInModel, setOpenClockInModel] = useState(clockIn)
+  const [isOpenClockOutModel, setOpenClockOutModel] = useState(false)
+  const { data: logs, isLoading, isError, refetch } = useGetLogsByDateQuery({ userId: user.id, date: new Date().toISOString().slice(0, 10) });
+  const { error: attendancesError, refetch: attendancesRefetch } = useGetAttendanceByUserIdQuery(user.id);
+  useFocusEffect(
+    useCallback(
+      () => {
+        const fetchLogs = async () => {
+          const response = await refetch().unwrap()
+          try {
+            const logs = [...response].sort((a, b) => (new Date(a.check_in).getTime() - new Date(b.check_in).getTime()));
+            // console.log(logs)
+            if (logs.length == 0) {
+              setWorkState('in')
+            } else {
+              const last_log = logs[logs.length - 1]
+              console.log(last_log)
+              console.log(last_log.type)
+              if (last_log.type == 'out') {
+                setWorkState('out')
+              } else if (last_log.type == 'in') {
+                setWorkState('break_work')
+              } else if (last_log.type == 'back_work') {
+                setWorkState('break_work')
+              } else if (last_log.type == 'break_work') {
+                setWorkState('back_work')
+              }
+            }
+            console.log(workState)
+          } catch (error: any) {
+            Toast.hide(error.message)
+          }
+        }
+        const fetchAttendances = async () => {
+          const attendances = await attendancesRefetch().unwrap();
+          console.log(attendances)
+          setData([...attendances])
+        }
+        fetchLogs()
+        fetchAttendances()
+      }, [refetch, refresh]
+    )
+  )
+  const handleClockInButton = () => {
+    setOpenClockInModel(true)
+  }
+  const handleWorkButton = async () => {
+    const formData = new FormData()
+    try {
+      formData.append('checkIn', new Date().toISOString());
+      formData.append('type', workState);
+      formData.append('userId', user.id.toString());
+    } catch (error: any) {
+      Toast.show(error.message)
     }
-    else {
-      //ToDO: call api clockout
+    try {
+      const response = await uploadLog(formData).unwrap();
+      if (workState === "break_work") Toast.show('Đã giải lao', { type: 'success' });
+      else Toast.show('Tiếp tục làm việc', { type: 'success' });
+      setRefresh(prev => !prev);
+    } catch (error) {
     }
   }
+
+  const handleClockOutButton = (note: string) => {
+    const makeAggregateLogsRequest = async () => {
+      const formData = new FormData()
+      try {
+        formData.append('checkIn', new Date().toISOString());
+        formData.append('type', 'out');
+        formData.append('userId', user.id.toString());
+        try {
+          const aggregateLogsRequest = {
+            date: (new Date()).toISOString(),
+            user_id: user.id,
+            note: note,
+          }
+          const response = await uploadLog(formData).unwrap();
+          console.log(response)
+          if (response.type === 'out') {
+            const attendaceResponse = await makeAttendance(aggregateLogsRequest).unwrap();
+            console.log(attendaceResponse)
+          }
+          setRefresh(prev => !prev);
+          setOpenClockOutModel(false);
+          setWorkState('out')
+        } catch (error: any) {
+          Toast.show(error.message)
+        }
+      } catch (error: any) {
+        Toast.show(error.message)
+      }
+
+    }
+    makeAggregateLogsRequest();
+  }
+
+
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.headerTitle}>Điểm danh</Text>
-              <Text style={styles.headerSubtitle}>Đừng quên việc điểm danh hàng ngày</Text>
-            </View>
-            <AlarmClock size={48} color="white" />
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitle}>Điểm danh</Text>
+            <Text style={styles.headerSubtitle}>Đừng quên việc điểm danh hàng ngày</Text>
           </View>
-          {/* Summary Card */}
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryRow}>
-              <View style={styles.summaryBox}>
-                <Text style={styles.summaryLabel}>Hôm nay</Text>
-                <Text style={styles.summaryValue}>00:00 Hrs</Text>
-              </View>
-              <View style={styles.summaryBox}>
-                <Text style={styles.summaryLabel}>Tháng này</Text>
-                <Text style={styles.summaryValue}>32:00 Hrs</Text>
-              </View>
-            </View>
-
-            <BaseButton title={clockState.toString()} onPress={handleClockInButton} />
-          </View>
+          <AlarmClock size={48} color="white" />
         </View>
+        {/* Summary Card */}
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryBox}>
+              <Text style={styles.summaryLabel}>Hôm nay</Text>
+              <Text style={styles.summaryValue}>00:00 Hrs</Text>
+            </View>
+            <View style={styles.summaryBox}>
+              <Text style={styles.summaryLabel}>Tháng này</Text>
+              <Text style={styles.summaryValue}>32:00 Hrs</Text>
+            </View>
+          </View>
+          {
+            (workState == "in") ?
+              (<BaseButton title={"Điểm danh"} onPress={handleClockInButton} isActive={activeButton} />)
+              : (workState == 'back_work' || workState == 'break_work') ?
+                (
+                  <View style={{ flexDirection: "row", alignItems: 'center', justifyContent: 'center' }}>
+                    {
+                      (workState == "back_work") ?
+                        <WorkButton title={"Quay lại"}
+                          onPress={handleWorkButton}
+                          colorBorder={colors.white}
+                        />
+                        : <WorkButton title={"Giải lao"}
+                          onPress={handleWorkButton}
+                          colorButtonEnd={colors.white}
+                          colorButtonStart={colors.white}
+                          colorText={colors.primary} />
+                    }
+                    <WorkButton title={"Check out"} onPress={() => setOpenClockOutModel(true)}
+                      colorButtonStart='#404040'
+                      colorButtonEnd='#282828'
+                      colorBorder='#414141'
+                    />
+                  </View>
+                )
+                : (
+                  <BaseButton title={"Hết ngày làm việc"} isActive={activeButton} />
+                )
+          }
 
+        </View>
+      </View>
 
+      <ScrollView style={styles.scrollStyle} contentContainerStyle={styles.scrollContent}>
 
         {/* History */}
         {data.map((item, index) => (
-          <View key={index} style={styles.historyCard}>
+          <TouchableOpacity
+            key={index}
+            style={styles.historyCard}
+            onPress={() => navigation.navigate('AttendanceDetail', { attendance: item, user_id: user.id })}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Calendar size={18} color="#880ED4" />
               <Text style={styles.historyDate}>{item.date}</Text>
             </View>
             <View style={styles.historyDetail}>
-              <Text>Total Hours{'\n'}<Text style={styles.bold}>{item.hours}</Text></Text>
-              <Text>Clock In & Out{'\n'}<Text style={styles.bold}>{item.in} — {item.out}</Text></Text>
+              <Text>Số giờ làm việc{'\n'}<Text style={styles.bold}>{item.total_hours}</Text></Text>
+              <Text>Giờ vào{'\n'}<Text style={styles.bold}>{item.clock_in}</Text></Text>
+              <Text>Giờ về{'\n'}<Text style={styles.bold}>{item.clock_out}</Text></Text>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
+
       <BaseModel
-        title="Cập nhật thông tin"
+        title="Điểm danh"
         open={isOpenClockInModel}
-        onClose={() => setOpenClockInModel(false)}
+        onClose={() => {
+          setOpenClockInModel(false)
+          setRefresh(prev => !prev)
+        }
+        }
       >
         <ClockInSelfieModal
           user={user}
-          onClose={() => setOpenClockInModel(false)}
-          clockInState={clockIn}
+          onClose={
+            () => {
+              Toast.show('Clock In successful!', { type: 'success' });              
+              console.log("Đ d")
+              setRefresh(prev => !prev)
+              console.log(refresh)
+              setOpenClockInModel(false)
+            }
+          }
+        />
+      </BaseModel>
+
+      <BaseModel
+        title='Xác nhận check out'
+        open={isOpenClockOutModel}
+        onClose={() => { setOpenClockOutModel(false) }}
+      >
+        <ClockOutModal
+          onConfirm={handleClockOutButton}
+          onClose={() => {
+            setOpenClockOutModel(false)
+            setRefresh(prev => !prev)
+          }}
         />
       </BaseModel>
     </SafeAreaView>
@@ -119,38 +270,41 @@ export default function ClockInScreen() {
 }
 
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f8fb',
+    backgroundColor: colors.primary, // Thay '#f8f8fb' bằng colors.background (#F8F8F8)
+  },
+  scrollStyle: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   scrollContent: {
     padding: 16,
     paddingBottom: 80,
   },
   header: {
-    backgroundColor: '#880ED4',
-    borderRadius: 20,
+    backgroundColor: colors.primary, // Thay '#880ED4' bằng colors.primary (#6C5CE7)
     padding: 20,
   },
   headerTitle: {
-    color: 'white',
+    color: colors.white, // Thay 'white' bằng colors.white (#FFFFFF)
     fontSize: 22,
     fontWeight: 'bold',
   },
   headerSubtitle: {
-    color: 'white',
+    color: colors.white, // Thay 'white' bằng colors.white (#FFFFFF)
     marginTop: 4,
     fontSize: 14,
   },
   summaryCard: {
-    backgroundColor: 'white',
+    backgroundColor: colors.cardBackground, // Thay 'white' bằng colors.cardBackground (#FFFFFF)
     borderRadius: 16,
     padding: 20,
     marginTop: 30,
     marginBottom: 0,
-    shadowColor: '#000',
+    shadowColor: colors.black, // Thay '#000' bằng colors.black (#000000)
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
@@ -164,13 +318,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 10,
-    backgroundColor: '#f5f5f9',
+    backgroundColor: colors.greyLight, // Thay '#f5f5f9' bằng colors.greyLight (#F8F8F8)
     borderRadius: 12,
     marginHorizontal: 5,
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#777',
+    color: colors.textLight, // Thay '#777' bằng colors.textLight (#BABABA)
   },
   summaryValue: {
     fontSize: 20,
@@ -179,21 +333,22 @@ const styles = StyleSheet.create({
   },
   clockInBtn: {
     marginTop: 10,
-    backgroundColor: '#880ED4',
+    backgroundColor: colors.primary, // Thay '#880ED4' bằng colors.primary (#6C5CE7)
     paddingVertical: 14,
     borderRadius: 30,
     alignItems: 'center',
   },
   clockInText: {
-    color: 'white',
+    color: colors.white, // Thay 'white' bằng colors.white (#FFFFFF)
     fontWeight: 'bold',
     fontSize: 16,
   },
   historyCard: {
-    backgroundColor: 'white',
+    backgroundColor: colors.cardBackground, // Thay 'white' bằng colors.cardBackground (#FFFFFF)
     padding: 16,
     borderRadius: 16,
     marginBottom: 16,
+    elevation: 2,
   },
   historyDate: {
     fontWeight: 'bold',
@@ -202,7 +357,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   historyDetail: {
-    backgroundColor: '#f5f5f9',
+    backgroundColor: colors.greyLight, // Thay '#f5f5f9' bằng colors.greyLight (#F8F8F8)
     borderRadius: 12,
     padding: 12,
     flexDirection: 'row',
@@ -215,16 +370,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: layout.spacing.xl,
+    paddingHorizontal: 16,
   },
   emptyStateTitle: {
-    fontSize: typography.fontSizes.xl,
-    fontWeight: typography.fontWeights.semibold,
+    fontSize: 20,
+    fontWeight: '600',
     color: colors.textPrimary,
-    marginBottom: layout.spacing.sm,
+    marginBottom: 8,
   },
   emptyStateDescription: {
-    fontSize: typography.fontSizes.md,
+    fontSize: 16,
     color: colors.textSecondary,
     textAlign: 'center',
   },

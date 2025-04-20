@@ -3,6 +3,7 @@ package org.example.management.management.domain.attendace;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.management.management.domain.profile.User;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -33,6 +34,7 @@ public class Attendance {
 
     private String note;
 
+    private int userId;
     public Attendance(
             LocalDate date,
             LocalTime clockIn,
@@ -40,7 +42,8 @@ public class Attendance {
             LocalTime actualClockIn,
             LocalTime actualClockOut,
             LocalTime totalHours,
-            String note
+            String note,
+            int userId
     ) {
         this.date = date;
         this.clockIn = clockIn;
@@ -49,5 +52,6 @@ public class Attendance {
         this.actualClockOut = actualClockOut;
         this.totalHours = totalHours;
         this.note = note;
+        this.userId = userId;
     }
 }

@@ -9,12 +9,13 @@ import org.example.management.management.domain.task.Image;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public abstract class LogMapper {
 
-    @Mapping(target = "id", source = "log.id")
-    @Mapping(target = "image", source = "image")
-    public abstract LogResponse toResponse(Log log, Image image, User user);
-
+    public abstract LogResponse toResponse(Log log);
+    public abstract List<LogResponse> toResponses(List<Log> logs);
     public abstract AttendanceResponse toResponse(Attendance attendance);
+    public abstract List<AttendanceResponse> toResponse(List<Attendance> attendances);
 }
