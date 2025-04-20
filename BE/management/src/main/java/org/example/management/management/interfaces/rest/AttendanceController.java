@@ -22,13 +22,11 @@ public class AttendanceController {
 
     @GetMapping("/logs/{userId}")
     public List<LogResponse> getLogs(@PathVariable(name="userId") int userId, @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date){
-        log.info(date.toString());
         return  this.attendanceService.getLogsByDayAndUserId(userId, date);
     }
 
     @GetMapping("/{userId}")
     public List<AttendanceResponse> getAttendance(@PathVariable int userId){
-        log.info("attendances get");
         return this.attendanceService.getAttendanceByUserId(userId);
     }
 

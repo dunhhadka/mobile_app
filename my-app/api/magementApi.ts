@@ -30,7 +30,7 @@ import {
   UserRequest,
 } from '../types/management'
 
-export const URL = 'http://192.168.100.8:8080'
+export const URL = 'http://192.168.31.117:8080'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',

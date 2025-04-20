@@ -88,7 +88,7 @@ export default function AttendanceDetai() {
           const displayData: AttendanceDetailDisplay =
           {
             date: attendance.date,
-            image: "",
+            image: checkInLog.image?.src? checkInLog.image.src:'https://img.freepik.com/premium-vector/man-empty-avatar-casual-business-style-vector-photo-placeholder-social-networks-resumes_885953-434.jpg?w=740',
             latitude: Number(checkInLog.latitude),
             longitude: Number(checkInLog.longitude),
             clockInNotes: String(checkInLog.note),
@@ -115,9 +115,8 @@ export default function AttendanceDetai() {
         {/* Selfie and Location */}
         <Text style={styles.sectionTitle}>Ảnh chụp điểm danh</Text>
         <Image
-          source={{ uri: 'https://img.freepik.com/premium-vector/man-empty-avatar-casual-business-style-vector-photo-placeholder-social-networks-resumes_885953-434.jpg?w=740' }}
+          source={{ uri: `${attendanceDisplay.image}` }}
           style={styles.selfieImage}
-          defaultSource={{ uri: 'https://img.freepik.com/premium-vector/man-empty-avatar-casual-business-style-vector-photo-placeholder-social-networks-resumes_885953-434.jpg?w=740' }} // Ảnh placeholder
         />
         <Text style={styles.locationText}>
           Lat: {attendanceDisplay.latitude}

@@ -24,6 +24,7 @@ import * as Location from 'expo-location'
 import WorkButton from '../models/WorkButton';
 import ClockOutModal from '../models/ClockOutComfirmModal';
 import { AttendanceStackParam } from '../../App';
+import calculateWorkedHours from '../../utils/workTimeUtils';
 
 
 
@@ -52,6 +53,8 @@ export default function ClockInScreen() {
   const [clockIn, setClockIn] = useState(false);
   const [workState, setWorkState] = useState<Type>('in')
   const [activeButton, setActiveButton] = useState(true)
+  const [totalHours, setTotalHours] = useState("00:00")
+  const [workTime, setWorkTime] = useState("00:00")
   const [isOpenClockInModel, setOpenClockInModel] = useState(clockIn)
   const [isOpenClockOutModel, setOpenClockOutModel] = useState(false)
   const { data: logs, isLoading, isError, refetch } = useGetLogsByDateQuery({ userId: user.id, date: new Date().toISOString().slice(0, 10) });
@@ -63,7 +66,7 @@ export default function ClockInScreen() {
           const response = await refetch().unwrap()
           try {
             const logs = [...response].sort((a, b) => (new Date(a.check_in).getTime() - new Date(b.check_in).getTime()));
-            // console.log(logs)
+            setWorkTime(calculateWorkedHours(logs))
             if (logs.length == 0) {
               setWorkState('in')
             } else {
@@ -89,6 +92,19 @@ export default function ClockInScreen() {
           const attendances = await attendancesRefetch().unwrap();
           console.log(attendances)
           setData([...attendances])
+          let totalSeconds = attendances.reduce((sum, item) => {
+            if(item.total_hours==null) return 0;
+            const [h, m, s] = item.total_hours.split(':');
+            return sum + (+h * 3600 + +m * 60 + parseFloat(s));
+          }, 0);
+        
+          const totalHours = Math.floor(totalSeconds / 3600);
+          const totalMinutes = Math.floor((totalSeconds % 3600) / 60);
+        
+          // Format thành chuỗi hh:mm
+          const hh = String(totalHours).padStart(2, '0');
+          const mm = String(totalMinutes).padStart(2, '0');
+          setTotalHours(`${hh}:${mm}`)
         }
         fetchLogs()
         fetchAttendances()
@@ -167,11 +183,11 @@ export default function ClockInScreen() {
           <View style={styles.summaryRow}>
             <View style={styles.summaryBox}>
               <Text style={styles.summaryLabel}>Hôm nay</Text>
-              <Text style={styles.summaryValue}>00:00 Hrs</Text>
+              <Text style={styles.summaryValue}>{workTime}</Text>
             </View>
             <View style={styles.summaryBox}>
               <Text style={styles.summaryLabel}>Tháng này</Text>
-              <Text style={styles.summaryValue}>32:00 Hrs</Text>
+              <Text style={styles.summaryValue}>{totalHours}</Text>
             </View>
           </View>
           {

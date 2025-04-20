@@ -32,7 +32,6 @@ public class ImageController {
     @PostMapping("/upload")
     public ImageResponse upload(@RequestParam("file") MultipartFile file) throws IOException {
         var imagesSaved = this.imageService.uploadImageWithFile(file);
-
         return taskMapper.toResponse(imagesSaved);
     }
 }

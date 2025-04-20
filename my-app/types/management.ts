@@ -269,6 +269,7 @@ export interface LogResponse {
   id: number
   type: Type
   check_in: string
+  image?: ImageResponse
   note?: string
   latitude?: string
   longitude?: string

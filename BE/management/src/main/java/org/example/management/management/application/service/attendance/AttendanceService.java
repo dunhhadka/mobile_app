@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.example.management.management.application.model.attendance.*;
+import org.example.management.management.application.model.images.ImageResponse;
 import org.example.management.management.application.service.images.ImageService;
+import org.example.management.management.application.utils.NumberUtils;
 import org.example.management.management.domain.attendace.Attendance;
 import org.example.management.management.domain.attendace.Log;
 import org.example.management.management.domain.task.Image;
@@ -23,6 +25,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -41,10 +46,35 @@ public class AttendanceService {
     private static final LocalTime eightAM = LocalTime.of(8, 0);
     private static final LocalTime fiveAM = LocalTime.of(17, 0);
 
-
-    public List<LogResponse> getLogsByDayAndUserId(int userId, LocalDate date){
+    public List<LogResponse> getLogsByDayAndUserId(int userId, LocalDate date) {
         var alllogs = this.logRepository.findByUserIdAndDate(userId, date);
-        return this.logMapper.toResponses(alllogs);
+
+        var ids = alllogs.stream().map((log) -> log.getLogImageId()).filter(NumberUtils::isPositive).toList();
+
+        var images = this.imageRepository.findByIdIn(ids)
+                .stream().collect(Collectors.toMap(Image::getId, Function.identity()));
+
+        var response = this.logMapper.toResponses(alllogs);
+        response
+                .forEach(log -> {
+                    var logId = log.getId();
+                    var logEntity = alllogs.stream()
+                            .filter(l -> l.getId() == logId)
+                            .findFirst().orElse(null);
+                    if (logEntity == null) return;
+
+                    var image = images.get(logEntity.getLogImageId());
+                    if (image == null) return;
+
+                    log.setImage(ImageResponse.builder()
+                            .id(image.getId())
+                            .alt(image.getAlt())
+                            .src(image.getSrc())
+                            .fileName(image.getFileName())
+                            .build());
+                });
+
+        return response;
     }
 
     @Transactional
@@ -168,7 +198,7 @@ public class AttendanceService {
                 userId
         );
         var saved = this.attendanceRepository.save(attendance);
-        allLogs.forEach(log->{
+        allLogs.forEach(log -> {
             log.setAttendance(saved.getId());
             this.logRepository.save(log);
         });
@@ -216,7 +246,7 @@ public class AttendanceService {
             if (clockIn == null && logFromLeft.getType() == Log.Type.in && logFromLeft.getCheckIn() != null) {
                 clockIn = logFromLeft.getCheckIn();
                 left++;
-            } else{
+            } else {
                 left++;
             }
 
@@ -224,7 +254,7 @@ public class AttendanceService {
             if (logFromRight.getType() == Log.Type.out && logFromRight.getCheckIn() != null) {
                 clockOut = logFromRight.getCheckIn();
                 right--;
-            } else{
+            } else {
                 right--;
             }
         }
@@ -289,9 +319,9 @@ public class AttendanceService {
         return zonedDateTime.toLocalTime();
     }
 
-    public List<AttendanceResponse> getAttendanceByUserId(int userId){
+    public List<AttendanceResponse> getAttendanceByUserId(int userId) {
         var attendances = this.attendanceRepository.findAllByUserId(userId);
-        return  this.logMapper.toResponse(attendances);
+        return this.logMapper.toResponse(attendances);
     }
 
     public AttendanceResponse getAttendanceById(int attendanceId) {
