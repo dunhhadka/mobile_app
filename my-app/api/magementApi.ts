@@ -15,6 +15,8 @@ import {
   Comment,
   DailyReport,
   DailyReportRequest,
+  LeaveRequest,
+  LeaveResponse,
   LoginRequest,
   LogResponse,
   Message,
@@ -37,7 +39,7 @@ export const managementApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: URL,
   }),
-  tagTypes: ['project', 'notification', 'task', 'attendances'],
+  tagTypes: ['project', 'notification', 'task', 'attendances', 'leave'],
   endpoints: (builder) => ({
     createUser: builder.mutation<User, UserRequest>({
       query: (request) => ({
@@ -332,6 +334,59 @@ export const managementApi = createApi({
         method: 'GET',
       }),
     }),
+
+    createLeave: builder.mutation<
+      LeaveResponse,
+      { userId: number; request: LeaveRequest }
+    >({
+      query: ({ userId, request }) => ({
+        url: `/api/leaves/${userId}`,
+        method: 'POST',
+        body: request,
+      }),
+      invalidatesTags: [
+        { type: 'leave', id: 'LIST' },
+        { type: 'notification', id: 'LIST' }, // Làm mới danh sách thông báo
+      ],
+    }),
+    getLeaveById: builder.query<LeaveResponse, number>({
+      query: (id) => ({
+        url: `/api/leaves/${id}`,
+        method: 'GET',
+      }),
+      providesTags: (result) =>
+        result ? [{ type: 'leave', id: result.id }] : [],
+    }),
+    updateLeaveStatus: builder.mutation<
+      LeaveResponse,
+      { leaveId: number; userId: number; status: string }
+    >({
+      query: ({ leaveId, userId, status }) => ({
+        url: `/api/leaves/${leaveId}/user/${userId}`,
+        method: 'PUT',
+        body: { status },
+      }),
+      invalidatesTags: (result, error, arg) => {
+        if (error) return [{ type: 'leave', id: 'LIST' }]
+        return [
+          { type: 'leave', id: arg.leaveId },
+          { type: 'notification', id: 'LIST' }, // Làm mới danh sách thông báo khi cập nhật trạng thái
+        ]
+      },
+    }),
+    getLeavesByUserId: builder.query<LeaveResponse[], number>({
+      query: (userId) => ({
+        url: `/api/leaves/all/${userId}`,
+        method: 'GET',
+      }),
+      providesTags: (result) =>
+        result && result.length
+          ? [
+              ...result.map(({ id }) => ({ type: 'leave' as const, id })),
+              { type: 'leave', id: 'LIST' },
+            ]
+          : [{ type: 'leave', id: 'LIST' }],
+    }),
   }),
 })
 
@@ -367,4 +422,8 @@ export const {
   useGetTaskByIdQuery,
   useReOpenTaskByIdMutation,
   useFilterTasksQuery,
+  useCreateLeaveMutation,
+  useGetLeaveByIdQuery,
+  useUpdateLeaveStatusMutation,
+  useGetLeavesByUserIdQuery,
 } = managementApi

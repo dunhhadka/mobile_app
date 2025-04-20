@@ -93,7 +93,6 @@ public class LeaveService {
                 .orElseThrow(() -> new ConstrainViolationException("leaveId", "Không tìm thấy đơn xin nghỉ"));
         leave.updateLeaveStatus(leaveId, status);
         leaveRepository.save(leave);
-        this.applicationEventPublisher.publishEvent(new );
         return leaveMapper.toLeaveResponse(leave);
     }
 
