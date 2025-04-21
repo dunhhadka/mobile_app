@@ -29,6 +29,17 @@ public class DailyReportService {
     private final UserService userService;
     private final DailyReportRepository dailyReportRepository;
 
+    public DailyReportResponse getById(int id) {
+        var dailyReport = this.dailyReportRepository.findById(id)
+                .orElseThrow(() ->
+                        new ConstrainViolationException(
+                                "Daily Report",
+                                "Daily Report not found"
+                        ));
+        var user = this.userService.findById(dailyReport.getReporterId());
+        return this.toResponse(dailyReport, user);
+    }
+
     @Transactional
     public int create(DailyReportRequest request) {
         var task = taskRepository.findById(request.getTaskId())
