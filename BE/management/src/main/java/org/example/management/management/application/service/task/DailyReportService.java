@@ -40,6 +40,16 @@ public class DailyReportService {
         return this.toResponse(dailyReport, user);
     }
 
+    public void test() {
+        var task = taskRepository.findById(1)
+                .orElseThrow(() ->
+                        new ConstrainViolationException(
+                                "Task",
+                                "Task not found"
+                        ));
+        var reporter = userService.findById(1);
+    }
+
     @Transactional
     public int create(DailyReportRequest request) {
         var task = taskRepository.findById(request.getTaskId())
@@ -57,6 +67,8 @@ public class DailyReportService {
                     "Tiến độ công việc phải trong khoảng 0-100"
             );
         }
+
+        /// /
 
         var dailyReport = DailyReport.builder()
                 .note(request.getNote())
