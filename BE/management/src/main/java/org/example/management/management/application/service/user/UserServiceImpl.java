@@ -156,7 +156,7 @@ public class UserServiceImpl implements UserService {
                     "Email hoặc mật khẩu không đúng"
             );
         }
-        return this.userMapper.toUserResponse(possiblyUser.get());
+        return this.getByIds(List.of(possiblyUser.get().getId())).get(0);
     }
 
     private Pair<List<UserResponse>, Long> getUserResponse(UserFilterRequest request, PageRequest pageable) {

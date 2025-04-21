@@ -1,23 +1,33 @@
 package org.example.management.management.domain.task;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "daily_reports")
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class DailyReport {
 
+    @ManyToOne
+    @JsonIgnore
+    @Setter
+    @JoinColumn(name = "taskId", referencedColumnName = "id")
+    private Task task;
+
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    private String content;
+    private String note;
 
     private Instant createdAt;
 
@@ -26,5 +36,7 @@ public class DailyReport {
     @NotNull
     private BigDecimal progress;
 
-    private int reportId;
+    private int reporterId;
+
+    private LocalDate date;
 }

@@ -61,6 +61,22 @@ export const formatDate = (date: Date | string | undefined | null): string => {
   })
 }
 
+export function formatDateTime(date: Date | string | undefined): string {
+  if (!date) return ''
+  const parsedDate = typeof date === 'string' ? new Date(date) : date
+
+  if (isNaN(parsedDate.getTime())) {
+    console.warn('Invalid date passed to formatDateTime:', date)
+    return ''
+  }
+
+  const day = String(parsedDate.getDate()).padStart(2, '0')
+  const month = String(parsedDate.getMonth() + 1).padStart(2, '0')
+  const year = parsedDate.getFullYear()
+
+  return `${day}/${month}/${year}`
+}
+
 export default function UpdateProfileModel({ user, onClose }: Props) {
   const [firstName, setFirstName] = useState<string>(user.first_name ?? '')
   const [lastName, setLastName] = useState(user.last_name ?? '')

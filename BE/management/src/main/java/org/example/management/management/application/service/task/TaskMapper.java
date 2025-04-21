@@ -7,12 +7,19 @@ import org.example.management.management.application.model.user.response.UserRes
 import org.example.management.management.domain.task.Image;
 import org.example.management.management.domain.task.Task;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring")
 public abstract class TaskMapper {
 
+    @Mapping(target = "startDate", source = "timeInfo.startDate")
+    @Mapping(target = "actualStartDate", source = "timeInfo.actualStartDate")
+    @Mapping(target = "dueDate", source = "timeInfo.dueDate")
+    @Mapping(target = "completedAt", source = "timeInfo.completedAt")
+    @Mapping(target = "estimatedTime", source = "timeInfo.estimatedTime")
+    @Mapping(target = "actualTime", source = "timeInfo.actualTime")
     public abstract TaskResponse toResponse(Task task);
 
     public abstract ImageResponse toResponse(Image image);

@@ -6,37 +6,56 @@ import {
   TouchableOpacity,
   Pressable,
 } from 'react-native'
-import { Calendar, Hash, Trash2 } from 'lucide-react-native'
+import {
+  Calendar,
+  ClipboardMinus,
+  Hash,
+  MessageSquareText,
+  Trash2,
+} from 'lucide-react-native'
 import colors from '../../constants/colors'
 import { PriorityTag } from './PriorityTag'
 import ProgressBar from '../layouts/ProgressBar'
 import { Task } from '../../types/management'
 import Avatar from '../layouts/Avatar'
-import BaseModel from '../models/BaseModel'
 import ConfirmModal from './ConfirmModal'
+import BaseModel from '../models/BaseModel'
+import { formatDateTime } from '../models/UpdateProfileModal'
 
 interface TaskItemProps {
   task: Task
   onDelete?: (id: number) => void
   onView?: (id: number) => void
+  showComment?: (id: number) => void
+  showDailyReports?: (id: number) => void
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
   task,
   onDelete,
   onView,
+  showComment,
+  showDailyReports,
 }) => {
-  const { id, title, priority, assign, process, due_date } = task
+  const { id, title, priority, assign, process, due_date, start_date } = task
   const assignedUsers = [assign, process].filter(Boolean)
 
   const [openDeleteModal, setOpenDeleteModal] = useState(false)
 
-  const formattedDate = due_date
-    ? new Date(due_date).toLocaleDateString('en-US', {
-        day: '2-digit',
-        month: 'short',
-      })
-    : 'No date'
+  const startDate = formatDateTime(start_date)
+  const formattedDate = formatDateTime(due_date)
+
+  const getStatus = (task: Task): string => {
+    if (!task.status) return 'Chưa bắt đầu'
+    switch (task.status) {
+      case 'in_process':
+        return 'Đang thực hiện'
+      case 'finish':
+        return 'Hoàn thành'
+      default:
+        return 'Chưa bắt đầu'
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -46,6 +65,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             <View style={styles.idContainer}>
               <Hash size={16} color={colors.primary} />
               <Text style={styles.idText}>{id}</Text>
+              <Pressable
+                style={{ marginLeft: 10 }}
+                onPress={() => showComment?.(task.id)}
+              >
+                <MessageSquareText color={colors.primary} />
+              </Pressable>
+              <Pressable
+                style={{ marginLeft: 10 }}
+                onPress={() => showDailyReports?.(id)}
+              >
+                <ClipboardMinus color={colors.primary} />
+              </Pressable>
             </View>
             <Text style={styles.title}>{title}</Text>
           </View>
@@ -55,11 +86,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         </View>
 
         <View style={styles.statusRow}>
-          <Text style={styles.statusText}>In Progress</Text>
+          <Text style={styles.statusText}>{getStatus(task)}</Text>
           {priority && <PriorityTag priority={priority} />}
         </View>
 
-        <ProgressBar progress={80} color={colors.primary} height={4} />
+        <ProgressBar
+          progress={task.process_value || 0}
+          color={colors.primary}
+          height={4}
+        />
 
         <View style={styles.footer}>
           <View style={styles.avatarsContainer}>

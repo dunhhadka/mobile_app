@@ -2,50 +2,38 @@ package org.example.management.management.domain.task;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import io.hypersistence.utils.hibernate.type.json.JsonType;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.PrimaryKeyJoinColumn;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
+import org.example.management.ddd.AggregateRoot;
+import org.example.management.management.application.converter.EnumConverter;
 import org.example.management.management.application.converter.IntListConverter;
 import org.example.management.management.application.model.task.TaskImageRequest;
 import org.example.management.management.domain.comment.Comment;
 import org.example.management.management.domain.leaves.Leave;
+import org.example.management.management.domain.task.events.DailyReportCreateEvent;
+import org.example.management.management.domain.task.events.TaskFinishEvent;
+import org.example.management.management.domain.task.events.TaskReOpenEvent;
+import org.example.management.management.domain.task.events.TaskStartEvent;
 import org.example.management.management.infastructure.exception.ConstrainViolationException;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.time.LocalDate;
+import java.util.*;
 
+@DynamicUpdate
 @Getter
 @Entity
 @Table(name = "tasks")
-public class Task {
+public class Task extends AggregateRoot<Task> {
 
     @Setter
     @JsonIgnore
@@ -106,7 +94,7 @@ public class Task {
     @Convert(converter = IntListConverter.class)
     private List<String> attachments = new ArrayList<>();
 
-    @Type(JsonType.class)
+    @Convert(converter = EnumConverter.class)
     private List<Tag> tags = new ArrayList<>();
 
     @OneToMany(mappedBy = "task", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
@@ -180,8 +168,6 @@ public class Task {
     }
 
     public void addComment(Comment comment) {
-        if (CollectionUtils.isEmpty(this.comments)) this.comments = new ArrayList<>();
-
         this.comments.add(comment);
 
         comment.setTask(this);
@@ -199,6 +185,39 @@ public class Task {
 
         comment.setTask(null);
         this.comments.remove(comment);
+    }
+
+    public void start() {
+        this.timeInfo = this.timeInfo.toBuilder()
+                .actualStartDate(LocalDate.now())
+                .build();
+        this.status = Status.in_process;
+
+        this.addDomainEvent(new TaskStartEvent(this.assignId, this.processId, this.id));
+    }
+
+    public void finish() {
+        this.timeInfo = this.timeInfo.toBuilder()
+                .completedAt(LocalDate.now())
+                .build();
+        this.status = Status.finish;
+
+        this.addDomainEvent(new TaskFinishEvent(this.assignId, this.processId, this.id));
+    }
+
+    public void addDailyReport(DailyReport dailyReport) {
+        this.processValue = dailyReport.getProgress();
+
+        this.reports.add(dailyReport);
+        dailyReport.setTask(this);
+
+        this.addDomainEvent(new DailyReportCreateEvent(this.assignId, this.processId, this.processValue, dailyReport.getDate()));
+    }
+
+    public void reOpen() {
+        this.status = Status.in_process;
+
+        this.addDomainEvent(new TaskReOpenEvent(this.processId, this.assignId, this.id));
     }
 
     public enum Status {

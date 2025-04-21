@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @Setter
 public class DailyReportRequest {
     @NotBlank
-    private String content;
+    private String note;
 
     @NotNull
     private BigDecimal progress;

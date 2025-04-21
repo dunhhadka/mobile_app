@@ -60,7 +60,17 @@ export default function SignUpScreen({ navigation }: any) {
         navigation.navigate('Main')
       }
     } catch (err: any) {
-      handleApiError(toast)
+      if (err?.data?.message) {
+        toast.show(err.data.message, {
+          type: 'danger',
+          duration: 4000,
+        })
+      } else {
+        toast.show('Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại!', {
+          type: 'danger',
+          duration: 4000,
+        })
+      }
     }
   }
 

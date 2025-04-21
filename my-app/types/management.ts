@@ -115,7 +115,44 @@ export interface Task {
   process?: User
   due_date?: Date
   process_value?: number
+  tags?: Tag[]
+  start_date: Date
+  actual_start_date?: Date
+  completed_at?: Date
+  extimated_time?: number
+  actual_time?: number
+  attachments?: string[]
 }
+
+export type Tag =
+  | 'front_end'
+  | 'back_end'
+  | 'database'
+  | 'architecture'
+  | 'security'
+  | 'performance'
+  | 'design'
+  | 'test'
+  | 'other'
+
+export const tagLabelMap: Record<Tag, string> = {
+  front_end: 'Giao diện (Frontend)',
+  back_end: 'Xử lý (Backend)',
+  database: 'Cơ sở dữ liệu',
+  architecture: 'Kiến trúc hệ thống',
+  security: 'Bảo mật',
+  performance: 'Hiệu năng',
+  design: 'Thiết kế',
+  test: 'Kiểm thử',
+  other: 'Khác',
+}
+
+export const tagWithLabel = Object.entries(tagLabelMap).map(
+  ([_, label], index) => ({
+    value: index,
+    label,
+  })
+)
 
 export interface UserFilterRequest {
   ids?: number[]
@@ -176,26 +213,6 @@ export interface Project {
   tasks: Task[]
 }
 
-export interface Task {
-  id: number
-  title: string
-  description: string
-  project_id: number
-  assign_id?: number
-  process_id?: number
-  priority?: TaskPriority
-  difficulty?: 'very_easy' | 'easy' // Bạn có thể thêm các giá trị difficulty còn lại
-  status?: 'to_do' | 'in_process' | 'finish'
-  created_on: string // Dạng ISO 8601 string
-  modified_on: string // Dạng ISO 8601 string
-  finished_on?: string // Dạng ISO 8601 string
-  images: ImageResponse[]
-  assign?: User
-  process?: User
-  due_date?: Date
-  process_value?: number
-}
-
 export interface UserFilterRequest {
   ids?: number[]
 }
@@ -214,6 +231,13 @@ export interface TaskRequest {
   status?: StatusType
   images?: ImageRequest[]
   process_value?: number
+  tags?: Tag[]
+  start_date: Date
+  due_date: Date
+  actual_start_date?: Date
+  completed_at?: Date
+  extimated_time?: number
+  actual_time?: number
 }
 
 export interface ImageRequest {
@@ -297,4 +321,52 @@ export const NotificationTitle = {
   comment: 'Bình luận',
   deadline: 'Hạn chót',
   user: 'Người dùng',
+}
+
+export interface CommentRequest {
+  task_id: number
+  user_id: number
+  content: string
+}
+
+export interface Comment {
+  id: number
+  content: string
+  user: User
+  created_at: string
+}
+
+export type ActionType =
+  | 'create'
+  | 'update'
+  | 'start'
+  | 'finish'
+  | 'no_action'
+  | 'update_process'
+  | 'reopen'
+
+export interface DailyReportRequest {
+  note: string
+  progress: number
+  task_id: number
+  reporter_id: number
+}
+
+export interface DailyReport {
+  id: number
+  note?: string
+  progress: number
+  created_at?: string
+  updated_at?: string
+  reporter: User
+  date: Date
+}
+
+export interface TaskFilterRequest {
+  title?: string
+  ids?: number[]
+  processId?: number
+  assignId?: number
+  projectId?: number
+  status?: StatusType
 }

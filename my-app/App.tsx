@@ -28,11 +28,13 @@ import ChatRoomScreen from './components/pages/ChatRoomScreen'
 import NotificationProvider from './provider/NotificationProvider'
 import Toast from 'react-native-toast-message'
 import CustomNotificationToast from './components/CustomNotificationToast'
+import CreateOrUpdateTaskFrom from './components/form/CreateOrUpdateTaskFrom'
 
 // Param types for Task stack
 export type TasksStackParamList = {
   ProjectList: undefined
   ProjectDetail: { project_id: number }
+  CreateOrUpdateTask: { projectId: number; taskId?: number }
 }
 
 export type HomeStackParamList = {
@@ -63,6 +65,10 @@ function TasksStack() {
     <TaskStack.Navigator screenOptions={{ headerShown: false }}>
       <TaskStack.Screen name="ProjectList" component={TaskScreen} />
       <TaskStack.Screen name="ProjectDetail" component={ProjectDetail} />
+      <TaskStack.Screen
+        name="CreateOrUpdateTask"
+        component={CreateOrUpdateTaskFrom}
+      />
     </TaskStack.Navigator>
   )
 }

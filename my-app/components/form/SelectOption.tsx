@@ -19,7 +19,7 @@ interface SelectOption {
   subtitle?: string
   data: Item[]
   selectedId?: number
-  onSelect: (id: number | number[]) => void
+  onSelect?: (id: number | number[]) => void
   onCancel?: () => void
   multiple?: boolean
   multipleSelected?: number[]
@@ -44,7 +44,7 @@ export default function SelectOption({
 
   const handleSelect = () => {
     if (current !== undefined) {
-      onSelect(current)
+      onSelect?.(current)
     }
   }
 
@@ -95,7 +95,7 @@ export default function SelectOption({
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-          <Text style={styles.cancelText}>Cancel</Text>
+          <Text style={styles.cancelText}>Quay lại</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
@@ -108,7 +108,7 @@ export default function SelectOption({
             else onMultipleSelected?.(multipleSelectedIds)
           }}
         >
-          <Text style={styles.selectText}>Select</Text>
+          <Text style={styles.selectText}>Chọn</Text>
         </TouchableOpacity>
       </View>
     </View>

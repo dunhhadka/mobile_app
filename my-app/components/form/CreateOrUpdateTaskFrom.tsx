@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import {
   View,
   Text,
@@ -16,45 +16,54 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native'
-import DateTimePicker from '@react-native-community/datetimepicker'
-import { StatusBar } from 'expo-status-bar'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useRouter } from 'expo-router'
 import {
+  Calendar,
   ChevronDown,
+  ClipboardList,
   FileText,
   Percent,
   UserCircle,
-  Users,
 } from 'lucide-react-native'
 import colors from '../../constants/colors'
 import {
-  useCreateProjectMutation,
   useCreateTaskMutation,
   useFilterUserQuery,
-  useUpdateProjectMutation,
+  useFinishTaskByIdMutation,
+  useGetProjectByIdQuery,
+  useGetTaskByIdQuery,
+  useReOpenTaskByIdMutation,
+  useStartTaskByIdMutation,
   useUpdateTaskMutation,
 } from '../../api/magementApi'
 import {
+  ActionType,
   Project,
-  ProjectRequest,
-  ProjectSearchRequest,
+  Tag,
+  tagLabelMap,
+  tagWithLabel,
   Task,
   TaskRequest,
   User,
   UserFilterRequest,
 } from '../../types/management'
-import { CheckBox } from 'react-native-elements'
-import { formatDate } from '../models/UpdateProfileModal'
-import { handleApiError } from '../../utils/errorHandler'
-import { useToast } from 'react-native-toast-notifications'
 import BaseModel from '../models/BaseModel'
 import SelectOption, { Item } from './SelectOption'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store/store'
+import CustomDateTimePicker from './DateTimePicker'
+import { formatDateTime } from '../models/UpdateProfileModal'
+import { TaskActionButton } from '../buttons/TaskActionButton'
+import DailyReportCreateForm from './DailyReportCreateForm'
+import {
+  RouteProp,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native'
+import ConfirmModal from '../card/ConfirmModal'
 
 interface Props {
-  onClose?: () => void
   project?: Project
   task?: Task
 }
@@ -150,26 +159,53 @@ export const getLabelDifficulty = (difficulty?: DifficultyType): string => {
   }
 }
 
-export default function CreateOrUpdateTaskFrom({
-  onClose,
-  project,
-  task,
-}: Props) {
+type TaskScreenProps = RouteProp<
+  {
+    params: { project_id: number; task_id: number }
+  },
+  'params'
+>
+
+export default function CreateOrUpdateTaskFrom() {
+  const route = useRoute<TaskScreenProps>()
+
+  const { project_id, task_id } = route.params
+
+  const {
+    data: project,
+    isLoading: isProjectLoading,
+    isFetching: isProjectFetching,
+  } = useGetProjectByIdQuery(project_id)
+
+  const {
+    data: task,
+    isLoading: isTaskLoading,
+    isFetching: isTaskFetching,
+    refetch,
+  } = useGetTaskByIdQuery(task_id, { skip: !task_id })
+
   const [userFilter, setUserFilter] = useState<UserFilterRequest>({})
   const [selectedUsers, setSelectedUser] = useState<number[]>(
     project?.users?.map((u) => u.id) ?? []
   )
 
-  console.log(task)
-
   const [openAssignTo, setOpenAssignTo] = useState(false)
   const [openPriority, setOpenPriority] = useState(false)
   const [openDifficulty, setOpenDifficulty] = useState(false)
+  const [openSelectStartDate, setOpenSelectStartDate] = useState(false)
+  const [openSelectDueDate, setOpenSelectDueDate] = useState(false)
+  const [openSelectTags, setOpenSelectTags] = useState(false)
+
+  const [startDate, setStartDate] = useState<Date | undefined>(task?.start_date)
+  const [dueDate, setDueDate] = useState<Date | undefined>(task?.due_date)
+  const [tagSelected, setTagSelected] = useState(task?.tags ?? [])
 
   const isCreate = !task
 
+  const currentUser = useSelector((state: RootState) => state.user)
+
   const [assignToId, setAssignToId] = useState<number | undefined>(
-    isCreate ? undefined : task.assign_id
+    isCreate ? undefined : task.process_id
   )
   const [priority, setPriority] = useState<
     'low' | 'medium' | 'high' | undefined
@@ -197,6 +233,13 @@ export default function CreateOrUpdateTaskFrom({
     isFetching: isUserFetching,
   } = useFilterUserQuery(userFilter, { refetchOnMountOrArgChange: true })
 
+  const [startTask, { isLoading: isStartTaskLoading }] =
+    useStartTaskByIdMutation()
+  const [finishTask, { isLoading: isFinishTaskLoading }] =
+    useFinishTaskByIdMutation()
+  const [reOpenTask, { isLoading: isReOpenTaskLoading }] =
+    useReOpenTaskByIdMutation()
+
   // options
 
   const getAssignDescription = (user: User | undefined): string => {
@@ -206,9 +249,9 @@ export default function CreateOrUpdateTaskFrom({
 
   const assignItems = useMemo((): Item[] => {
     if (!users) return []
-    return users.map(
-      (u) => ({ label: getAssignDescription(u), value: u.id } as Item)
-    )
+    return users
+      .filter((u) => u.id !== currentUser.currentUser?.id)
+      .map((u) => ({ label: getAssignDescription(u), value: u.id } as Item))
   }, [])
 
   const [modalVisible, setModalVisible] = useState(false)
@@ -224,7 +267,6 @@ export default function CreateOrUpdateTaskFrom({
   const [description, setDescription] = useState(
     isCreate ? '' : task.description
   )
-  const [showPicker, setShowPicker] = useState(false)
   const [error, setError] = useState<string | null>('')
 
   const [createTask, { isLoading: isCreateTaskLoading }] =
@@ -233,9 +275,9 @@ export default function CreateOrUpdateTaskFrom({
   const [updateTask, { isLoading: isUpdateTaskLoading }] =
     useUpdateTaskMutation()
 
-  const currentUser = useSelector((state: RootState) => state.user)
+  const [openShowDailyReport, setOpenShowDailyReport] = useState(false)
 
-  const toast = useToast()
+  const navigation = useNavigation()
 
   const handleCreateProject = async () => {
     const request = {
@@ -247,8 +289,11 @@ export default function CreateOrUpdateTaskFrom({
       process_id: assignToId,
       priority: priority,
       difficulty: difficulty,
-      status: 'to_do',
+      status: task?.status ?? 'to_do',
       process_value: processValue ?? 0,
+      tags: tagSelected ?? [],
+      start_date: startDate,
+      due_date: dueDate,
     } as TaskRequest
     try {
       console.log('TaskRequest', request)
@@ -257,7 +302,9 @@ export default function CreateOrUpdateTaskFrom({
       else response = await updateTask(request).unwrap()
       console.log('Task Created: ', response)
       setError(null)
-      onClose?.()
+
+      // @ts-ignore
+      navigation.navigate('ProjectDetail', { project_id })
     } catch (err: any) {
       console.log('Create project Error', err)
       let message: string | null = null
@@ -270,11 +317,110 @@ export default function CreateOrUpdateTaskFrom({
     }
   }
 
+  const handleStartTask = async () => {
+    try {
+      if (task?.id && currentUser.currentUser?.id && actionButton === 'start') {
+        await startTask({
+          taskId: task?.id,
+          userId: currentUser.currentUser?.id,
+        }).unwrap()
+        refetch()
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const handleFinishTask = async () => {
+    try {
+      if (
+        task?.id &&
+        currentUser.currentUser?.id &&
+        actionButton === 'finish'
+      ) {
+        await finishTask({
+          taskId: task?.id,
+          userId: currentUser.currentUser?.id,
+        }).unwrap()
+        refetch()
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const [showConfirmReOpen, setShowComfirmReOpen] = useState(false)
+  const handleReopenTask = async () => {
+    try {
+      if (
+        task?.id &&
+        currentUser.currentUser?.id &&
+        actionButton === 'reopen'
+      ) {
+        await reOpenTask({
+          taskId: task?.id,
+          userId: currentUser.currentUser?.id,
+        }).unwrap()
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const tagKeys = Object.keys(tagLabelMap) as Tag[]
+
+  const actionButton = useMemo((): ActionType => {
+    if (isCreate) return 'create'
+
+    const currentUserId = currentUser.currentUser?.id ?? 0
+    if (
+      currentUserId == task?.assign_id &&
+      task &&
+      ((task.process_value ?? 0) != 100 || task.status == 'in_process')
+    )
+      return 'update'
+
+    if (currentUserId == task.process_id) {
+      if (!task.actual_start_date) {
+        return 'start'
+      } else if (!task.completed_at && (task.process_value ?? 0) >= 100) {
+        return 'finish'
+      } else if (
+        (task.process_value ?? 0) < 100 ||
+        task.status == 'in_process'
+      ) {
+        return 'update_process'
+      }
+    }
+
+    if (currentUserId === task?.assign_id) {
+      return 'reopen'
+    }
+
+    return 'no_action'
+  }, [isCreate, currentUser, task])
+
+  console.log('ACTION', actionButton)
+
+  useFocusEffect(
+    useCallback(() => {
+      if (task_id) {
+        refetch()
+      }
+    }, [task_id])
+  )
+
   const isLoading =
     isUserLoading ||
     isUserFetching ||
     isCreateTaskLoading ||
-    isUpdateTaskLoading
+    isUpdateTaskLoading ||
+    isStartTaskLoading ||
+    isFinishTaskLoading ||
+    isProjectLoading ||
+    isProjectFetching ||
+    isTaskLoading ||
+    isTaskFetching
 
   return (
     <KeyboardAvoidingView
@@ -282,6 +428,19 @@ export default function CreateOrUpdateTaskFrom({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
+      <LinearGradient colors={['#7B5CFF', '#5E3FD9']}>
+        <View style={styles.headerTask}>
+          <View>
+            <Text style={styles.title}>
+              {task ? `Task ${task.title}` : 'Tạo task'}
+            </Text>
+            <Text style={styles.subtitle}>{`Dự án ${project?.title}`}</Text>
+          </View>
+          <View style={styles.iconContainer}>
+            <ClipboardList size={24} color="white" />
+          </View>
+        </View>
+      </LinearGradient>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
           style={styles.scrollView}
@@ -322,7 +481,7 @@ export default function CreateOrUpdateTaskFrom({
               />
             </View>
 
-            <Text style={styles.label}>Assign To</Text>
+            <Text style={styles.label}>Người thực hiện</Text>
             <Pressable
               style={styles.selectorButton}
               onPress={() => {
@@ -338,7 +497,7 @@ export default function CreateOrUpdateTaskFrom({
                         ? getAssignDescription(user)
                         : 'User not found'
                     })()
-                  : 'Chọn Assign To'}
+                  : 'Chọn người thực hiện'}
               </Text>
 
               <ChevronDown size={20} color={colors.light.textLight} />
@@ -368,58 +527,141 @@ export default function CreateOrUpdateTaskFrom({
               <ChevronDown size={20} color={colors.light.textLight} />
             </Pressable>
 
-            {!isCreate && task && (
-              <View>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={styles.label}>Tiến độ công việc</Text>
-                  <Percent
-                    color="#999"
-                    size={15}
-                    style={[styles.icon, { marginLeft: 5, marginBottom: 2 }]}
-                  />
-                </View>
-                <TextInput
-                  value={processValue + ''}
-                  onChangeText={(value) => setProcessValue(Number(value))}
-                  placeholder="Nhập số"
-                  keyboardType="numeric"
-                  style={styles.selectorButton}
-                  placeholderTextColor="#aaa"
-                />
-              </View>
-            )}
+            <View style={styles.chooseDate}>
+              <Text style={styles.label}>Ngày bắt đầu dự kiến:</Text>
+              <Pressable
+                style={styles.selectorDateButton}
+                onPress={() => setOpenSelectStartDate(true)}
+              >
+                <Calendar size={20} color={colors.light.primaryPurple} />
+                <Text style={styles.selectorDateValue}>
+                  {startDate ? formatDateTime(startDate) : 'Chọn ngày'}
+                </Text>
+              </Pressable>
+            </View>
 
-            {showPicker && (
-              <DateTimePicker
-                value={startedOn || new Date()}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={(event, selectedDate) => {
-                  setShowPicker(false)
-                  if (selectedDate) setStartedOn(selectedDate)
-                }}
+            <View style={styles.chooseDate}>
+              <Text style={styles.label}>Ngày kết thúc dự kiến:</Text>
+              <Pressable
+                style={styles.selectorDateButton}
+                onPress={() => setOpenSelectDueDate(true)}
+              >
+                <Calendar size={20} color={colors.light.primaryPurple} />
+                <Text style={styles.selectorDateValue}>
+                  {dueDate ? formatDateTime(dueDate) : 'Chọn ngày'}
+                </Text>
+              </Pressable>
+            </View>
+            {openSelectStartDate && (
+              <CustomDateTimePicker
+                value={startDate}
+                onClose={() => setOpenSelectStartDate(false)}
+                onChange={(date) => setStartDate(date)}
+              />
+            )}
+            {openSelectDueDate && (
+              <CustomDateTimePicker
+                value={dueDate}
+                onClose={() => setOpenSelectDueDate(false)}
+                onChange={(date) => setDueDate(date)}
               />
             )}
 
-            {/* Submit Button */}
-            <TouchableOpacity
-              style={styles.buttonWrapper}
-              disabled={isLoading} // Disable nút khi đang submit
-              onPress={handleCreateProject}
-            >
-              <LinearGradient
-                colors={['#7B5AFF', '#4D66F4']}
-                style={styles.button}
+            <View style={{ marginTop: 30 }}>
+              <Text style={styles.label}>Tags</Text>
+              <Pressable
+                style={styles.selectorButton}
+                onPress={() => setOpenSelectTags(true)}
               >
-                {isLoading ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : isCreate ? (
-                  <Text style={styles.buttonText}>Tạo công việc</Text>
+                {tagSelected && tagSelected?.length ? (
+                  <View style={styles.tagContainer}>
+                    {tagSelected.map((tag, index) => (
+                      <View key={index} style={styles.tagChip}>
+                        <Text style={styles.tagText}>{tagLabelMap[tag]}</Text>
+                      </View>
+                    ))}
+                  </View>
                 ) : (
-                  <Text style={styles.buttonText}>Cập nhật công việc</Text>
+                  <Text style={styles.selectorText}>{'Chọn Tags'}</Text>
                 )}
-              </LinearGradient>
-            </TouchableOpacity>
+              </Pressable>
+            </View>
+
+            {openSelectTags && (
+              <BaseModel
+                open={openSelectTags}
+                onClose={() => setOpenSelectTags(false)}
+                height={450}
+              >
+                <SelectOption
+                  title="Chọn thẻ liên quan"
+                  subtitle="Bạn có thể chọn nhiều thẻ"
+                  data={tagWithLabel}
+                  multiple
+                  multipleSelected={
+                    tagSelected?.map((tag) => tagKeys.indexOf(tag)) ?? []
+                  }
+                  onMultipleSelected={(selectedIndexes) => {
+                    const selectedTags = selectedIndexes.map(
+                      (index) => tagKeys[index]
+                    )
+                    setTagSelected(selectedTags)
+                    setOpenSelectTags(false)
+                  }}
+                  onCancel={() => setOpenSelectTags(false)}
+                />
+              </BaseModel>
+            )}
+
+            {/* Submit Button */}
+            {(actionButton === 'create' || actionButton === 'update') && (
+              <TouchableOpacity
+                style={styles.buttonWrapper}
+                disabled={isLoading} // Disable nút khi đang submit
+                onPress={handleCreateProject}
+              >
+                <LinearGradient
+                  colors={['#7B5AFF', '#4D66F4']}
+                  style={styles.button}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : isCreate ? (
+                    <Text style={styles.buttonText}>Tạo công việc</Text>
+                  ) : (
+                    <Text style={styles.buttonText}>Cập nhật công việc</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+            {actionButton === 'start' && (
+              <TaskActionButton
+                onClick={handleStartTask}
+                action={'Bắt đầu'}
+                isLoading={isLoading}
+              />
+            )}
+            {actionButton === 'finish' && (
+              <TaskActionButton
+                onClick={handleFinishTask}
+                action={'Hoàn thành'}
+                isLoading={isLoading}
+              />
+            )}
+            {actionButton === 'update_process' && (
+              <TaskActionButton
+                onClick={() => setOpenShowDailyReport(true)}
+                action={`Báo cáo ngày ${formatDateTime(new Date())}`}
+                isLoading={isLoading}
+              />
+            )}
+            {actionButton === 'reopen' && (
+              <TaskActionButton
+                onClick={() => setShowComfirmReOpen(true)}
+                action={'Mở lại Task'}
+                isLoading={isLoading}
+              />
+            )}
           </View>
         </ScrollView>
       </TouchableWithoutFeedback>
@@ -547,6 +789,30 @@ export default function CreateOrUpdateTaskFrom({
           />
         </BaseModel>
       )}
+      {openShowDailyReport && (
+        <BaseModel
+          open={openShowDailyReport}
+          onClose={() => setOpenShowDailyReport(false)}
+        >
+          <DailyReportCreateForm
+            task={task}
+            onClose={() => {
+              setOpenShowDailyReport(false)
+              refetch()
+            }}
+          />
+        </BaseModel>
+      )}
+      {showConfirmReOpen && (
+        <ConfirmModal
+          open={showConfirmReOpen}
+          onCancel={() => setShowComfirmReOpen(false)}
+          onConfirm={() => {
+            handleReopenTask()
+            setShowComfirmReOpen(false)
+          }}
+        />
+      )}
     </KeyboardAvoidingView>
   )
 }
@@ -556,7 +822,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.light.background,
     width: 420,
-    marginTop: 10,
+    position: 'relative',
   },
   scrollView: { flex: 1 },
   scrollContent: { flexGrow: 1 },
@@ -656,8 +922,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.light.backgroundLight,
     marginBottom: 12,
   },
+  selectorDateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors.light.borderColor,
+    borderRadius: 8,
+    backgroundColor: colors.light.backgroundLight,
+    width: 200,
+  },
   selectorText: {
     flex: 1,
+    marginLeft: 8,
+    color: colors.light.textLight,
+    fontWeight: '500',
+  },
+  selectorDateValue: {
     marginLeft: 8,
     color: colors.light.textLight,
     fontWeight: '500',
@@ -731,4 +1013,53 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   icon: {},
+  chooseDate: {
+    marginTop: 20,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  chooseDateInput: {},
+  tagContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  tagChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#F4F0FC',
+    borderColor: colors.light.primaryPurple,
+    borderWidth: 1,
+    borderRadius: 16,
+  },
+  tagText: {
+    color: colors.light.primaryPurple,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  buttonStart: {
+    flexDirection: 'row',
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  headerTask: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
 })

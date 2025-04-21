@@ -9,6 +9,7 @@ import lombok.Setter;
 import org.example.management.management.domain.task.Task;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -43,12 +44,14 @@ public class TaskCreateRequest {
     private List<Task.Tag> tags;
 
     @NotNull
-    private LocalTime startDate;
+    private LocalDate startDate;
 
     @NotNull
-    private LocalTime dueDate;
+    private LocalDate dueDate;
 
-    private LocalTime completedAt;
+    private LocalDate completedAt;
+
+    private LocalDate actualStartDate;
 
     private BigDecimal estimatedTime;
 

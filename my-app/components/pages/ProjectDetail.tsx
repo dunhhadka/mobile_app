@@ -6,8 +6,9 @@ import {
   ScrollView,
   SafeAreaView,
   TouchableOpacity,
+  Pressable,
 } from 'react-native'
-import { Circle } from 'lucide-react-native'
+import { Circle, SlidersHorizontal } from 'lucide-react-native'
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'
 import colors from '../../constants/colors'
 import StatusBadge from '../layouts/StatusBadge'
@@ -15,12 +16,25 @@ import ProgressBar from '../layouts/ProgressBar'
 import BaseModel from '../models/BaseModel'
 import CreateOrUpdateTaskForm from '../form/CreateOrUpdateTaskFrom'
 import {
+  useFilterTasksQuery,
   useGetProjectByIdQuery,
   useLazyGetTaskByIdQuery,
 } from '../../api/magementApi'
 import { TaskItem } from '../card/TaskItem'
-import { Task } from '../../types/management'
+import {
+  Position,
+  StatusType,
+  Task,
+  TaskFilterRequest,
+} from '../../types/management'
 import Loading from '../loading/Loading'
+import CommentPage from '../layouts/Comment'
+import DailyReportList from '../layouts/DailyReportList'
+import SearchInput from '../card/SearchInput'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../store/store'
+import { useDebounce } from 'use-debounce'
+import EmptySearchResult from '../models/EmptySearchResult'
 
 // Types
 
@@ -68,24 +82,50 @@ const getSprintStatus = (status: Sprint['status']) => {
 export default function ProjectDetail() {
   const route = useRoute<ProjectDetailRouteProp>()
   const { project_id } = route.params
+  const navigation = useNavigation()
+  const currentUser = useSelector((state: RootState) => state.user.currentUser)
+  const [status, setStatus] = useState<StatusType | undefined>(undefined)
 
-  const { data: project, isLoading } = useGetProjectByIdQuery(project_id)
-  const [getTask, { data: taskSelected }] = useLazyGetTaskByIdQuery()
-
-  const [openCreateTaskModal, setOpenCreateTaskModal] = useState(false)
-  const [taskSelectedInForm, setTaskSelectedInForm] = useState<
-    Task | undefined
-  >()
-
-  useEffect(() => {
-    if (taskSelected) {
-      setTaskSelectedInForm(taskSelected)
-      setOpenCreateTaskModal(true)
+  const { data: project, isLoading: isProjectLoading } = useGetProjectByIdQuery(
+    project_id,
+    {
+      refetchOnMountOrArgChange: true,
     }
-  }, [taskSelected])
+  )
 
-  const summary = project
-    ? getTaskSummary(project.tasks || [])
+  const [query, setQuery] = useState<string>('')
+  const [debouncedTitle] = useDebounce(query, 500)
+
+  const [taskFilter, setTaskFilter] = useState<TaskFilterRequest>({
+    projectId: project_id,
+    processId:
+      currentUser?.position && Position[currentUser.position] == 'Quản lý'
+        ? 0
+        : currentUser?.id ?? 0,
+  })
+
+  const fullTaskFilter: TaskFilterRequest = {
+    ...taskFilter,
+    title: debouncedTitle,
+    status: status,
+  }
+
+  const {
+    data: tasks,
+    isLoading: isFilterTaskLoading,
+    isFetching: isTaskFetching,
+    refetch: refetchTasks,
+  } = useFilterTasksQuery(fullTaskFilter, { refetchOnMountOrArgChange: true })
+
+  const [showComment, setShowComment] = useState(false)
+  const [showTaskComment, setShowTaskComment] = useState<Task | undefined>(
+    undefined
+  )
+
+  const [showDailyReport, setShowDailyReport] = useState(false)
+
+  const summary = tasks
+    ? getTaskSummary(tasks || [])
     : { todo: 0, inProgress: 0, done: 0 }
 
   const sprint: Sprint = {
@@ -102,6 +142,8 @@ export default function ProjectDetail() {
     sprint.status
   )
 
+  const isLoading = isFilterTaskLoading || isTaskFetching
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -113,10 +155,10 @@ export default function ProjectDetail() {
           <Text style={styles.cardTitle}>Summary of Your Work</Text>
           <Text style={styles.cardSubtitle}>Your current task progress</Text>
           <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
+            <Pressable style={styles.statItem}>
               <StatusBadge status="todo" />
               <Text style={styles.statValue}>{summary.todo}</Text>
-            </View>
+            </Pressable>
             <View style={styles.divider} />
             <View style={styles.statItem}>
               <StatusBadge status="inProgress" />
@@ -129,82 +171,171 @@ export default function ProjectDetail() {
             </View>
           </View>
         </View>
-
         {/* Sprint Stats */}
         <View style={styles.card}>
           <View style={styles.headerRow}>
-            <Text style={styles.cardTitle}>
-              Sprint {sprint.number} - Burnout Stats
-            </Text>
-            <View
-              style={[styles.statusBadge, { backgroundColor: sprintColor }]}
-            >
-              <Text style={styles.statusText}>{sprintLabel}</Text>
-            </View>
+            <Text style={styles.cardTitle}>Tống số tasks của bạn</Text>
+            <Pressable>
+              <View
+                style={[styles.statusBadge, { backgroundColor: sprintColor }]}
+              >
+                <Text style={styles.statusText}>{`${
+                  tasks && !!tasks.length ? tasks.length : 0
+                } tasks`}</Text>
+              </View>
+            </Pressable>
           </View>
           <Text style={styles.description}>
-            You've completed{' '}
+            {`Tiến độ của bạn trong dự án ${project?.title} là 70% `}
             <Text style={styles.highlight}>
               {sprint.completedTasks} {sprint.comparisonText}
             </Text>
             , {sprint.advice}
           </Text>
           <View style={styles.progressContainer}>
-            <Circle fill={colors.done} color={colors.done} size={24} />
             <ProgressBar progress={70} color={colors.done} height={6} />
           </View>
-          <View style={styles.filterContainer}>
-            <View style={[styles.filterButton, styles.filterButtonActive]}>
-              <Text style={styles.filterTextActive}>All</Text>
-            </View>
-            <View
-              style={[styles.filterButton, { backgroundColor: colors.primary }]}
+          <View
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}
+          >
+            <Pressable
+              style={[
+                styles.statusButton,
+                !status && styles.statusButtonActive,
+              ]}
+              onPress={() => setStatus(undefined)}
             >
-              <Text style={styles.filterTextActive}>In Progress</Text>
-            </View>
-            <View style={styles.filterButton}>
-              <Text style={styles.filterText}>Finish</Text>
-            </View>
+              <Text
+                style={[styles.statusText, !status && styles.statusTextActive]}
+              >
+                Tất cả
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={[
+                styles.statusButton,
+                status && status === 'to_do' && styles.statusButtonActive,
+              ]}
+              onPress={() => setStatus('to_do')}
+            >
+              <Text
+                style={[
+                  styles.statusText,
+                  status && status === 'to_do' && styles.statusTextActive,
+                ]}
+              >
+                Chưa bắt đầu
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.statusButton,
+                status && status === 'in_process' && styles.statusButtonActive,
+              ]}
+              onPress={() => setStatus('in_process')}
+            >
+              <Text
+                style={[
+                  styles.statusText,
+                  status && status === 'in_process' && styles.statusTextActive,
+                ]}
+              >
+                Đang thực hiện
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.statusButton,
+                status && status === 'finish' && styles.statusButtonActive,
+              ]}
+              onPress={() => setStatus('finish')}
+            >
+              <Text
+                style={[
+                  styles.statusText,
+                  status && status === 'finish' && styles.statusTextActive,
+                ]}
+              >
+                Hoàn thành
+              </Text>
+            </Pressable>
           </View>
         </View>
 
+        <SearchInput value={query} onChange={(value) => setQuery(value)} />
+
+        <View style={{ marginTop: 20 }}></View>
+
         {/* Task list */}
-        {project?.tasks?.map((task) => (
-          <View key={task.id}>
-            <TaskItem
-              task={task}
-              onDelete={() => {}}
-              onView={(id) => getTask(id)}
-            />
-          </View>
-        ))}
+        {tasks && !!tasks.length ? (
+          tasks.map((task) => (
+            <View key={task.id}>
+              <TaskItem
+                task={task}
+                onDelete={() => {}}
+                onView={(id) => {
+                  // @ts-ignore
+                  navigation.navigate('CreateOrUpdateTask', {
+                    project_id,
+                    task_id: id,
+                  })
+                }}
+                showComment={() => {
+                  setShowComment(true)
+                  setShowTaskComment(task)
+                }}
+                showDailyReports={() => {
+                  setShowDailyReport(true)
+                  setShowTaskComment(task)
+                }}
+              />
+            </View>
+          ))
+        ) : (
+          <EmptySearchResult />
+        )}
       </ScrollView>
 
       {/* Create Task Button */}
       <TouchableOpacity
         style={styles.floatingButton}
-        onPress={() => setOpenCreateTaskModal(true)}
+        onPress={() => {
+          // @ts-ignore
+          navigation.navigate('CreateOrUpdateTask', {
+            project_id,
+            task_id: null,
+          })
+        }}
       >
         <Text style={styles.floatingButtonText}>＋</Text>
       </TouchableOpacity>
 
-      {/* Modal */}
-      {openCreateTaskModal && (
+      {showComment && showTaskComment && (
         <BaseModel
-          open={openCreateTaskModal}
+          open={showComment}
           onClose={() => {
-            setOpenCreateTaskModal(false)
-            setTaskSelectedInForm(undefined)
+            setShowComment(false)
+            setShowTaskComment(undefined)
           }}
         >
-          <CreateOrUpdateTaskForm
-            project={project}
-            task={taskSelectedInForm}
-            onClose={() => {
-              setOpenCreateTaskModal(false)
-              setTaskSelectedInForm(undefined)
-            }}
-          />
+          <CommentPage taskId={showTaskComment.id} />
+        </BaseModel>
+      )}
+      {showDailyReport && showTaskComment && (
+        <BaseModel
+          open={showDailyReport}
+          onClose={() => {
+            setShowDailyReport(false)
+            setShowTaskComment(undefined)
+          }}
+        >
+          <DailyReportList taskId={showTaskComment.id} />
         </BaseModel>
       )}
       {isLoading && <Loading />}
@@ -268,9 +399,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
+
+    // Shadow cho iOS
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+
+    // Elevation cho Android
+    elevation: 4,
+
+    backgroundColor: '#fff', // 👈 Bắt buộc có để thấy bóng
   },
   statusText: {
-    color: colors.textLight,
+    color: colors.black,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -331,5 +476,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     lineHeight: 30,
     marginTop: 5,
+  },
+  statusButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 15,
+    backgroundColor: '#F4F0FC',
+    borderColor: colors.light.primaryPurple,
+    borderWidth: 1,
+    borderRadius: 16,
+    color: colors.black,
+  },
+  statusButtonActive: {
+    backgroundColor: colors.primary,
+  },
+  statusTextActive: {
+    color: colors.white,
   },
 })

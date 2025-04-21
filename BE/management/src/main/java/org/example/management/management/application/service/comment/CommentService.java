@@ -45,6 +45,10 @@ public class CommentService {
 
         task.addComment(comment);
 
+        commentRepository.save(comment);
+
+        this.taskRepository.save(task);
+
         return this.getCommentId(comment.getId());
     }
 

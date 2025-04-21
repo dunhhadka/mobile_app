@@ -1,15 +1,14 @@
 package org.example.management.management.application.service.task;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.example.management.management.application.model.images.ImageRequest;
 import org.example.management.management.application.model.images.StoredImageResult;
-import org.example.management.management.application.model.task.TaskCreateRequest;
-import org.example.management.management.application.model.task.TaskImageRequest;
-import org.example.management.management.application.model.task.TaskResponse;
-import org.example.management.management.application.model.task.TaskUpdateRequest;
+import org.example.management.management.application.model.task.*;
 import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.application.service.images.ImageProcessService;
 import org.example.management.management.application.service.user.UserMapper;
@@ -24,6 +23,7 @@ import org.example.management.management.infastructure.persistance.JpaUserReposi
 import org.example.management.management.infastructure.persistance.ProjectRepository;
 import org.example.management.management.infastructure.persistance.TaskRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,6 +51,8 @@ public class TaskService {
     private final ImageProcessService imageProcessService;
     private final ImageRepository imageRepository;
 
+    private final EntityManager entityManager;
+
     @Transactional
     public int createTask(TaskCreateRequest request) throws IOException {
         var project = this.projectRepository.findById(request.getProjectId())
@@ -74,7 +76,7 @@ public class TaskService {
                 Optional.ofNullable(processedUser).map(User::getId).orElse(null),
                 request.getPriority(),
                 request.getDifficulty(),
-                request.getStatus(),
+                request.getStatus() == null ? Task.Status.to_do : request.getStatus(),
                 request.getProcessValue(),
                 buildTimeInfo(new TaskTimeInfo(), request),
                 request.getTags(),
@@ -99,6 +101,7 @@ public class TaskService {
                 .completedAt(request.getCompletedAt())
                 .estimatedTime(request.getEstimatedTime())
                 .actualTime(request.getActualTime())
+                .actualStartDate(request.getActualStartDate())
                 .build();
     }
 
@@ -209,6 +212,124 @@ public class TaskService {
                         ));
 
         task.updateStatus(status);
+    }
+
+    public void start(int taskId, int userId) {
+        var taskInfo = this.validate(taskId, userId);
+
+        var task = taskInfo.task;
+
+        if (task.getTimeInfo().getActualStartDate() != null) {
+            throw new ConstrainViolationException(
+                    "task",
+                    "Công việc đã bắt đầu"
+            );
+        }
+
+        task.start();
+
+        taskRepository.save(task);
+    }
+
+    public void finish(int taskId, int userId) {
+        var taskInfo = this.validate(taskId, userId);
+        var task = taskInfo.task;
+        if (task.getTimeInfo().getCompletedAt() != null) {
+            throw new ConstrainViolationException(
+                    "task",
+                    "Công việc đã được hoàn thành"
+            );
+        }
+
+        task.finish();
+
+        taskRepository.save(task);
+    }
+
+    private TaskInfo validate(int taskId, int userId) {
+        var task = this.taskRepository.findById(taskId)
+                .orElseThrow(() ->
+                        new ConstrainViolationException(
+                                "task",
+                                "Task not found"
+                        ));
+        var user = this.userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new ConstrainViolationException(
+                                "user",
+                                "User not found"
+                        ));
+        if (user.getId() != task.getProcessId()) {
+            throw new ConstrainViolationException(
+                    "task",
+                    "Công việc không được thực hiện bởi " + user.getUserName() + " nên không thể bắt đầu"
+            );
+        }
+
+        return new TaskInfo(task, user);
+    }
+
+    public void reopen(int taskId, int userId) {
+        var task = this.taskRepository.findById(taskId)
+                .orElseThrow(() ->
+                        new ConstrainViolationException(
+                                "task",
+                                "Task not found"
+                        ));
+        if (userId != task.getAssignId()) {
+            throw new ConstrainViolationException(
+                    "Task",
+                    "Công việc không thể mở lại bởi người dùng. Chỉ có người tạo ra task này."
+            );
+        }
+
+        task.reOpen();
+
+        this.taskRepository.save(task);
+    }
+
+    public List<TaskResponse> filter(TaskFilterRequest request) {
+        Specification<Task> specification = buildSpecification(request);
+
+        var taskIds = this.taskRepository.findAll(specification).stream()
+                .map(Task::getId)
+                .distinct()
+                .toList();
+
+        return this.getByIds(taskIds);
+    }
+
+    private Specification<Task> buildSpecification(TaskFilterRequest request) {
+        Specification<Task> specification = Specification.where(null);
+
+        if (CollectionUtils.isNotEmpty(request.getIds())) {
+            specification = specification.and(TaskSpecification.hasIdIn(request.getIds()));
+        }
+
+        if (StringUtils.isNotBlank(request.getTitle())) {
+            specification = specification.and(TaskSpecification.likeTitle(request.getTitle()));
+        }
+
+        if (request.getStatus() != null) {
+            specification = specification.and(TaskSpecification.equalStatus(request.getStatus()));
+        }
+
+        if (request.getProcessId() > 0) {
+            specification = specification.and(TaskSpecification.equalProcessId(request.getProcessId()));
+        }
+
+        if (request.getAssignId() > 0) {
+            specification = specification.and(TaskSpecification.equalAssignId(request.getAssignId()));
+        }
+
+        if (request.getProjectId() > 0) {
+            specification = specification.and(TaskSpecification.equalByProjectId(request.getProjectId()));
+        }
+
+        return specification;
+    }
+
+    record TaskInfo(Task task, User user) {
     }
 
     public record TaskDeletedEvent(int taskId, int projectId, int userId) {
