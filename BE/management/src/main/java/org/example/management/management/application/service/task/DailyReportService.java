@@ -7,4 +7,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class DailyReportService {
 
+    public void createDailyReport() {
+
+    }
 }
