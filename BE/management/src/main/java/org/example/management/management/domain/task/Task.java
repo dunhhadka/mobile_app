@@ -25,8 +25,8 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDate;
+import java.math.RoundingMode;
+import java.time.*;
 import java.util.*;
 
 @DynamicUpdate
@@ -196,9 +196,19 @@ public class Task extends AggregateRoot<Task> {
     }
 
     public void finish() {
+        LocalDateTime now = LocalDate.now().atStartOfDay();
+        LocalDateTime startDate = timeInfo.getActualStartDate().atStartOfDay();
+
+        Duration duration = Duration.between(startDate, now);
+        long totalSeconds = duration.getSeconds();
+        BigDecimal hours = BigDecimal.valueOf(totalSeconds)
+                .divide(BigDecimal.valueOf(3600), 2, RoundingMode.HALF_UP); // đổi giây sang giờ
+
         this.timeInfo = this.timeInfo.toBuilder()
                 .completedAt(LocalDate.now())
+                .actualTime(hours)
                 .build();
+
         this.status = Status.finish;
 
         this.addDomainEvent(new TaskFinishEvent(this.assignId, this.processId, this.id));
@@ -219,6 +229,9 @@ public class Task extends AggregateRoot<Task> {
 
     public void reOpen() {
         this.status = Status.in_process;
+        this.timeInfo = this.timeInfo.toBuilder()
+                .completedAt(null)
+                .build();
 
         this.addDomainEvent(new TaskReOpenEvent(this.processId, this.assignId, this.id));
 

@@ -52,7 +52,6 @@ export default function SignUpScreen({ navigation }: any) {
     }
 
     try {
-      console.log('data:', data) // Log ra response để kiểm tra
       const response = await createUser(data).unwrap()
       if (response) {
         dispatch(setUser(response))

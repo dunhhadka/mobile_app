@@ -33,7 +33,6 @@ export default function DailyReportCreateForm({ task, onClose }: Props) {
         note: note,
         reporter_id: currentUser?.id ?? 0,
       }
-      console.log(request)
       await createDailyReport(request).unwrap()
     } catch (err) {
       console.error(err)

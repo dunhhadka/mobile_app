@@ -24,6 +24,7 @@ import {
   URL,
   useGetMessageByRoomIdQuery,
   useGetRoomByIdQuery,
+  useMarkupReadRoomMessageQuery,
 } from '../../api/magementApi'
 import Loading from '../loading/Loading'
 import { useEffect, useRef, useState } from 'react'
@@ -107,6 +108,11 @@ const ChatRoomScreen = () => {
 
   const { data: fechedData, isLoading: isMessageLoading } =
     useGetMessageByRoomIdQuery(roomId, { refetchOnMountOrArgChange: true })
+
+  const { data, isLoading: isMarkupLoading } = useMarkupReadRoomMessageQuery(
+    memberId,
+    { skip: !memberId }
+  )
 
   const currentUser = useSelector((state: RootState) => state.user.currentUser)
 
@@ -202,7 +208,7 @@ const ChatRoomScreen = () => {
     setMessage('')
   }
 
-  const isLoading = isRoomLoading
+  const isLoading = isRoomLoading || isMarkupLoading
 
   return (
     <SafeAreaView style={styles.container}>
@@ -287,6 +293,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     // backgroundColor: colors.light.backgroundSecondary,
+    paddingTop: 35,
   },
   receiveTimeText: {
     fontSize: 11,

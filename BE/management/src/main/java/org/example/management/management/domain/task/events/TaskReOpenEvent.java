@@ -8,7 +8,7 @@ import java.time.Instant;
 
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskReOpenEvent implements DomainEvent {
+public class TaskReOpenEvent implements DomainEvent, TaskEvent {
     private int currentProcessorId;
     private int openerId;
     private int taskId;
@@ -21,5 +21,20 @@ public class TaskReOpenEvent implements DomainEvent {
     @Override
     public String type() {
         return getClass().getName();
+    }
+
+    @Override
+    public int creatorId() {
+        return this.openerId;
+    }
+
+    @Override
+    public int taskId() {
+        return this.taskId;
+    }
+
+    @Override
+    public int processorId() {
+        return this.currentProcessorId;
     }
 }

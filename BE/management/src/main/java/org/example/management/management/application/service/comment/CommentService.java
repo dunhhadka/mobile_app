@@ -1,6 +1,8 @@
 package org.example.management.management.application.service.comment;
 
 import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.example.management.management.application.model.comment.CommentRequest;
@@ -11,6 +13,7 @@ import org.example.management.management.domain.comment.Comment;
 import org.example.management.management.infastructure.exception.ConstrainViolationException;
 import org.example.management.management.infastructure.persistance.CommentRepository;
 import org.example.management.management.infastructure.persistance.TaskRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -25,6 +28,8 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final TaskRepository taskRepository;
     private final UserService userService;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public CommentResponse createComment(int taskId, CommentRequest request) {
@@ -47,9 +52,18 @@ public class CommentService {
 
         commentRepository.save(comment);
 
+        this.applicationEventPublisher.publishEvent(new CommentCreatedEvent(user.getId(), taskId));
+
         this.taskRepository.save(task);
 
         return this.getCommentId(comment.getId());
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static class CommentCreatedEvent {
+        private int senderId;
+        private int taskId;
     }
 
     private CommentResponse getCommentId(int id) {

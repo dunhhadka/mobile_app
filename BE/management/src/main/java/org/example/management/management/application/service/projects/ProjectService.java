@@ -144,7 +144,16 @@ public class ProjectService {
         var event = new ProjectCreatedEvent(projectId, new UserInProjectInfo(userIdsValid.getKey(), userIdsValid.getValue()), project);
         this.projectManagementService.handleProjectCreated(event);
 
+        this.applicationEventPublisher.publishEvent(new UpdateProjectEvent(projectId, userIdsValid.getRight()));
+
         return projectId;
+    }
+
+    public record UpdateProjectEvent(
+            int projectId,
+            List<Integer> addedUserIds
+    ) {
+
     }
 
     private Pair<List<Integer>, List<Integer>> splitOldAndNewUserId(Project project, List<Integer> userIdsRequest) {

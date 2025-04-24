@@ -10,7 +10,7 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskFinishEvent implements DomainEvent {
+public class TaskFinishEvent implements DomainEvent, TaskEvent {
 
     private int creatorId;
     private int finisherId;
@@ -24,5 +24,20 @@ public class TaskFinishEvent implements DomainEvent {
     @Override
     public String type() {
         return getClass().getName();
+    }
+
+    @Override
+    public int creatorId() {
+        return this.creatorId;
+    }
+
+    @Override
+    public int taskId() {
+        return this.taskId;
+    }
+
+    @Override
+    public int processorId() {
+        return this.finisherId;
     }
 }

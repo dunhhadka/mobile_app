@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   View,
   Text,
@@ -64,6 +64,7 @@ import {
 import ConfirmModal from '../card/ConfirmModal'
 import DailyReportList from '../layouts/DailyReportList'
 import CommentPage from '../layouts/Comment'
+import { useToast } from 'react-native-toast-notifications'
 
 interface Props {
   project?: Project
@@ -71,14 +72,14 @@ interface Props {
 }
 
 export const PRIORITY_OPTIONS: Item[] = [
-  { value: 1, label: 'Low' },
-  { value: 2, label: 'Medium' },
-  { value: 3, label: 'High' },
+  { value: 1, label: 'Thấp' },
+  { value: 2, label: 'Trung bình' },
+  { value: 3, label: 'Cao' },
 ]
 
 export const DIFFICULTY_OPTIONS: Item[] = [
-  { value: 1, label: 'Very Easy' },
-  { value: 2, label: 'Easy' },
+  { value: 1, label: 'Rất dễ' },
+  { value: 2, label: 'Dễ' },
 ]
 
 export const getPriorityValue = (
@@ -186,7 +187,9 @@ export default function CreateOrUpdateTaskFrom() {
     refetch,
   } = useGetTaskByIdQuery(task_id, { skip: !task_id })
 
-  const [userFilter, setUserFilter] = useState<UserFilterRequest>({})
+  const [userFilter, setUserFilter] = useState<UserFilterRequest>({
+    project_id,
+  })
   const [selectedUsers, setSelectedUser] = useState<number[]>(
     project?.users?.map((u) => u.id) ?? []
   )
@@ -239,7 +242,10 @@ export default function CreateOrUpdateTaskFrom() {
     data: users,
     isLoading: isUserLoading,
     isFetching: isUserFetching,
-  } = useFilterUserQuery(userFilter, { refetchOnMountOrArgChange: true })
+  } = useFilterUserQuery(userFilter, {
+    refetchOnMountOrArgChange: true,
+    skip: !project_id,
+  })
 
   const [startTask, { isLoading: isStartTaskLoading }] =
     useStartTaskByIdMutation()
@@ -287,6 +293,8 @@ export default function CreateOrUpdateTaskFrom() {
 
   const navigation = useNavigation()
 
+  const toast = useToast()
+
   const handleCreateProject = async () => {
     const request = {
       id: task?.id,
@@ -304,24 +312,25 @@ export default function CreateOrUpdateTaskFrom() {
       due_date: dueDate,
     } as TaskRequest
     try {
-      console.log('TaskRequest', request)
       let response: Task
       if (isCreate) response = await createTask(request).unwrap()
       else response = await updateTask(request).unwrap()
-      console.log('Task Created: ', response)
       setError(null)
 
       // @ts-ignore
       navigation.navigate('ProjectDetail', { project_id })
     } catch (err: any) {
-      console.log('Create project Error', err)
-      let message: string | null = null
       if (err?.data?.message) {
-        message = err.data.message
+        toast.show(err.data.message, {
+          type: 'danger',
+          duration: 4000,
+        })
       } else {
-        message = 'Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại!'
+        toast.show('Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại!', {
+          type: 'danger',
+          duration: 4000,
+        })
       }
-      setError(message)
     }
   }
 
@@ -409,8 +418,6 @@ export default function CreateOrUpdateTaskFrom() {
     return 'no_action'
   }, [isCreate, currentUser, task])
 
-  console.log('ACTION', actionButton)
-
   useFocusEffect(
     useCallback(() => {
       if (task_id) {
@@ -418,6 +425,19 @@ export default function CreateOrUpdateTaskFrom() {
       }
     }, [task_id])
   )
+
+  useEffect(() => {
+    if (task && !isCreate) {
+      setTitle(task.title || '')
+      setDescription(task.description || '')
+      setAssignToId(task.process_id)
+      setPriority(task.priority)
+      setDifficulty(task.difficulty)
+      setStartDate(task.start_date ? new Date(task.start_date) : undefined)
+      setDueDate(task.due_date ? new Date(task.due_date) : undefined)
+      setTagSelected(task.tags || [])
+    }
+  }, [task, isCreate])
 
   const isLoading =
     isUserLoading ||
@@ -479,25 +499,25 @@ export default function CreateOrUpdateTaskFrom() {
             )}
 
             {/* Title input */}
-            <Text style={styles.label}>Task title</Text>
+            <Text style={styles.label}>Tiêu đề</Text>
             <View style={[styles.inputContainer]}>
               <View style={styles.iconContainer}>
                 <FileText size={20} color={colors.light.primaryPurple} />
               </View>
               <TextInput
                 style={styles.input}
-                placeholder="Enter task title"
+                placeholder="Nhập tiêu đề"
                 placeholderTextColor={colors.light.textLight}
                 value={title}
                 onChangeText={setTitle}
               />
             </View>
             {/* Description input */}
-            <Text style={styles.label}>Task Description</Text>
+            <Text style={styles.label}>Mô tả</Text>
             <View style={[styles.inputContainer]}>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Enter Task Description"
+                placeholder="Nhập mô tả"
                 placeholderTextColor={colors.light.textLight}
                 value={description}
                 onChangeText={setDescription}
@@ -528,7 +548,7 @@ export default function CreateOrUpdateTaskFrom() {
               <ChevronDown size={20} color={colors.light.textLight} />
             </Pressable>
 
-            <Text style={styles.label}>Priority</Text>
+            <Text style={styles.label}>Đô ưu tiên</Text>
             <Pressable
               style={styles.selectorButton}
               onPress={() => setOpenPriority(true)}
@@ -540,7 +560,7 @@ export default function CreateOrUpdateTaskFrom() {
               <ChevronDown size={20} color={colors.light.textLight} />
             </Pressable>
 
-            <Text style={styles.label}>Difficulty</Text>
+            <Text style={styles.label}>Độ khó</Text>
             <Pressable
               style={styles.selectorButton}
               onPress={() => setOpenDifficulty(true)}
@@ -762,8 +782,8 @@ export default function CreateOrUpdateTaskFrom() {
           height={470}
         >
           <SelectOption
-            title={'Assign To'}
-            subtitle={'Who wil finish this task'}
+            title={'Người thực hiện'}
+            subtitle={'Chọn người thực hiện task'}
             data={assignItems}
             selectedId={assignToId}
             onSelect={(id) => {
@@ -783,12 +803,15 @@ export default function CreateOrUpdateTaskFrom() {
           height={470}
         >
           <SelectOption
-            title={'Priority'}
-            subtitle={'Select the priority'}
+            title={'Độ ưu tiên'}
+            subtitle={'Chọn độ ưu tiên cho task'}
             data={PRIORITY_OPTIONS}
             selectedId={getPriorityValue(priority)}
             onSelect={(id) => {
               setPriority(getPriorityFromValue(id))
+              setOpenPriority(false)
+            }}
+            onCancel={() => {
               setOpenPriority(false)
             }}
           />
@@ -803,14 +826,15 @@ export default function CreateOrUpdateTaskFrom() {
           height={470}
         >
           <SelectOption
-            title={'Assign To'}
-            subtitle={'Who wil finish this task'}
+            title={'Độ khó'}
+            subtitle={'Chọn độ khó cho task'}
             data={DIFFICULTY_OPTIONS}
             selectedId={assignToId}
             onSelect={(id) => {
               setDifficulty(getDifficultyFromValue(id))
               setOpenDifficulty(false)
             }}
+            onCancel={() => setOpenDifficulty(false)}
           />
         </BaseModel>
       )}
@@ -1103,7 +1127,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 35,
     paddingBottom: 16,
   },
 })

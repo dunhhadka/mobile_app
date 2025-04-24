@@ -119,6 +119,10 @@ public class ProjectFilterService {
             specification = specification.and(ProjectSpecification.hasUserIdsIn(request.getProcessIds()));
         }
 
+        if (CollectionUtils.isNotEmpty(request.getStatuses())) {
+            specification = specification.and(ProjectSpecification.hasStatusIn(request.getStatuses()));
+        }
+
         return specification;
     }
 }

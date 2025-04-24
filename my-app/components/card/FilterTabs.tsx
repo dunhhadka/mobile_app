@@ -4,13 +4,18 @@ import { Circle } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import colors, { gradients } from '../../constants/colors'
 
-export const FilterTabs = () => {
+interface Props {
+  changeFilter: (status: 'all' | 'in_progress' | 'done') => void
+}
+
+export const FilterTabs = ({ changeFilter }: Props) => {
   const [activeFilter, setActiveFilter] = useState<
     'all' | 'in_progress' | 'done'
   >('all')
 
   const handleFilterChange = (filter: 'all' | 'in_progress' | 'done') => {
     setActiveFilter(filter)
+    changeFilter(filter)
   }
 
   return (
@@ -25,7 +30,7 @@ export const FilterTabs = () => {
             activeFilter === 'all' && styles.activeTabText,
           ]}
         >
-          All
+          Tất cả
         </Text>
       </TouchableOpacity>
 
@@ -38,7 +43,7 @@ export const FilterTabs = () => {
             style={styles.activeGradientTab}
           >
             <View style={styles.tabContent}>
-              <Text style={styles.activeTabText}>In Progress</Text>
+              <Text style={styles.activeTabText}>Đang thực hiện</Text>
               <Circle
                 size={8}
                 fill={colors.inProgress}
@@ -49,7 +54,7 @@ export const FilterTabs = () => {
           </LinearGradient>
         ) : (
           <View style={styles.tab}>
-            <Text style={styles.tabText}>In Progress</Text>
+            <Text style={styles.tabText}>Đang thực hiện</Text>
           </View>
         )}
       </TouchableOpacity>
@@ -64,7 +69,7 @@ export const FilterTabs = () => {
             activeFilter === 'done' && styles.activeTabText,
           ]}
         >
-          Finish
+          Đã hoàn thành
         </Text>
       </TouchableOpacity>
     </View>

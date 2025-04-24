@@ -39,7 +39,6 @@ export default function SignInScreen({ navigation }: any) {
   })
 
   const handleSignIn = async (data: LoginRequest) => {
-    console.log('Login Data', data)
     try {
       const response = await signIn(data).unwrap()
       if (response) {
@@ -64,8 +63,8 @@ export default function SignInScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sign In</Text>
-      <Text style={styles.subtitle}>Sign in to my account</Text>
+      <Text style={styles.title}>Đăng nhập</Text>
+      <Text style={styles.subtitle}>Đăng nhập với tài khoản của bạn</Text>
 
       <Controller
         name="email"
@@ -127,19 +126,6 @@ export default function SignInScreen({ navigation }: any) {
         <Text style={styles.errorText}>{errors.password.message}</Text>
       )}
 
-      <View style={styles.row}>
-        <View style={styles.checkboxContainer}>
-          <Checkbox
-            status={rememberMe ? 'checked' : 'unchecked'}
-            onPress={() => setRememberMe(!rememberMe)}
-          />
-          <Text style={styles.rememberMe}>Remember Me</Text>
-        </View>
-        <TouchableOpacity>
-          <Text style={styles.forgot}>Forgot Password</Text>
-        </TouchableOpacity>
-      </View>
-
       <TouchableOpacity
         style={styles.buttonWrapper}
         onPress={handleSubmit(handleSignIn)}
@@ -148,7 +134,7 @@ export default function SignInScreen({ navigation }: any) {
           {isSignInLoading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
+            <Text style={styles.buttonText}>Đăng nhập</Text>
           )}
         </LinearGradient>
       </TouchableOpacity>
@@ -166,7 +152,7 @@ export default function SignInScreen({ navigation }: any) {
         textColor={colors.primary}
         onPress={() => {}}
       >
-        Sign in With Employee ID
+        Đăng nhập cùng với mã nhân viên
       </Button>
 
       <Button
@@ -176,7 +162,7 @@ export default function SignInScreen({ navigation }: any) {
         textColor={colors.primary}
         onPress={() => {}}
       >
-        Sign in With Phone
+        Đăng nhập cùng số điện thoại
       </Button>
 
       <TouchableOpacity
@@ -184,7 +170,7 @@ export default function SignInScreen({ navigation }: any) {
         onPress={() => navigation.navigate('SignUp')}
       >
         <Text>
-          Don't have an account? <Text style={styles.signup}>Sign Up Here</Text>
+          Bạn chưa có tài khoản? <Text style={styles.signup}>Đăng ký</Text>
         </Text>
       </TouchableOpacity>
     </View>

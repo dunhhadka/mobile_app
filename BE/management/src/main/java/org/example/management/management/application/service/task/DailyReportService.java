@@ -10,6 +10,7 @@ import org.example.management.management.domain.task.DailyReport;
 import org.example.management.management.infastructure.exception.ConstrainViolationException;
 import org.example.management.management.infastructure.persistance.DailyReportRepository;
 import org.example.management.management.infastructure.persistance.TaskRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,8 @@ public class DailyReportService {
     private final TaskRepository taskRepository;
     private final UserService userService;
     private final DailyReportRepository dailyReportRepository;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public int create(DailyReportRequest request) {
@@ -61,7 +64,15 @@ public class DailyReportService {
         dailyReportRepository.save(dailyReport);
         taskRepository.save(task);
 
+        this.applicationEventPublisher.publishEvent(new DailyReportEvent(task.getId(), dailyReport.getReporterId()));
+
         return dailyReport.getId();
+    }
+
+    public record DailyReportEvent(
+            int taskId,
+            int creatorId
+    ) {
     }
 
 

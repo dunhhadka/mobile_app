@@ -38,6 +38,7 @@ import SlideInModal from '../models/SlideInModal'
 import TaskFilterForm from '../form/TaskFilterForm'
 import { TaskActionButton } from '../buttons/TaskActionButton'
 import ConfirmModal from '../card/ConfirmModal'
+import { useToast } from 'react-native-toast-notifications'
 
 // Types
 
@@ -102,8 +103,6 @@ export default function ProjectDetail() {
     refetchOnMountOrArgChange: true,
   })
 
-  console.log(project)
-
   const isShowForManager = !currentUser?.position
     ? false
     : Position[currentUser.position] === 'Quản lý'
@@ -146,6 +145,8 @@ export default function ProjectDetail() {
     sprint.status
   )
 
+  const toast = useToast()
+
   const handleStartProject = async () => {
     try {
       const changeRequest: ChangeProjectStatusRequest = {
@@ -153,6 +154,10 @@ export default function ProjectDetail() {
         status: 'in_process',
       }
       await changeProjectStatus(changeRequest).unwrap()
+      toast.show('Bắt đầu dự án thành công', {
+        type: 'success',
+        duration: 3000,
+      })
     } catch (err) {}
 
     sethowStartConfirmModal(false)
@@ -308,84 +313,10 @@ export default function ProjectDetail() {
               )}
             </View>
           )}
-          {/* <View
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              gap: 8,
-              flexWrap: 'wrap',
-            }}
-          >
-            <Pressable
-              style={[
-                styles.statusButton,
-                !status && styles.statusButtonActive,
-              ]}
-              onPress={() => setStatus(undefined)}
-            >
-              <Text
-                style={[styles.statusText, !status && styles.statusTextActive]}
-              >
-                Tất cả
-              </Text>
-            </Pressable>
-
-            <Pressable
-              style={[
-                styles.statusButton,
-                status && status === 'to_do' && styles.statusButtonActive,
-              ]}
-              onPress={() => setStatus('to_do')}
-            >
-              <Text
-                style={[
-                  styles.statusText,
-                  status && status === 'to_do' && styles.statusTextActive,
-                ]}
-              >
-                Chưa bắt đầu
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.statusButton,
-                status && status === 'in_process' && styles.statusButtonActive,
-              ]}
-              onPress={() => setStatus('in_process')}
-            >
-              <Text
-                style={[
-                  styles.statusText,
-                  status && status === 'in_process' && styles.statusTextActive,
-                ]}
-              >
-                Đang thực hiện
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.statusButton,
-                status && status === 'finish' && styles.statusButtonActive,
-              ]}
-              onPress={() => setStatus('finish')}
-            >
-              <Text
-                style={[
-                  styles.statusText,
-                  status && status === 'finish' && styles.statusTextActive,
-                ]}
-              >
-                Hoàn thành
-              </Text>
-            </Pressable>
-          </View> */}
         </View>
-
-        {/* <SearchInput value={query} onChange={(value) => setQuery(value)} /> */}
 
         <View style={{ marginTop: 20 }}></View>
 
-        {/* Task list */}
         {tasks && !!tasks.length ? (
           tasks.map((task) => (
             <View key={task.id}>
@@ -407,7 +338,6 @@ export default function ProjectDetail() {
         )}
       </ScrollView>
 
-      {/* Create Task Button */}
       {isManager && project?.status && project.status === 'in_process' && (
         <TouchableOpacity
           style={styles.floatingButton}
@@ -462,7 +392,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: 35,
+    paddingTop: 20,
   },
   scrollContent: {
     padding: 16,

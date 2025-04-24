@@ -14,17 +14,18 @@ import { ChevronLeft } from 'lucide-react-native'
 import ChatMemberItem from '../card/ChatMemberItem'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
 import { HomeStackParamList } from '../../App'
+import Loading from '../loading/Loading'
 
 const ChatListScreen = () => {
   const navigation = useNavigation<NavigationProp<HomeStackParamList>>()
 
   const currentUser = useSelector((state: RootState) => state.user.currentUser)
-  const { data: chatMembers, isLoading } = useGetChatMemberByUserIdQuery(
-    currentUser?.id ?? 0,
-    {
+  const { data: chatMembers, isLoading: isChatLoading } =
+    useGetChatMemberByUserIdQuery(currentUser?.id ?? 0, {
       refetchOnMountOrArgChange: true,
-    }
-  )
+    })
+
+  const isLoading = isChatLoading
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -53,6 +54,7 @@ const ChatListScreen = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
       />
+      {isLoading && <Loading />}
     </SafeAreaView>
   )
 }
@@ -63,6 +65,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.light.backgroundSecondary,
+    paddingTop: 20,
   },
   header: {
     flexDirection: 'row',

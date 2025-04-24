@@ -13,6 +13,7 @@ import org.example.management.management.application.model.user.response.UserRes
 import org.example.management.management.application.service.images.ImageProcessService;
 import org.example.management.management.application.service.projects.ProjectUpdated;
 import org.example.management.management.application.service.user.UserMapper;
+import org.example.management.management.application.service.user.UserService;
 import org.example.management.management.application.utils.NumberUtils;
 import org.example.management.management.domain.profile.User;
 import org.example.management.management.domain.task.Image;
@@ -52,7 +53,7 @@ public class TaskService {
     private final ImageProcessService imageProcessService;
     private final ImageRepository imageRepository;
 
-    private final EntityManager entityManager;
+    private final UserService userService;
 
     @Transactional
     public int createTask(TaskCreateRequest request) throws IOException {
@@ -91,6 +92,8 @@ public class TaskService {
         eventPublisher.publishEvent(new CreateTaskManagement(project.getId(), task.getProcessId(), task));
 
         eventPublisher.publishEvent(new ProjectUpdated(project.getId()));
+
+        eventPublisher.publishEvent(new TaskCreatedEvent(project.getId(), task.getProcessId(), task.getId()));
 
         return task.getId();
     }
@@ -236,6 +239,13 @@ public class TaskService {
         taskRepository.save(task);
 
         eventPublisher.publishEvent(new ProjectUpdated(task.getProjectId()));
+
+        eventPublisher.publishEvent(new HandleTaskEvent(task));
+    }
+
+    public record HandleTaskEvent(
+            Task task
+    ) {
     }
 
     public void finish(int taskId, int userId) {
@@ -253,6 +263,8 @@ public class TaskService {
         taskRepository.save(task);
 
         eventPublisher.publishEvent(new ProjectUpdated(task.getProjectId()));
+
+        eventPublisher.publishEvent(new HandleTaskEvent(task));
     }
 
     private TaskInfo validate(int taskId, int userId) {
@@ -297,6 +309,8 @@ public class TaskService {
         this.taskRepository.save(task);
 
         eventPublisher.publishEvent(new ProjectUpdated(task.getProjectId()));
+
+        eventPublisher.publishEvent(new HandleTaskEvent(task));
     }
 
     public List<TaskResponse> filter(TaskFilterRequest request) {
@@ -577,9 +591,8 @@ public class TaskService {
                 .distinct()
                 .toList();
 
-        var userMap = this.userRepository.findByIdIn(userIds)
+        var userMap = this.userService.getByIds(userIds)
                 .stream()
-                .map(this.userMapper::toUserResponse)
                 .collect(Collectors.toMap(UserResponse::getId, Function.identity()));
 
         return taskWithImages.stream()

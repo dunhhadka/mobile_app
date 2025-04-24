@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import colors from '../../constants/colors'
 import { Project } from '../../types/management'
 import { formatDate, formatDateTime } from '../models/UpdateProfileModal'
+import { useGetCurrentUser } from '../../utils/getCurrentUser'
 
 export type ProjectStatus = 'in_progress' | 'done'
 
@@ -29,6 +30,8 @@ export const ProjectCard = ({ project, onEdit }: ProjectCardProps) => {
   const isInProgress = status === 'in_process'
   const statusColor = isInProgress ? colors.inProgress : colors.success
   const statusText = isInProgress ? 'In Progress' : 'Done'
+
+  const { isManager } = useGetCurrentUser()
 
   return (
     <View style={styles.container}>
@@ -86,9 +89,14 @@ export const ProjectCard = ({ project, onEdit }: ProjectCardProps) => {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.editButton} onPress={() => onEdit(id)}>
-          <Edit size={18} color={colors.primary} />
-        </TouchableOpacity>
+        {isManager && (
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => onEdit(id)}
+          >
+            <Edit size={18} color={colors.primary} />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   )

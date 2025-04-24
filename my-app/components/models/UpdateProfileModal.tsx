@@ -36,6 +36,7 @@ import * as ImagePicker from 'expo-image-picker'
 import typography from '../../constants/typography'
 import layout from '../../constants/layout'
 import colors from '../../constants/colors'
+import dayjs from 'dayjs'
 
 interface Props {
   user: User
@@ -75,6 +76,11 @@ export function formatDateTime(date: Date | string | undefined): string {
   const year = parsedDate.getFullYear()
 
   return `${day}/${month}/${year}`
+}
+
+export function formatDateTimeInstant(iso: string): string {
+  if (!iso) return ''
+  return dayjs().format('HH:mm:ss DD/MM/YYYY')
 }
 
 export default function UpdateProfileModel({ user, onClose }: Props) {
@@ -133,12 +139,9 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
   const [uploadUserAvatar] = useUploadUserAvatarMutation()
 
   const handlePickImage = async () => {
-    console.log('handlePickImage')
-
     try {
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync()
       if (!permissionResult.granted) {
-        console.log('Camera permission denied')
         return
       }
 

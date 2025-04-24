@@ -1,6 +1,7 @@
 package org.example.management.management.application.service.chat;
 
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -10,9 +11,11 @@ import org.example.management.management.application.model.chat.MessageRequest;
 import org.example.management.management.application.model.chat.MessageResponse;
 import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.application.service.projects.ProjectCreatedEvent;
+import org.example.management.management.application.service.projects.ProjectService;
 import org.example.management.management.application.service.user.UserService;
 import org.example.management.management.domain.chat.ChatMember;
 import org.example.management.management.domain.chat.ChatRoom;
+import org.example.management.management.domain.chat.LastMessage;
 import org.example.management.management.domain.chat.Message;
 import org.example.management.management.domain.project.Project;
 import org.example.management.management.infastructure.exception.ConstrainViolationException;
@@ -26,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,6 +80,43 @@ public class ChatService {
         this.chatMemberRepository.saveAll(chatMembers);
     }
 
+    @Async
+    @EventListener(ProjectService.UpdateProjectEvent.class)
+    public void handleProjectUpdated(ProjectService.UpdateProjectEvent event) {
+        var projectId = event.projectId();
+        var addedUserIds = event.addedUserIds();
+        if (CollectionUtils.isEmpty(addedUserIds)) {
+            log.info("No users added for project {}", projectId);
+            return;
+        }
+
+        var chatRoom = this.chatRoomRepository.findByProjectId(projectId);
+        if (chatRoom == null) {
+            log.info("Room chưa tồn tại");
+            return;
+        }
+
+        var chatMembers = this.chatMemberRepository.getByUserIdInAndChatRoomId(addedUserIds, chatRoom.getId())
+                .stream()
+                .collect(Collectors.toMap(
+                        ChatMember::getUserId,
+                        Function.identity(),
+                        (first, second) -> second
+                ));
+
+        var usersShouldAddToRoom = addedUserIds.stream()
+                .filter(userId -> chatMembers.get(userId) == null)
+                .toList();
+        if (CollectionUtils.isEmpty(usersShouldAddToRoom)) {
+            return;
+        }
+
+        var chatMembersCreate = usersShouldAddToRoom.stream()
+                .map(id -> createNewChatMember(id, chatRoom))
+                .toList();
+        this.chatMemberRepository.saveAll(chatMembersCreate);
+    }
+
     private ChatMember createNewChatMember(Integer userId, ChatRoom room) {
         return ChatMember.builder()
                 .userId(userId)
@@ -96,7 +137,7 @@ public class ChatService {
             return Collections.emptyList();
         }
 
-        var user = this.userService.getUserById(userId);
+        var allUsers = this.getAllUsers(chatMembers);
 
         var roomIds = chatMembers.stream()
                 .map(ChatMember::getChatRoomId)
@@ -105,18 +146,59 @@ public class ChatService {
         var roomMap = this.chatRoomRepository.findByIdIn(roomIds)
                 .stream().collect(Collectors.toMap(ChatRoom::getId, Function.identity()));
 
-
         return chatMembers.stream()
-                .map(member -> this.toMemberResponse(member, user, roomMap.get(member.getChatRoomId())))
+                .map(member -> this.toMemberResponse(member, allUsers, roomMap.get(member.getChatRoomId())))
                 .toList();
     }
 
-    private ChatMemberResponse toMemberResponse(ChatMember member, UserResponse user, ChatRoom chatRoom) {
+    private Map<Integer, UserResponse> getAllUsers(List<ChatMember> chatMembers) {
+        if (CollectionUtils.isEmpty(chatMembers)) {
+            return Map.of();
+        }
+
+        var memberUserIds = chatMembers.stream()
+                .map(ChatMember::getUserId)
+                .distinct()
+                .toList();
+        var lastSenderUserIds = chatMembers.stream()
+                .filter(member -> member.getLastMessage() != null)
+                .map(member -> member.getLastMessage().getSenderId())
+                .distinct()
+                .toList();
+        var allUserIds = Stream.concat(memberUserIds.stream(), lastSenderUserIds.stream()).distinct().toList();
+
+        return this.userService.getByIds(allUserIds).stream()
+                .collect(Collectors.toMap(
+                        UserResponse::getId,
+                        Function.identity()));
+    }
+
+    private ChatMemberResponse toMemberResponse(ChatMember member, Map<Integer, UserResponse> allUsers, ChatRoom chatRoom) {
+        var user = allUsers.get(member.getUserId());
+        if (user == null) return null;
+
+        var lastSendUser = member.getLastMessage() != null ? allUsers.get(member.getLastMessage().getSenderId()) : null;
+
         return ChatMemberResponse.builder()
                 .id(member.getId())
                 .user(user)
                 .chatRoom(toChatRoomResponse(chatRoom))
                 .joinedAt(member.getJoinedAt())
+                .lastMessage(buildLastMessage(lastSendUser, member.getLastMessage()))
+                .unReadCount(member.getUnReadCount())
+                .build();
+    }
+
+    private ChatMemberResponse.LastMessage buildLastMessage(UserResponse lastSendUser, LastMessage lastMessage) {
+        if (lastSendUser == null || lastMessage == null) {
+            log.info("No last message for member");
+            return null;
+        }
+
+        return ChatMemberResponse.LastMessage.builder()
+                .userLastSend(lastSendUser)
+                .sendTime(lastMessage.getSendTime())
+                .content(lastMessage.getContent())
                 .build();
     }
 
@@ -137,6 +219,7 @@ public class ChatService {
         return this.toChatRoomResponse(room);
     }
 
+    @Transactional
     // TODO: Đang không check gì cả. Làm nhanh
     public MessageResponse saveMessage(int roomId, MessageRequest request) {
         var room = this.chatRoomRepository.findById(roomId)
@@ -160,7 +243,25 @@ public class ChatService {
 
         var messageSaved = this.messageRepository.save(message);
 
+        this.updateChatMember(messageSaved);
+
         return this.toMessageResponse(messageSaved, room, member, sender);
+    }
+
+    private void updateChatMember(Message messageSaved) {
+        var chatRoomId = messageSaved.getChatRoomId();
+        var chatMembers = this.chatMemberRepository.getByChatRoomId(chatRoomId);
+
+        if (CollectionUtils.isEmpty(chatMembers)) {
+            log.info("No member in roomId {}", chatRoomId);
+            return;
+        }
+
+        chatMembers.stream()
+                .filter(member -> member.getUserId() != messageSaved.getSenderId())
+                .forEach(member -> member.updateUnReadMessage(messageSaved));
+
+        this.chatMemberRepository.saveAll(chatMembers);
     }
 
     private MessageResponse toMessageResponse(Message message, ChatRoom room, ChatMember member, UserResponse sender) {
@@ -208,5 +309,28 @@ public class ChatService {
                 .time(message.getTime())
                 .senderId(message.getSenderId())
                 .build();
+    }
+
+    public int countUnRead(int userId) {
+        var chatMembers = this.chatMemberRepository.getByUserId(userId);
+        if (CollectionUtils.isEmpty(chatMembers)) {
+            return 0;
+        }
+
+        return (int) chatMembers.stream()
+                .filter(ChatMember::isUnRead)
+                .count();
+    }
+
+    public void markupRead(int memberId) {
+        var chatMember = this.chatMemberRepository.findById(memberId)
+                .orElse(null);
+        if (chatMember == null) {
+            return;
+        }
+
+        chatMember.clearLastMessage();
+
+        chatMemberRepository.save(chatMember);
     }
 }

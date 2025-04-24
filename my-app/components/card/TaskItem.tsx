@@ -93,7 +93,11 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                   zIndex: 10 - index,
                 }}
               >
-                <Avatar name={''} size={20} uri={user?.avatar?.alt} />
+                <Avatar
+                  name={user?.user_name}
+                  size={20}
+                  uri={user?.avatar?.src}
+                />
               </View>
             ))}
           </View>

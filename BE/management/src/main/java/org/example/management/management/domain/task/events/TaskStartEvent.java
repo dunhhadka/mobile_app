@@ -10,7 +10,7 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskStartEvent implements DomainEvent {
+public class TaskStartEvent implements DomainEvent, TaskEvent {
     private int creatorId;
     private int starterId;
     private int taskId;
@@ -23,5 +23,20 @@ public class TaskStartEvent implements DomainEvent {
     @Override
     public String type() {
         return getClass().getName();
+    }
+
+    @Override
+    public int creatorId() {
+        return this.creatorId;
+    }
+
+    @Override
+    public int taskId() {
+        return this.taskId;
+    }
+
+    @Override
+    public int processorId() {
+        return this.starterId;
     }
 }

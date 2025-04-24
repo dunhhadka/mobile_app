@@ -2,17 +2,22 @@ import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Circle } from 'lucide-react-native'
 import colors from '../../constants/colors'
+import { Project } from '../../types/management'
 
-interface Props {}
+interface Props {
+  projects: Project[]
+}
 
-export const ProjectSummary = () => {
-  const inProgressCount = 8
-  const doneCount = 5
+export const ProjectSummary = ({ projects }: Props) => {
+  const inProgressCount = projects.filter(
+    (p) => p.status === 'in_process'
+  ).length
+  const doneCount = projects.filter((p) => p.status === 'finish').length
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Summary of Your Projects</Text>
-      <Text style={styles.subtitle}>Your current project progress</Text>
+      <Text style={styles.title}>Tóm tắt tắt cả dự án của bạn</Text>
+      <Text style={styles.subtitle}>Dự án hiện tại</Text>
 
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>
@@ -22,7 +27,7 @@ export const ProjectSummary = () => {
               fill={colors.inProgress}
               color={colors.inProgress}
             />
-            <Text style={styles.statLabel}>In Progress</Text>
+            <Text style={styles.statLabel}>Đang thực hiện</Text>
           </View>
           <Text style={styles.statValue}>{inProgressCount}</Text>
         </View>
@@ -32,7 +37,7 @@ export const ProjectSummary = () => {
         <View style={styles.statBox}>
           <View style={styles.statHeader}>
             <Circle size={12} fill={colors.success} color={colors.success} />
-            <Text style={styles.statLabel}>Done</Text>
+            <Text style={styles.statLabel}>Đã hoàn thành</Text>
           </View>
           <Text style={styles.statValue}>{doneCount}</Text>
         </View>

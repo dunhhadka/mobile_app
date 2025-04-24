@@ -48,8 +48,6 @@ export default function SelectOption({
     }
   }
 
-  console.log(data)
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>

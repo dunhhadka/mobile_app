@@ -2,6 +2,10 @@ import { Pressable, Text, View, StyleSheet } from 'react-native'
 import { ChatMember } from '../../types/management'
 import colors from '../../constants/colors'
 import Avatar from '../layouts/Avatar'
+import {
+  formatDateTime,
+  formatDateTimeInstant,
+} from '../models/UpdateProfileModal'
 
 interface Props {
   member: ChatMember
@@ -13,9 +17,7 @@ const ChatMemberItem = ({ member, onPress }: Props) => {
     onPress()
   }
 
-  const formattedTime = '10:00:00'
-
-  const unreadCount = 5
+  const unreadCount = member.un_read_count ?? 0
 
   return (
     <Pressable
@@ -26,12 +28,16 @@ const ChatMemberItem = ({ member, onPress }: Props) => {
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.name}>{member?.chat_room?.name}</Text>
-          <Text style={styles.time}>{formattedTime}</Text>
+          {member.last_message && member.last_message.send_time && (
+            <Text style={styles.time}>
+              {formatDateTimeInstant(member.last_message.send_time)}
+            </Text>
+          )}
         </View>
         <View style={styles.messageContainer}>
           <Text style={styles.message} numberOfLines={1}>
-            {member?.chat_room?.last_message?.content
-              ? member.chat_room.last_message.content
+            {member?.last_message?.content
+              ? `${member.last_message.user_last_send.user_name} : ${member.last_message.content}`
               : 'Chưa có tín nhắn nào'}
           </Text>
           {unreadCount > 0 && (

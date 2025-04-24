@@ -20,4 +20,16 @@ public class ChatMemberResponse {
     private Instant joinedAt;
 
     private boolean unRead;
+
+    private int unReadCount;
+
+    private LastMessage lastMessage;
+
+    @Builder
+    @Getter
+    public static class LastMessage {
+        private UserResponse userLastSend;
+        private Instant sendTime;
+        private String content;
+    }
 }

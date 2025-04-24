@@ -100,8 +100,6 @@ export default function NotificationsScreen() {
 
   const [markIsRead, { isLoading: isMarkLoading }] = useMarkIsReadMutation()
 
-  console.log('Get Notifications', notifications)
-
   const handleNotificationPress = async (notification: Notification) => {
     await markIsRead(notification.id)
 
@@ -116,7 +114,7 @@ export default function NotificationsScreen() {
             params: { project_id: data?.projectId },
           })
         }
-        break;
+        break
       }
       case 'leave': {
         var data = JSON.parse(notification.data ?? '')
@@ -128,7 +126,20 @@ export default function NotificationsScreen() {
             params: { leave_id: data?.leaveId },
           })
         }
-        break;
+        break
+      }
+      case 'task': {
+        const data = JSON.parse(notification.data ?? '')
+        if (data && data?.taskId && data?.projectId) {
+          // @ts-ignore
+          navigation.navigate('Tasks', {
+            screen: 'CreateOrUpdateTask',
+            params: {
+              project_id: data?.projectId,
+              task_id: data?.taskId,
+            },
+          })
+        }
       }
     }
   }

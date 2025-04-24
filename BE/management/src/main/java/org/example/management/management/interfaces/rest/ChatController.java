@@ -1,14 +1,12 @@
 package org.example.management.management.interfaces.rest;
 
 import lombok.RequiredArgsConstructor;
+import org.checkerframework.checker.units.qual.A;
 import org.example.management.management.application.model.chat.ChatMemberResponse;
 import org.example.management.management.application.model.chat.ChatRoomResponse;
 import org.example.management.management.application.model.chat.MessageResponse;
 import org.example.management.management.application.service.chat.ChatService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -32,5 +30,10 @@ public class ChatController {
     @GetMapping("/rooms/{roomId}/messages")
     public List<MessageResponse> getMessageByRoomId(@PathVariable int roomId) {
         return this.chatService.getMessageByRoomId(roomId);
+    }
+
+    @GetMapping("/markup-read/{memberId}")
+    public void markupReadRoomMessage(@PathVariable int memberId) {
+        this.chatService.markupRead(memberId);
     }
 }

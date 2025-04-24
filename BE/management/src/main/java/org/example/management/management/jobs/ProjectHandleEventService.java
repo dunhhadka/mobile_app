@@ -9,6 +9,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.example.management.management.application.model.user.response.UserResponse;
 import org.example.management.management.application.service.NotificationService;
 import org.example.management.management.application.service.event.EventModel;
+import org.example.management.management.application.service.projects.ProjectService;
 import org.example.management.management.application.service.projects.ProjectUpdated;
 import org.example.management.management.application.service.user.UserService;
 import org.example.management.management.application.utils.JsonUtils;
@@ -240,5 +241,43 @@ public class ProjectHandleEventService {
             if (this.totalTask == 0) return BigDecimal.ZERO;
             return this.progress.divide(BigDecimal.valueOf(totalTask), RoundingMode.FLOOR);
         }
+    }
+
+    @Async
+    @EventListener(ProjectService.UpdateProjectEvent.class)
+    public void handleProjectUpdated(ProjectService.UpdateProjectEvent event) throws JsonProcessingException {
+        var projectId = event.projectId();
+        var addedUserIds = event.addedUserIds();
+        if (CollectionUtils.isEmpty(addedUserIds)) {
+            return;
+        }
+
+        var project = this.projectRepository.findById(projectId)
+                .orElseThrow();
+        var users = this.userService.getByIds(
+                        Stream.concat(
+                                addedUserIds.stream(),
+                                Stream.of(project.getCreatedId())
+                        ).toList()
+                )
+                .stream().collect(Collectors.toMap(UserResponse::getId, Function.identity()));
+
+        var creator = users.get(project.getCreatedId());
+
+        var eventMessage = creator.getUserName() + " vừa thêm " + addedUserIds.size() + " thành viên mới vào dự án " + project.getTitle();
+        var updatedEvent = Event.builder()
+                .createdBy(project.getCreatedId())
+                .message(eventMessage)
+                .build();
+        var eventSaved = this.eventRepository.save(updatedEvent);
+
+        var json = JsonUtils.marshal(new Data(project.getId()));
+
+        List<Notification> notifications = addedUserIds.stream()
+                .map(userId -> this.buildNotification(eventSaved, userId, users, project, json))
+                .toList();
+        this.notificationRepository.saveAll(notifications);
+
+        this.notificationService.sendNotifications(notifications);
     }
 }

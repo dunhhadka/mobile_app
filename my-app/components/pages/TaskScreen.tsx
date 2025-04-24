@@ -15,14 +15,16 @@ import { LinearGradient } from 'expo-linear-gradient'
 import ProjectCard from '../card/ProjectCard'
 import ProjectSummary from '../process/ProjectSummary'
 import { ClipboardList } from 'lucide-react-native'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import FilterTabs from '../card/FilterTabs'
 import BaseModel from '../models/BaseModel'
 import CreateOrUpdateProject from './CreateOrUpdateProject'
-import { Project, ProjectSearchRequest } from '../../types/management'
+import { Position, Project, ProjectSearchRequest } from '../../types/management'
 import { useSearchProjectQuery } from '../../api/magementApi'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
 import Loading from '../loading/Loading'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../store/store'
 
 const TaskScreen = () => {
   const [projectUpdateSelected, setProjectUpdateSelected] = useState<
@@ -33,16 +35,19 @@ const TaskScreen = () => {
 
   const [openCreateModel, setOpenCreateModel] = useState(false)
 
+  const currentUser = useSelector((state: RootState) => state.user.currentUser)
+  const isManager =
+    currentUser?.position && Position[currentUser.position] === 'Quản lý'
+
   const {
     data: projects,
     isLoading: isProjectLoading,
     isFetching: isProjectFetching,
+    refetch: refetchProjects,
   } = useSearchProjectQuery(projetFilter, { refetchOnMountOrArgChange: true })
 
   const handleEditProject = (id: number) => {
-    console.log('ProjectId', id)
     const project = projects?.find((p) => p.id === id)
-    console.log('Project', project)
     setProjectUpdateSelected(project)
     setOpenCreateModel(true)
   }
@@ -72,9 +77,22 @@ const TaskScreen = () => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-            <ProjectSummary />
+            <ProjectSummary projects={projects || []} />
 
-            <FilterTabs />
+            <FilterTabs
+              changeFilter={(s) => {
+                setProjectFilter((prev) => ({
+                  ...prev,
+                  statuses:
+                    s === 'all'
+                      ? []
+                      : s === 'in_progress'
+                      ? ['in_process']
+                      : ['finish'],
+                }))
+                refetchProjects()
+              }}
+            />
 
             {projects &&
               projects.map((project) => (
@@ -94,26 +112,28 @@ const TaskScreen = () => {
                 </Pressable>
               ))}
           </ScrollView>
-          <View
-            style={{
-              backgroundColor: 'white',
-              paddingLeft: 8,
-              paddingRight: 8,
-            }}
-          >
-            <TouchableOpacity
-              style={styles.buttonWrapper}
-              onPress={() => setOpenCreateModel(true)}
-              disabled={isLoading} // Disable nút khi đang submit
+          {isManager && (
+            <View
+              style={{
+                backgroundColor: 'white',
+                paddingLeft: 8,
+                paddingRight: 8,
+              }}
             >
-              <LinearGradient
-                colors={['#7B5AFF', '#4D66F4']}
-                style={styles.button}
+              <TouchableOpacity
+                style={styles.buttonWrapper}
+                onPress={() => setOpenCreateModel(true)}
+                disabled={isLoading} // Disable nút khi đang submit
               >
-                <Text style={styles.buttonText}>Tạo dự án</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
+                <LinearGradient
+                  colors={['#7B5AFF', '#4D66F4']}
+                  style={styles.button}
+                >
+                  <Text style={styles.buttonText}>Tạo dự án</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          )}
         </SafeAreaView>
       </LinearGradient>
       {openCreateModel && (

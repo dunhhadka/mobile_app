@@ -1,6 +1,7 @@
 package org.example.management.management.application.model.task;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -18,6 +19,7 @@ import java.util.List;
 public class TaskCreateRequest {
 
     @Size(max = 255)
+    @NotBlank(message = "Title không được để trống")
     private String title;
 
     @Size(max = 255)
@@ -31,8 +33,10 @@ public class TaskCreateRequest {
 
     private Integer processId;
 
+    @NotNull(message = "Độ ưu tiên không dược để trống.")
     private Task.Priority priority;
 
+    @NotNull(message = "Độ khó không được để trống.")
     private Task.Difficulty difficulty;
 
     private Task.Status status;
@@ -43,10 +47,10 @@ public class TaskCreateRequest {
 
     private List<Task.Tag> tags;
 
-    @NotNull
+    @NotNull(message = "Ngày bắt đầu dự kiến không được để trống")
     private LocalDate startDate;
 
-    @NotNull
+    @NotNull(message = "Ngày kết thúc dự kiến không được để trống")
     private LocalDate dueDate;
 
     private LocalDate completedAt;

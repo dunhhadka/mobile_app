@@ -9,8 +9,6 @@ const CustomNotificationToast = ({
 }: {
   notification: Notification
 }) => {
-  console.log('SHOW NOTIFICATION', notification)
-
   const slideAnim = useRef(new Animated.Value(-80)).current
   const fadeAnim = useRef(new Animated.Value(0)).current
   const shakeAnim = useRef(new Animated.Value(0)).current
@@ -18,8 +16,6 @@ const CustomNotificationToast = ({
   const hasVibrated = useRef(false)
 
   useEffect(() => {
-    console.log('Component Mount')
-
     if (!hasVibrated.current) {
       Vibration.vibrate(500)
       hasVibrated.current = true
@@ -62,7 +58,6 @@ const CustomNotificationToast = ({
     ).start()
 
     return () => {
-      console.log('Component Unmount')
       hasVibrated.current = false
     }
   }, [notification])

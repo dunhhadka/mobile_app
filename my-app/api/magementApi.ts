@@ -34,8 +34,7 @@ import {
   UserRequest,
 } from '../types/management'
 
-export const URL =
-  'https://4ac2-2405-4802-214-a790-a4e7-123-802e-d318.ngrok-free.app'
+export const URL = 'http://172.11.222.45:8080'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',
@@ -90,11 +89,13 @@ export const managementApi = createApi({
       }),
     }),
     filterUser: builder.query<User[], UserFilterRequest>({
-      query: (request) => ({
-        url: '/api/users/filter',
-        method: 'POST',
-        body: request,
-      }),
+      query: (request) => {
+        return {
+          url: '/api/users/filter',
+          method: 'POST',
+          body: request,
+        }
+      },
     }),
     createProject: builder.mutation<Project, ProjectRequest>({
       query: (request) => ({
@@ -301,7 +302,6 @@ export const managementApi = createApi({
     }),
     filterTasks: builder.query<Task[], TaskFilterRequest>({
       query: (request) => {
-        console.log(request)
         return {
           url: `/api/tasks/filter`,
           method: 'GET',
@@ -419,6 +419,12 @@ export const managementApi = createApi({
           : [{ type: 'project', id: arg.project_id }]
       },
     }),
+    markupReadRoomMessage: builder.query<void, number>({
+      query: (member) => ({
+        url: `/api/chats/markup-read/${member}`,
+        method: 'GET',
+      }),
+    }),
   }),
 })
 
@@ -460,4 +466,5 @@ export const {
   useGetLeavesByUserIdQuery,
   useGetProjectMamagementByProjectIdAndUserIdQuery,
   useChangProjectStatusMutation,
+  useMarkupReadRoomMessageQuery,
 } = managementApi

@@ -10,4 +10,6 @@ import java.util.List;
 @Setter
 public class UserFilterRequest extends PageRequest {
     private List<Integer> ids;
+
+    private Integer projectId;
 }

@@ -156,10 +156,6 @@ export const tagWithLabel = Object.entries(tagLabelMap).map(
   })
 )
 
-export interface UserFilterRequest {
-  ids?: number[]
-}
-
 export interface ProjectSearchRequest {
   processIds?: number[]
   createdIds?: number[]
@@ -228,9 +224,8 @@ export interface Project {
 
 export interface UserFilterRequest {
   ids?: number[]
+  project_id?: number
 }
-
-export interface ProjectSearchRequest {}
 
 export interface TaskRequest {
   id?: number
@@ -297,17 +292,20 @@ export interface ChatRoom {
   last_message: LastMessage
 }
 
-export interface LastMessage {
-  sender: User
-  content: string
-}
-
 export interface ChatMember {
   id: number
   user: User
   chat_room: ChatRoom
   joined_at: string
   un_read: boolean
+  un_read_count?: number
+  last_message?: LastMessage
+}
+
+export interface LastMessage {
+  user_last_send: User
+  send_time: string
+  content: string
 }
 
 export interface MessageRequest {

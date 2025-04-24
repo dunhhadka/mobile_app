@@ -15,9 +15,11 @@ import org.example.management.management.domain.profile.User;
 import org.example.management.management.domain.profile.UserRepository;
 import org.example.management.management.domain.profile.User_;
 import org.example.management.management.domain.task.Image;
+import org.example.management.management.domain.task.ProjectManagement;
 import org.example.management.management.infastructure.exception.ConstrainViolationException;
 import org.example.management.management.infastructure.persistance.ImageRepository;
 import org.example.management.management.infastructure.persistance.JpaUserRepositoryInterface;
+import org.example.management.management.infastructure.persistance.ProjectManagementRepository;
 import org.example.management.management.interfaces.rest.ImageController;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -51,17 +53,16 @@ public class UserServiceImpl implements UserService {
 
     private final ImageService imageService;
 
+    private final ProjectManagementRepository projectManagementRepository;
+
     @Override
     @Transactional
     public UserResponse createUser(UserRequest request) {
-        if (request == null) {
-            throw new ConstrainViolationException("request", "Request is null");
-        }
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ConstrainViolationException(request.getEmail(), "Email has been existed!");
+            throw new ConstrainViolationException(request.getEmail(), "Email đã tồn tại. Vui lòng chọn Email khác");
         }
         if (userRepository.existsByPhone(request.getPhone())) {
-            throw new ConstrainViolationException(request.getPhone(), "Phone has bean existed!");
+            throw new ConstrainViolationException(request.getPhone(), "Số điện thoại đã tồn tại.");
         }
         User user = userMapper.toUser(request);
 
@@ -121,9 +122,23 @@ public class UserServiceImpl implements UserService {
     public Page<UserResponse> filter(UserFilterRequest request) {
         var pageable = PageRequest.of(request.getPageNumber() - 1, request.getPageSize(), Sort.by(User_.ID).descending());
 
+        if (request.getProjectId() != null) {
+            this.setUser(request, request.getProjectId());
+        }
+
         var pageUsers = getUserResponse(request, pageable);
 
         return new PageImpl<>(pageUsers.getKey(), pageable, pageUsers.getRight());
+    }
+
+    private void setUser(UserFilterRequest request, Integer projectId) {
+        var projectManagements = this.projectManagementRepository.findByProjectId(projectId);
+        if (CollectionUtils.isEmpty(projectManagements))
+            return;
+        var userIds = projectManagements.stream()
+                .map(ProjectManagement::getUserId)
+                .toList();
+        request.setIds(userIds);
     }
 
     @Override

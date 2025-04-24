@@ -29,6 +29,6 @@ public class ChatMessageController {
 
     @GetMapping("/api/messages/{userId}/un-read")
     public int countUnRead(@PathVariable int userId) {
-        return 5;
+        return this.chatService.countUnRead(userId);
     }
 }
