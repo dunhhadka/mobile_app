@@ -10,6 +10,7 @@ import {
 import {
   AggregateLogRequest,
   AttendanceResponse,
+  ChangePasswordRequest,
   ChangeProjectStatusRequest,
   ChatMember,
   ChatRoom,
@@ -34,7 +35,7 @@ import {
   UserRequest,
 } from '../types/management'
 
-export const URL = 'http://192.168.31.117:8080'
+export const URL = 'http://10.1.43.13:8080'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',
@@ -425,6 +426,14 @@ export const managementApi = createApi({
         method: 'GET',
       }),
     }),
+
+    changePassword: builder.mutation<User, ChangePasswordRequest & {userId: number}>({
+      query: (request) => ({
+        url: `/api/users/change-password/${request.userId}`,
+        method: 'POST',
+        body: request
+      }),
+    })
   }),
 })
 
@@ -467,4 +476,5 @@ export const {
   useGetProjectMamagementByProjectIdAndUserIdQuery,
   useChangProjectStatusMutation,
   useMarkupReadRoomMessageQuery,
+  useChangePasswordMutation
 } = managementApi

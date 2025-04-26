@@ -437,3 +437,8 @@ export interface ChangeProjectStatusRequest {
   status: 'in_process' | 'to_do' | 'finish'
   creator_id?: number
 }
+
+export interface ChangePasswordRequest {
+  old_password: string
+  new_password: string
+}

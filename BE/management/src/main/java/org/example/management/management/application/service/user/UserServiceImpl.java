@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.example.management.management.application.model.user.request.ChangePasswordRequest;
 import org.example.management.management.application.model.user.request.LoginRequest;
 import org.example.management.management.application.model.user.request.UserFilterRequest;
 import org.example.management.management.application.model.user.request.UserRequest;
@@ -174,6 +175,32 @@ public class UserServiceImpl implements UserService {
             );
         }
         return this.getByIds(List.of(possiblyUser.get().getId())).get(0);
+    }
+
+    @Override
+    public UserResponse changePassword(int userId, ChangePasswordRequest request) {
+        var user = this.repositoryInterface.findById(userId)
+                .orElseThrow(() ->
+                        new ConstrainViolationException(
+                                "user",
+                                "Không tìm thấy người dùng với id là " + userId
+                        ));
+
+        var oldPassword = request.getOldPassword();
+        var newPassword = request.getNewPassword();
+
+        if (!StringUtils.equals(oldPassword, user.getPassword())) {
+            throw new ConstrainViolationException(
+                    "password",
+                    "Mật khẩu hiện tại không đúng"
+            );
+        }
+
+        user.setPassword(newPassword);
+
+        this.repositoryInterface.save(user);
+
+        return this.getByIds(List.of(userId)).get(0);
     }
 
     private Pair<List<UserResponse>, Long> getUserResponse(UserFilterRequest request, PageRequest pageable) {

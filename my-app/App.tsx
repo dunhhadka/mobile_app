@@ -9,7 +9,6 @@ import {
 } from '@react-navigation/bottom-tabs'
 import {
   Bell,
-  Calendar,
   CalendarCheck2,
   Home,
   ListChecks,

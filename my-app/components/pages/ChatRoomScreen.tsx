@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     // backgroundColor: colors.light.backgroundSecondary,
-    paddingTop: 35,
+    paddingTop: 20,
   },
   receiveTimeText: {
     fontSize: 11,
