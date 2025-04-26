@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.example.management.management.application.model.user.request.ChangePasswordRequest;
 import org.example.management.management.application.model.user.request.LoginRequest;
 import org.example.management.management.application.model.user.request.UserFilterRequest;
 import org.example.management.management.application.model.user.request.UserRequest;
@@ -68,5 +69,11 @@ public class UserController {
     @PostMapping("/login")
     public UserResponse login(@Valid @RequestBody LoginRequest request) {
         return this.userService.login(request);
+    }
+
+
+    @PostMapping("/change-password/{userId}")
+    public UserResponse changePassword(@PathVariable int userId, @Valid @RequestBody ChangePasswordRequest request) {
+        return this.userService.changePassword(userId, request);
     }
 }

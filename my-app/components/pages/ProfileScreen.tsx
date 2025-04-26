@@ -30,6 +30,7 @@ import BaseModel from '../models/BaseModel'
 import UpdateProfileModal from '../models/UpdateProfileModal'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
 import { RootStackParamList } from '../../App'
+import ChangePasswordForm from '../form/ChangePasswordForm'
 
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>()
@@ -37,6 +38,8 @@ export default function ProfileScreen() {
   const { currentUser } = useUserStore()
   const { tasks } = useTaskStore()
   const [isOpenUpdateModel, setIsOpenUpdateModel] = useState(false)
+  const [showModalChangePassword, setShowModalChangePassword] = useState(false)
+
   const user = useSelector((state: RootState) => state.user.currentUser)
 
   if (!currentUser || !user) {
@@ -152,39 +155,7 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Tài khoản</Text>
 
           <View style={styles.infoCard}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.infoItem,
-                pressed && styles.infoItemPressed,
-              ]}
-              onPress={() => {}}
-            >
-              <View style={styles.infoIconContainer}>
-                <Briefcase size={20} color={colors.primary} />
-              </View>
-              <View style={styles.infoTextContainer}>
-                <Text style={styles.infoTitle}>Thông tin cá nhân</Text>
-              </View>
-              <ChevronRight size={20} color={colors.textLight} />
-            </Pressable>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.infoItem,
-                pressed && styles.infoItemPressed,
-              ]}
-              onPress={() => {}}
-            >
-              <View style={styles.infoIconContainer}>
-                <Building size={20} color={colors.primary} />
-              </View>
-              <View style={styles.infoTextContainer}>
-                <Text style={styles.infoTitle}>Tài sản cá nhân</Text>
-              </View>
-              <ChevronRight size={20} color={colors.textLight} />
-            </Pressable>
-
-            <Pressable
+            {/* <Pressable
               style={({ pressed }) => [
                 styles.infoItem,
                 pressed && styles.infoItemPressed,
@@ -199,7 +170,7 @@ export default function ProfileScreen() {
               </View>
 
               <ChevronRight size={20} color={colors.textLight} />
-            </Pressable>
+            </Pressable> */}
 
             <Pressable
               style={({ pressed }) => [
@@ -224,7 +195,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Settings</Text>
+          <Text style={styles.sectionTitle}>Cài đặt</Text>
 
           <View style={styles.infoCard}>
             <Pressable
@@ -232,18 +203,18 @@ export default function ProfileScreen() {
                 styles.infoItem,
                 pressed && styles.infoItemPressed,
               ]}
-              onPress={() => router.push('/settings/change-password')}
+              onPress={() => setShowModalChangePassword(true)}
             >
               <View style={styles.infoIconContainer}>
                 <Lock size={20} color={colors.primary} />
               </View>
               <View style={styles.infoTextContainer}>
-                <Text style={styles.infoTitle}>Change Password</Text>
+                <Text style={styles.infoTitle}>Thay đổi mật khẩu</Text>
               </View>
               <ChevronRight size={20} color={colors.textLight} />
             </Pressable>
 
-            <Pressable
+            {/* <Pressable
               style={({ pressed }) => [
                 styles.infoItem,
                 pressed && styles.infoItemPressed,
@@ -257,9 +228,9 @@ export default function ProfileScreen() {
                 <Text style={styles.infoTitle}>Versioning</Text>
               </View>
               <ChevronRight size={20} color={colors.textLight} />
-            </Pressable>
+            </Pressable> */}
 
-            <Pressable
+            {/* <Pressable
               style={({ pressed }) => [
                 styles.infoItem,
                 pressed && styles.infoItemPressed,
@@ -273,7 +244,7 @@ export default function ProfileScreen() {
                 <Text style={styles.infoTitle}>FAQ and Help</Text>
               </View>
               <ChevronRight size={20} color={colors.textLight} />
-            </Pressable>
+            </Pressable> */}
 
             <Pressable
               style={({ pressed }) => [
@@ -281,7 +252,8 @@ export default function ProfileScreen() {
                 pressed && styles.infoItemPressed,
               ]}
               onPress={() => {
-                /* Handle logout */
+                // @ts-ignore
+                navigation.navigate("SignIn")
               }}
             >
               <View style={styles.infoIconContainer}>
@@ -289,7 +261,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.infoTextContainer}>
                 <Text style={[styles.infoTitle, { color: colors.danger }]}>
-                  Logout
+                  Đăng xuất
                 </Text>
               </View>
               <ChevronRight size={20} color={colors.textLight} />
@@ -308,6 +280,17 @@ export default function ProfileScreen() {
           />
         </BaseModel>
       )}
+      {
+        showModalChangePassword && (
+          <BaseModel 
+          open={showModalChangePassword} 
+          onClose={() => setShowModalChangePassword(false)}
+          height={500}
+          >
+            <ChangePasswordForm onColose={() => setShowModalChangePassword(false)}/>
+          </BaseModel>
+        )
+      }
     </SafeAreaView>
   )
 }
