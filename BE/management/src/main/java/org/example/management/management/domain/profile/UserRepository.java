@@ -19,4 +19,5 @@ public interface UserRepository {
 
     Boolean existsByPhone(String phone);
     List<User> findAllByIds(List<Integer> userIds);
+    List<User> findAll();
 }

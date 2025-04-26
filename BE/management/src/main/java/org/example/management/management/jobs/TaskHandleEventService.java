@@ -16,6 +16,8 @@ import org.example.management.management.application.service.user.UserService;
 import org.example.management.management.application.utils.JsonUtils;
 import org.example.management.management.domain.event.Event;
 import org.example.management.management.domain.event.Notification;
+import org.example.management.management.domain.profile.User;
+import org.example.management.management.domain.profile.UserRepository;
 import org.example.management.management.domain.project.Project;
 import org.example.management.management.domain.task.Task;
 import org.example.management.management.domain.task.events.TaskEvent;
@@ -28,9 +30,12 @@ import org.example.management.management.infastructure.persistance.ProjectReposi
 import org.example.management.management.infastructure.persistance.TaskRepository;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,6 +50,7 @@ public class TaskHandleEventService {
     private final ProjectRepository projectRepository;
     private final UserService userService;
     private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
 
     private final EventRepository eventRepository;
     private final NotificationRepository notificationRepository;
@@ -390,5 +396,25 @@ public class TaskHandleEventService {
         public boolean isProcessorSendComment() {
             return this.createCommentId == processor.getId();
         }
+    }
+
+    @Scheduled(cron = "0 56 13 * * *")
+    public void taskRemind() throws JsonProcessingException {
+        List<Task> tasks = taskRepository.findByDate(LocalDate.now());
+        List<Notification> notifications = new ArrayList<>();
+        for (Task task : tasks) {
+            log.info(task.getTitle());
+            Notification notification = Notification.builder()
+                    .receiveMessage(String.format("Task %s đến hạn hôm nay", task.getTitle()))
+                    .type(Notification.Type.task)
+                    .isRead(false)
+                    .receiveId(task.getProcessId())
+                    .createdAt(Instant.now())
+                    .data(JsonUtils.marshal(new TaskData(task.getId(), task.getProjectId())))
+                    .build();
+            notifications.add(notification);
+            this.notificationRepository.save(notification);
+        }
+        this.notificationService.sendNotifications(notifications);
     }
 }
