@@ -13,6 +13,8 @@ import {
   Home,
   ListChecks,
   User,
+  UserPen,
+  View,
 } from 'lucide-react-native'
 import { Provider } from 'react-redux'
 import { store } from './store/store'
@@ -46,6 +48,8 @@ export type TasksStackParamList = {
   CreateOrUpdateTask: { projectId: number; taskId?: number }
 }
 import { AttendanceResponse } from './types/management'
+import UserManagementScreen from './components/pages/UserManagementScreen'
+import CreateUserScreen from './components/pages/CreateUserScreen'
 
 export type LeaveStackParamList = {
   LeaveScreen: undefined
@@ -66,6 +70,12 @@ export type RootStackParamList = {
   Main: undefined
   LeaveStack: undefined
 }
+
+export type UserManagementStackParamList = {
+  UserList: undefined
+  CreateUser: {manager_id: number}
+}
+
 
 const HomeStack = createNativeStackNavigator<HomeStackParamList>()
 function HomesStack() {
@@ -129,6 +139,17 @@ function LeaveStackNavigator() {
   )
 }
 
+const UserStack = createNativeStackNavigator<UserManagementStackParamList>()
+function UsersStack() { // Stack cho UserManagement
+  return (
+    <UserStack.Navigator screenOptions={{ headerShown: false }}>
+      <UserStack.Screen name="UserList" component={UserManagementScreen} />
+      <UserStack.Screen name='CreateUser' component={CreateUserScreen} />
+    </UserStack.Navigator>
+  )
+}
+
+
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -148,6 +169,8 @@ function MainTabs() {
               return <User size={size} color={color} />
             case 'Tasks':
               return <ListChecks size={size} color={color} />
+            case 'UserManagement':
+              return <UserPen size={size} color={color}/>
             default:
               return null
           }
@@ -169,6 +192,7 @@ function MainTabs() {
       <Tab.Screen name="Attendance" component={AttendancesStack} />
       <Tab.Screen name="Notification" component={NotificationsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="UserManagement" component={UsersStack}/>
     </Tab.Navigator>
   )
 }

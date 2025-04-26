@@ -30,6 +30,9 @@ public class User extends AggregateRoot<User> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    @Column(name = "manager_id")
+    private Integer managerId;
+
     @Size(max = 255)
     private String firstName;
     @Size(max = 255)

@@ -34,8 +34,9 @@ import {
   UserFilterRequest,
   UserRequest,
 } from '../types/management'
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
-export const URL = 'http://10.1.43.13:8080'
+export const URL = 'http://192.168.31.117:8080'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',
@@ -433,6 +434,14 @@ export const managementApi = createApi({
         method: 'POST',
         body: request
       }),
+    }),
+
+    getUserByManagerId: builder.query<User[],  number>({
+      query: (managerId) =>({
+        url: `/api/users/manager/${managerId}`,
+        method:'GET',
+      })
+
     })
   }),
 })
@@ -476,5 +485,6 @@ export const {
   useGetProjectMamagementByProjectIdAndUserIdQuery,
   useChangProjectStatusMutation,
   useMarkupReadRoomMessageQuery,
-  useChangePasswordMutation
+  useChangePasswordMutation,
+  useGetUserByManagerIdQuery
 } = managementApi

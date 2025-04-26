@@ -23,12 +23,12 @@ const userSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addMatcher(
-        managementApi.endpoints.createUser.matchFulfilled,
-        (state, action) => {
-          state.currentUser = action.payload
-        }
-      )
+      // .addMatcher(
+      //   managementApi.endpoints.createUser.matchFulfilled,
+      //   (state, action) => {
+      //     state.currentUser = action.payload
+      //   }
+      // )
       .addMatcher(
         managementApi.endpoints.updateUser.matchFulfilled,
         (state, action) => {

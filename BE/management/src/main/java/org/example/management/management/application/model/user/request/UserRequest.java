@@ -39,6 +39,7 @@ public class UserRequest {
 
     private String defaultColor;
 
+    private Integer managerId;
     @Getter
     @Setter
     @NoArgsConstructor

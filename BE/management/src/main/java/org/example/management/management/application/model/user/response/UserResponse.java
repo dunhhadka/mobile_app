@@ -14,6 +14,7 @@ import java.time.LocalDate;
 public class UserResponse {
     private int id;
 
+    private Integer managerId;
     private String companyId;
 
     private LocalDate dateOfBirth;

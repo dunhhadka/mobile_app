@@ -87,6 +87,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<UserResponse> getByManagerId(int managerId) {
+        List<User> users = userRepository.findAllByManagerId(managerId);
+        var imageIds = users.stream().map(User::getAvatarId).toList();
+        var images = imageRepository.findAllById(imageIds).stream().collect(Collectors.toMap(
+                Image::getId, Function.identity()
+        ));
+        return users.stream().map(user -> userMapper.toUserResponse(user, user.getAvatarId()==null? null:images.get(user.getAvatarId()))).toList();
+    }
+
+    @Override
     @Transactional
     public UserResponse updateUser(int id, UserRequest request) {
         User user = userRepository.findById(id)
