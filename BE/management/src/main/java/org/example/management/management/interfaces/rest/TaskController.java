@@ -1,11 +1,13 @@
 package org.example.management.management.interfaces.rest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.management.management.application.model.task.*;
 import org.example.management.management.application.service.projectmanagement.ProjectManagementService;
 import org.example.management.management.application.service.task.TaskService;
 import org.example.management.management.domain.task.Task;
+import org.example.management.management.jobs.TaskHandleEventService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -84,5 +86,11 @@ public class TaskController {
     @GetMapping("/{userId}/project-managements/{projectId}")
     public ProjectManagementResponse getByProjectIdAndUserId(@PathVariable int userId, @PathVariable int projectId) {
         return this.projectManagementService.getByProjectIdAndUserId(projectId, userId);
+    }
+
+    private final TaskHandleEventService taskHandleEventService;
+    @GetMapping("/task-reminder")
+    public void taskReminderTest() throws JsonProcessingException {
+        this.taskHandleEventService.taskRemind();
     }
 }
