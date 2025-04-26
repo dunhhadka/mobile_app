@@ -38,6 +38,10 @@ public class UserController {
         return userService.createUser(request);
     }
 
+    @GetMapping("/manager/{id}")
+    public List<UserResponse> getUser(@Valid @PathVariable(name = "id") Integer managerId){
+        return userService.getByManagerId(managerId);
+    }
 
     @GetMapping("/{id}")
     public UserResponse getUser(@PathVariable(name = "id") @Min(1) int id) {
@@ -76,4 +80,5 @@ public class UserController {
     public UserResponse changePassword(@PathVariable int userId, @Valid @RequestBody ChangePasswordRequest request) {
         return this.userService.changePassword(userId, request);
     }
+
 }

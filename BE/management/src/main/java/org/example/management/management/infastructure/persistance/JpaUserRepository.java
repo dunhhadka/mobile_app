@@ -54,5 +54,9 @@ public class JpaUserRepository implements UserRepository {
     }
 
     @Override
-    public  List<User> findAll() {return userRepositoryInterface.findAll();}
+    public List<User> findAllByManagerId(int managerId) {
+        return userRepositoryInterface.findAllByManagerId(managerId);
+    }
+
+
 }

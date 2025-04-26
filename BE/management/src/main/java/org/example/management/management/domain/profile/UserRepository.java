@@ -18,6 +18,8 @@ public interface UserRepository {
     Boolean existsByEmail(String email);
 
     Boolean existsByPhone(String phone);
+
     List<User> findAllByIds(List<Integer> userIds);
-    List<User> findAll();
+
+    List<User> findAllByManagerId(int managerId);
 }

@@ -18,6 +18,8 @@ public interface UserService {
 
     UserResponse getUserById(int id);
 
+    List<UserResponse> getByManagerId(int managerId);
+
     UserResponse updateUser(int id, UserRequest request);
 
     List<UserResponse> getByIds(List<Integer> userIds);

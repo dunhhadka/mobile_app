@@ -14,6 +14,7 @@ export interface UserRequest {
   address?: AddressRequest
   confirm_password?: string
   default_color?: string
+  manager_id?: number
 }
 
 export interface AddressRequest {
@@ -36,6 +37,7 @@ export interface User {
   address?: AddressResponse
   avatar?: ImageResponse
   default_color?: string
+  manager_id?: number
 }
 
 export interface AddressResponse {
