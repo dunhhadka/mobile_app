@@ -15,6 +15,7 @@ import {
   LogOut,
   ChevronRight,
   BookText,
+  User2,
 } from 'lucide-react-native'
 import Avatar from '../layouts/Avatar'
 import colors from '../../constants/colors'
@@ -155,22 +156,27 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Tài khoản</Text>
 
           <View style={styles.infoCard}>
-            {/* <Pressable
+            <Pressable
               style={({ pressed }) => [
                 styles.infoItem,
                 pressed && styles.infoItemPressed,
               ]}
-              onPress={() => {}}
+              onPress={() => {
+                // @ts-ignore
+                navigation.navigate('UserManagement', {
+                  screen: 'UserList',
+                })
+              }}
             >
               <View style={styles.infoIconContainer}>
-                <Calendar size={20} color={colors.primary} />
+                <User2 size={20} color={colors.primary} />
               </View>
               <View style={styles.infoTextContainer}>
-                <Text style={styles.infoTitle}>Bảng Lương</Text>
+                <Text style={styles.infoTitle}>Nhân viên</Text>
               </View>
 
               <ChevronRight size={20} color={colors.textLight} />
-            </Pressable> */}
+            </Pressable>
 
             <Pressable
               style={({ pressed }) => [
@@ -253,7 +259,7 @@ export default function ProfileScreen() {
               ]}
               onPress={() => {
                 // @ts-ignore
-                navigation.navigate("SignIn")
+                navigation.navigate('SignIn')
               }}
             >
               <View style={styles.infoIconContainer}>
@@ -280,17 +286,17 @@ export default function ProfileScreen() {
           />
         </BaseModel>
       )}
-      {
-        showModalChangePassword && (
-          <BaseModel 
-          open={showModalChangePassword} 
+      {showModalChangePassword && (
+        <BaseModel
+          open={showModalChangePassword}
           onClose={() => setShowModalChangePassword(false)}
           height={500}
-          >
-            <ChangePasswordForm onColose={() => setShowModalChangePassword(false)}/>
-          </BaseModel>
-        )
-      }
+        >
+          <ChangePasswordForm
+            onColose={() => setShowModalChangePassword(false)}
+          />
+        </BaseModel>
+      )}
     </SafeAreaView>
   )
 }

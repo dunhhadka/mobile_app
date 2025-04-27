@@ -76,11 +76,10 @@ export type RootStackParamList = {
 
 export type UserManagementStackParamList = {
   UserList: undefined
-  CreateUser: {manager_id: number}
-  AttendanceList: {user: User}
+  CreateUser: { manager_id: number }
+  AttendanceList: { user: User }
   AttendanceDetail: { attendance: AttendanceResponse; user_id: number }
 }
-
 
 const HomeStack = createNativeStackNavigator<HomeStackParamList>()
 function HomesStack() {
@@ -145,17 +144,20 @@ function LeaveStackNavigator() {
 }
 
 const UserStack = createNativeStackNavigator<UserManagementStackParamList>()
-function UsersStack() { // Stack cho UserManagement
+function UsersStack() {
+  // Stack cho UserManagement
   return (
     <UserStack.Navigator screenOptions={{ headerShown: false }}>
       <UserStack.Screen name="UserList" component={UserManagementScreen} />
-      <UserStack.Screen name='CreateUser' component={CreateUserScreen} />
-      <UserStack.Screen name="AttendanceList" component={AttendanceManagementScreen}/>
-      <UserStack.Screen name="AttendanceDetail" component={AttendanceDetai}/>
+      <UserStack.Screen name="CreateUser" component={CreateUserScreen} />
+      <UserStack.Screen
+        name="AttendanceList"
+        component={AttendanceManagementScreen}
+      />
+      <UserStack.Screen name="AttendanceDetail" component={AttendanceDetai} />
     </UserStack.Navigator>
   )
 }
-
 
 function MainTabs() {
   const currentUser = useSelector((state: RootState) => state.user.currentUser)
@@ -178,7 +180,7 @@ function MainTabs() {
             case 'Tasks':
               return <ListChecks size={size} color={color} />
             case 'UserManagement':
-              return <UserPen size={size} color={color}/>
+              return <UserPen size={size} color={color} />
             default:
               return null
           }
@@ -200,8 +202,16 @@ function MainTabs() {
       <Tab.Screen name="Attendance" component={AttendancesStack} />
       <Tab.Screen name="Notification" component={NotificationsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
-      {currentUser?.position && Position[currentUser.position] === 'Quản lý' &&
-      <Tab.Screen name="UserManagement" component={UsersStack}/>}
+      {currentUser?.position &&
+        Position[currentUser.position] === 'Quản lý' && (
+          <Tab.Screen
+            name="UserManagement"
+            component={UsersStack}
+            options={{
+              tabBarItemStyle: { display: 'none' }, // Hide the tab from the bottom bar
+            }}
+          />
+        )}
     </Tab.Navigator>
   )
 }

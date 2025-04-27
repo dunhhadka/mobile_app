@@ -34,9 +34,10 @@ import {
   UserFilterRequest,
   UserRequest,
 } from '../types/management'
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry'
 
-export const URL = 'http://192.168.31.117:8080'
+export const URL =
+  'https://37a7-2405-4802-1f01-4050-749f-b892-3511-2558.ngrok-free.app'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',
@@ -428,21 +429,23 @@ export const managementApi = createApi({
       }),
     }),
 
-    changePassword: builder.mutation<User, ChangePasswordRequest & {userId: number}>({
+    changePassword: builder.mutation<
+      User,
+      ChangePasswordRequest & { userId: number }
+    >({
       query: (request) => ({
         url: `/api/users/change-password/${request.userId}`,
         method: 'POST',
-        body: request
+        body: request,
       }),
     }),
 
-    getUserByManagerId: builder.query<User[],  number>({
-      query: (managerId) =>({
+    getUserByManagerId: builder.query<User[], number>({
+      query: (managerId) => ({
         url: `/api/users/manager/${managerId}`,
-        method:'GET',
-      })
-
-    })
+        method: 'GET',
+      }),
+    }),
   }),
 })
 
@@ -486,5 +489,5 @@ export const {
   useChangProjectStatusMutation,
   useMarkupReadRoomMessageQuery,
   useChangePasswordMutation,
-  useGetUserByManagerIdQuery
+  useGetUserByManagerIdQuery,
 } = managementApi

@@ -40,6 +40,7 @@ export default function SignInScreen({ navigation }: any) {
 
   const handleSignIn = async (data: LoginRequest) => {
     try {
+      console.log('data', data)
       const response = await signIn(data).unwrap()
       if (response) {
         dispath(setUser(response))
