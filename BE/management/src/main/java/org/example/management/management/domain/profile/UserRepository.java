@@ -22,4 +22,8 @@ public interface UserRepository {
     List<User> findAllByIds(List<Integer> userIds);
 
     List<User> findAllByManagerId(int managerId);
+    
+    List<User> findByRole(User.Role role);
+
+    Optional<User> findByEmail(String email);
 }

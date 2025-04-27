@@ -444,3 +444,16 @@ export interface ChangePasswordRequest {
   old_password: string
   new_password: string
 }
+// Password reset interfaces
+export interface ForgotPasswordRequest {
+  email: string
+}
+
+export interface VerifyOtpRequest {
+  email: string
+  otp: string
+}
+
+export interface VerifyOtpResponse {
+  is_valid: boolean
+}

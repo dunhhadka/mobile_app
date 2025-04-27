@@ -26,4 +26,7 @@ public interface JpaUserRepositoryInterface extends JpaRepository<User, Integer>
 
     @Query("Select u from User u where u.managerId = :managerId")
     List<User> findAllByManagerId(Integer managerId);
+    
+    @Query("SELECT u FROM User u WHERE u.role = :role")
+    List<User> findByRoleName(User.Role role);
 }

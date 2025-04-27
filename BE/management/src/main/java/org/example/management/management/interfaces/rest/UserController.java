@@ -8,11 +8,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import org.example.management.management.application.model.user.request.ChangePasswordRequest;
-import org.example.management.management.application.model.user.request.LoginRequest;
-import org.example.management.management.application.model.user.request.UserFilterRequest;
-import org.example.management.management.application.model.user.request.UserRequest;
+import org.example.management.management.application.model.user.request.*;
 import org.example.management.management.application.model.user.response.UserResponse;
+import org.example.management.management.application.model.user.response.VerifyOtpResponse;
 import org.example.management.management.application.service.user.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
@@ -47,6 +45,16 @@ public class UserController {
     public UserResponse getUser(@PathVariable(name = "id") @Min(1) int id) {
         //code
         return userService.findById(id);
+    }
+
+    @PostMapping("/forgot-password")
+    public void forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        userService.forgotPassword(request);
+    }
+
+    @PostMapping("/verify-otp")
+    public VerifyOtpResponse verifyOtp(@RequestBody VerifyOtpRequest request) {
+        return userService.verifyOtp(request);
     }
 
     @PutMapping("/update/{id}")

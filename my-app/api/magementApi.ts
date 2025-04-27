@@ -33,6 +33,9 @@ import {
   User,
   UserFilterRequest,
   UserRequest,
+  ForgotPasswordRequest,
+  VerifyOtpRequest,
+  VerifyOtpResponse,
 } from '../types/management'
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry'
 
@@ -437,6 +440,13 @@ export const managementApi = createApi({
         url: `/api/users/change-password/${request.userId}`,
         method: 'POST',
         body: request,
+      })
+    }),
+    forgotPassword: builder.mutation<void, ForgotPasswordRequest>({
+      query: (request) => ({
+        url: '/api/users/forgot-password',
+        method: 'POST',
+        body: request,
       }),
     }),
 
@@ -444,6 +454,11 @@ export const managementApi = createApi({
       query: (managerId) => ({
         url: `/api/users/manager/${managerId}`,
         method: 'GET',
+    verifyOtp: builder.mutation<VerifyOtpResponse, VerifyOtpRequest>({
+      query: (request) => ({
+        url: '/api/users/verify-otp',
+        method: 'POST',
+        body: request,
       }),
     }),
   }),
@@ -490,4 +505,6 @@ export const {
   useMarkupReadRoomMessageQuery,
   useChangePasswordMutation,
   useGetUserByManagerIdQuery,
+  useForgotPasswordMutation,
+  useVerifyOtpMutation,
 } = managementApi

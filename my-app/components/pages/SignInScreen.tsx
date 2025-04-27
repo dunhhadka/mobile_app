@@ -127,6 +127,14 @@ export default function SignInScreen({ navigation }: any) {
         <Text style={styles.errorText}>{errors.password.message}</Text>
       )}
 
+      {/* Nút quên mật khẩu */}
+      <TouchableOpacity 
+        style={styles.forgotPasswordContainer}
+        onPress={() => navigation.navigate('ForgotPassword')}
+      >
+        <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity
         style={styles.buttonWrapper}
         onPress={handleSubmit(handleSignIn)}
@@ -272,5 +280,14 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 12,
     marginBottom: 8,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 20,
+  },
+  forgotPasswordText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '500',
   },
 })
