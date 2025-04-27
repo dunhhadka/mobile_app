@@ -437,3 +437,17 @@ export interface ChangeProjectStatusRequest {
   status: 'in_process' | 'to_do' | 'finish'
   creator_id?: number
 }
+
+// Password reset interfaces
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface VerifyOtpRequest {
+  email: string;
+  otp: string;
+}
+
+export interface VerifyOtpResponse {
+  is_valid: boolean;
+}

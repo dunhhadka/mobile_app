@@ -28,6 +28,7 @@ import ProfileScreen from './components/pages/ProfileScreen'
 import SignInScreen from './components/pages/SignInScreen'
 import SignUpScreen from './components/pages/SignUpScreen'
 import OnboardScreen from './components/pages/OnboardScreen'
+import ForgotPasswordScreen from './components/pages/ForgotPasswordScreen'
 import { ToastProvider } from 'react-native-toast-notifications'
 import CustomToast from './components/layouts/CustomToast'
 import ProjectDetail from './components/pages/ProjectDetail'
@@ -64,6 +65,7 @@ export type RootStackParamList = {
   Onboarding: undefined
   SignIn: undefined
   SignUp: undefined
+  ForgotPassword: undefined
   Main: undefined
   LeaveStack: undefined
 }
@@ -198,6 +200,7 @@ export default function App() {
               <RootStack.Screen name="Onboarding" component={OnboardScreen} />
               <RootStack.Screen name="SignIn" component={SignInScreen} />
               <RootStack.Screen name="SignUp" component={SignUpScreen} />
+              <RootStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
               <RootStack.Screen name="Main" component={MainTabs} />
               <RootStack.Screen
                 name="LeaveStack"

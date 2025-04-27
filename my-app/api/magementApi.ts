@@ -32,9 +32,12 @@ import {
   User,
   UserFilterRequest,
   UserRequest,
+  ForgotPasswordRequest,
+  VerifyOtpRequest,
+  VerifyOtpResponse,
 } from '../types/management'
 
-export const URL = 'http://172.11.222.45:8080'
+export const URL = 'http://192.168.1.25:8080'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',
@@ -425,6 +428,20 @@ export const managementApi = createApi({
         method: 'GET',
       }),
     }),
+    forgotPassword: builder.mutation<void, ForgotPasswordRequest>({
+      query: (request) => ({
+        url: '/api/users/forgot-password',
+        method: 'POST',
+        body: request,
+      }),
+    }),
+    verifyOtp: builder.mutation<VerifyOtpResponse, VerifyOtpRequest>({
+      query: (request) => ({
+        url: '/api/users/verify-otp',
+        method: 'POST',
+        body: request,
+      }),
+    }),
   }),
 })
 
@@ -467,4 +484,6 @@ export const {
   useGetProjectMamagementByProjectIdAndUserIdQuery,
   useChangProjectStatusMutation,
   useMarkupReadRoomMessageQuery,
+  useForgotPasswordMutation,
+  useVerifyOtpMutation,
 } = managementApi

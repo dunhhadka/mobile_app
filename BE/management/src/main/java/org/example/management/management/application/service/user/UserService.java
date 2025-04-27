@@ -1,10 +1,9 @@
 package org.example.management.management.application.service.user;
 
 import jakarta.validation.Valid;
-import org.example.management.management.application.model.user.request.LoginRequest;
-import org.example.management.management.application.model.user.request.UserFilterRequest;
-import org.example.management.management.application.model.user.request.UserRequest;
+import org.example.management.management.application.model.user.request.*;
 import org.example.management.management.application.model.user.response.UserResponse;
+import org.example.management.management.application.model.user.response.VerifyOtpResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,4 +27,8 @@ public interface UserService {
     UserResponse findById(int id);
 
     UserResponse login(@Valid LoginRequest request);
+
+    void forgotPassword(@Valid ForgotPasswordRequest request);
+
+    VerifyOtpResponse verifyOtp(@Valid VerifyOtpRequest request);
 }

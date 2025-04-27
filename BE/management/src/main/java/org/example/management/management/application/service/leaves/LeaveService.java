@@ -43,11 +43,12 @@ public class LeaveService {
     public int createLeave(LeaveRequest request, Integer userId) {
         //TODO: Kiem tra delegateId co o trong project co delegateId khong
 
-        Integer userPrincipal = userId; // Sau khi cấu hình security sẽ có
+        Integer userPrincipal = userId;
         List<Task> tasks = taskRepository.findByProcessIdIn(List.of(userId));
         Integer managerId = null;
-        if(!CollectionUtils.isEmpty(tasks)) {
-            managerId = tasks.get(0).getAssignId();
+        List<User> users = userRepository.findByRole(User.Role.manager);
+        if (!CollectionUtils.isEmpty(users)) {
+            managerId = users.get(0).getId();
         }
         var leave = new Leave(
                 request.getCategory(),
@@ -81,7 +82,7 @@ public class LeaveService {
 
     public List<LeaveResponse> getLeavesWithCurrentUser(Integer userId) {
         List<Leave> leaves = leaveRepository.findByCreatedBy(userId);
-        if(CollectionUtils.isEmpty(leaves)) {
+        if (CollectionUtils.isEmpty(leaves)) {
             return new ArrayList<>();
         }
         return leaves.stream().map(leaveMapper::toLeaveResponse).toList();
@@ -110,7 +111,7 @@ public class LeaveService {
         Leave leave = leaveRepository.findById(leaveId)
                 .orElseThrow(() -> new ConstrainViolationException("leaveId", "Không tìm thấy đơn xin nghỉ"));
         User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new ConstrainViolationException("userId", "Không tìm thấy người dùng đăng nhập"));
+                .orElseThrow(() -> new ConstrainViolationException("userId", "Không tìm thấy người dùng đăng nhập"));
 
         leave.approve(userId, Instant.now());
         leaveRepository.save(leave);

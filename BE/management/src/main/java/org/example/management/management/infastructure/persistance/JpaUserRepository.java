@@ -52,4 +52,14 @@ public class JpaUserRepository implements UserRepository {
     public List<User> findAllByIds(List<Integer> userIds) {
         return userRepositoryInterface.findByIdIn(userIds);
     }
+
+    @Override
+    public List<User> findByRole(User.Role role) {
+        return userRepositoryInterface.findByRoleName(role);
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return userRepositoryInterface.findByEmail(email);
+    }
 }

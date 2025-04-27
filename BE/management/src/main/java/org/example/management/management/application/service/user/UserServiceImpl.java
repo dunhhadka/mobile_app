@@ -5,11 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.example.management.management.application.model.user.request.LoginRequest;
-import org.example.management.management.application.model.user.request.UserFilterRequest;
-import org.example.management.management.application.model.user.request.UserRequest;
+import org.example.management.management.application.model.user.request.*;
 import org.example.management.management.application.model.user.response.UserResponse;
+import org.example.management.management.application.model.user.response.VerifyOtpResponse;
 import org.example.management.management.application.service.images.ImageService;
+import org.example.management.management.application.service.mail.MailEvent;
 import org.example.management.management.application.utils.NumberUtils;
 import org.example.management.management.domain.profile.User;
 import org.example.management.management.domain.profile.UserRepository;
@@ -21,6 +21,7 @@ import org.example.management.management.infastructure.persistance.ImageReposito
 import org.example.management.management.infastructure.persistance.JpaUserRepositoryInterface;
 import org.example.management.management.infastructure.persistance.ProjectManagementRepository;
 import org.example.management.management.interfaces.rest.ImageController;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -31,8 +32,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,6 +59,8 @@ public class UserServiceImpl implements UserService {
     private final ImageService imageService;
 
     private final ProjectManagementRepository projectManagementRepository;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -174,6 +181,114 @@ public class UserServiceImpl implements UserService {
             );
         }
         return this.getByIds(List.of(possiblyUser.get().getId())).get(0);
+    }
+
+    @Override
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new ConstrainViolationException("email", "Tài khoản với email không tồn tại"));
+        String otp = generateOtp();
+        user.setOtp(otp);
+        user.setOtpExpiryTime(LocalDateTime.ofInstant(Instant.now().plus(10, ChronoUnit.MINUTES), ZoneId.systemDefault()));
+        userRepository.save(user);
+        sendVerificationEmail(user, otp);
+    }
+
+    @Override
+    public VerifyOtpResponse verifyOtp(VerifyOtpRequest request) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new ConstrainViolationException("user", "Tài khoản không tồn tại"));
+        if (StringUtils.isBlank(user.getOtp()) || !user.getOtp().equals(request.otp())) {
+            return VerifyOtpResponse.builder()
+                    .isValid(false)
+                    .build();
+        }
+        if (user.getOtpExpiryTime() == null || user.getOtpExpiryTime().isBefore(LocalDateTime.now())) {
+            return VerifyOtpResponse.builder()
+                    .isValid(false)
+                    .build();
+        }
+        user.setOtp(null);
+        user.setOtpExpiryTime(null);
+        String newPassword = generatePassword(6);
+        user.setPassword(newPassword);
+        userRepository.save(user);
+        sendNewPassword(user, newPassword);
+        return VerifyOtpResponse.builder()
+                .isValid(true)
+                .build();
+    }
+
+    private void sendVerificationEmail(User user, String otp) {
+        Map<String, Object> props = new HashMap<>();
+        props.put("recipientName", user.getUserName());
+        props.put("otpCode", otp);
+
+        MailEvent event = MailEvent.builder()
+                .channel("EMAIL")
+                .subject("Verify Otp")
+                .params(props)
+                .recipient(user.getEmail())
+                .templateCode("otp-email")
+                .build();
+
+        this.eventPublisher.publishEvent(event);
+    }
+
+    private void sendNewPassword(User user, String password) {
+        Map<String, Object> props = new HashMap<>();
+        props.put("recipientName", user.getUserName());
+        props.put("newPassword", password);
+
+        MailEvent event = MailEvent.builder()
+                .channel("EMAIL")
+                .subject("New Password")
+                .params(props)
+                .recipient(user.getEmail())
+                .templateCode("new-password")
+                .build();
+        this.eventPublisher.publishEvent(event);
+    }
+
+    private String generatePassword(int length) {
+        String lowercase = "abcdefghijklmnopqrstuvwxyz";
+        String uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String digits = "0123456789";
+        String allChars = lowercase + uppercase + digits;
+
+        // Sử dụng SecureRandom để tạo số ngẫu nhiên an toàn
+        SecureRandom random = new SecureRandom();
+        StringBuilder password = new StringBuilder();
+
+        // Đảm bảo mật khẩu có ít nhất 1 chữ thường, 1 chữ hoa, 1 số
+        password.append(lowercase.charAt(random.nextInt(lowercase.length())));
+        password.append(uppercase.charAt(random.nextInt(uppercase.length())));
+        password.append(digits.charAt(random.nextInt(digits.length())));
+
+        // Thêm các ký tự ngẫu nhiên cho đến khi đạt độ dài mong muốn
+        for (int i = 3; i < length; i++) {
+            password.append(allChars.charAt(random.nextInt(allChars.length())));
+        }
+
+        // Xáo trộn mật khẩu
+        char[] passwordArray = password.toString().toCharArray();
+        for (int i = passwordArray.length - 1; i > 0; i--) {
+            int j = random.nextInt(i + 1);
+            char temp = passwordArray[i];
+            passwordArray[i] = passwordArray[j];
+            passwordArray[j] = temp;
+        }
+
+        return new String(passwordArray);
+    }
+
+    private String generateOtp() {
+        Random random = new Random();
+        StringBuilder otp = new StringBuilder("");
+        for(int i = 0; i < 6; i++) {
+            otp.append(random.nextInt(10));
+        }
+        return otp.toString();
     }
 
     private Pair<List<UserResponse>, Long> getUserResponse(UserFilterRequest request, PageRequest pageable) {

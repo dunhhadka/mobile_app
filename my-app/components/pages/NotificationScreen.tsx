@@ -85,18 +85,28 @@ export const getNotiTitle = (key: NotificationType): string => {
 
 export default function NotificationsScreen() {
   const router = useRouter()
-
   const navigation = useNavigation()
-
   const currentUser = useSelector((state: RootState) => state.user.currentUser)
 
   const {
     data: notifications,
     isLoading: isLoadingNotifications,
     isFetching: isFetchingNotification,
+    refetch,
   } = useGetNotificationByUserIdQuery(currentUser?.id ?? 0, {
     refetchOnMountOrArgChange: true,
+    pollingInterval: 10000, // Tự động làm mới mỗi 10 giây
   })
+
+  // Sử dụng useFocusEffect để làm mới dữ liệu mỗi khi màn hình được focus
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      console.log('Notification screen focused, refreshing data...');
+      refetch();
+    });
+
+    return unsubscribe;
+  }, [navigation, refetch]);
 
   const [markIsRead, { isLoading: isMarkLoading }] = useMarkIsReadMutation()
 

@@ -14,6 +14,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -64,6 +65,10 @@ public class User extends AggregateRoot<User> {
     private List<Address> addresses = new ArrayList<>();
 
     private String image;
+
+    private String otp;
+
+    private LocalDateTime otpExpiryTime;
 
     private String defaultColor;
 
