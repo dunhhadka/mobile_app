@@ -10,6 +10,7 @@ import { Position } from '../../types/management';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { User } from '../../types/management';
 import { useGetUserByManagerIdQuery } from '../../api/magementApi';
+import { UserManagementStackParamList } from '../../App';
 // Dữ liệu mẫu (có thể thay thế bằng dữ liệu từ API)
 
 
@@ -26,7 +27,9 @@ const UserManagementScreen = () => {
     const currentUser = useSelector((state: RootState) => state.user.currentUser)
     const isManager =
         currentUser?.position && Position[currentUser.position] === 'Quản lý'
-    // const userList = [
+    const navigation = useNavigation<NavigationProp<UserManagementStackParamList>>()
+
+        // const userList = [
     //     { id: '1', name: 'Thomas Edison', age: 50, position: 'Lập trình viên', uri: '' },
     //     { id: '2', name: '', age: null, position: '', uri: '' },
     // ];
@@ -42,7 +45,6 @@ const UserManagementScreen = () => {
             () => {
                 const fetchData = async () => {
                     const response = await refetch().unwrap()
-                    console.log(response[3])
                     setUserList([...response])
                 }
                 fetchData()
@@ -50,7 +52,6 @@ const UserManagementScreen = () => {
         )
     )
     // Hàm render từng nhân viên
-    const navigation = useNavigation<NavigationProp<UserManagementStackParamList>>()
 
     return (
         isManager &&
@@ -76,7 +77,7 @@ const UserManagementScreen = () => {
                             key={index}
                             style={styles.employeeCard}
                             onPress={() => {
-
+                                navigation.navigate("AttendanceList", {user: item})
                             }}
                             activeOpacity={0.8}
                         >

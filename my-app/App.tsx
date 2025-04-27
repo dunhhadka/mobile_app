@@ -12,12 +12,12 @@ import {
   CalendarCheck2,
   Home,
   ListChecks,
-  User,
+  User as UserIcon,
   UserPen,
   View,
 } from 'lucide-react-native'
-import { Provider } from 'react-redux'
-import { store } from './store/store'
+import { Provider, useSelector } from 'react-redux'
+import { RootState, store } from './store/store'
 
 // Screens
 import HomeScreen from './components/pages/HomeScreen'
@@ -47,9 +47,12 @@ export type TasksStackParamList = {
   ProjectDetail: { project_id: number }
   CreateOrUpdateTask: { projectId: number; taskId?: number }
 }
-import { AttendanceResponse } from './types/management'
+import { AttendanceResponse, Position, User } from './types/management'
 import UserManagementScreen from './components/pages/UserManagementScreen'
 import CreateUserScreen from './components/pages/CreateUserScreen'
+import AttendanceManagementScreen from './components/pages/AttendanceManagementScreen'
+import AttendanceDetai from './components/pages/AttendanceDetail'
+import { currentUser } from './mocks/users'
 
 export type LeaveStackParamList = {
   LeaveScreen: undefined
@@ -74,6 +77,8 @@ export type RootStackParamList = {
 export type UserManagementStackParamList = {
   UserList: undefined
   CreateUser: {manager_id: number}
+  AttendanceList: {user: User}
+  AttendanceDetail: { attendance: AttendanceResponse; user_id: number }
 }
 
 
@@ -145,12 +150,15 @@ function UsersStack() { // Stack cho UserManagement
     <UserStack.Navigator screenOptions={{ headerShown: false }}>
       <UserStack.Screen name="UserList" component={UserManagementScreen} />
       <UserStack.Screen name='CreateUser' component={CreateUserScreen} />
+      <UserStack.Screen name="AttendanceList" component={AttendanceManagementScreen}/>
+      <UserStack.Screen name="AttendanceDetail" component={AttendanceDetai}/>
     </UserStack.Navigator>
   )
 }
 
 
 function MainTabs() {
+  const currentUser = useSelector((state: RootState) => state.user.currentUser)
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -166,7 +174,7 @@ function MainTabs() {
             case 'Notification':
               return <Bell size={size} color={color} />
             case 'Profile':
-              return <User size={size} color={color} />
+              return <UserIcon size={size} color={color} />
             case 'Tasks':
               return <ListChecks size={size} color={color} />
             case 'UserManagement':
@@ -192,7 +200,8 @@ function MainTabs() {
       <Tab.Screen name="Attendance" component={AttendancesStack} />
       <Tab.Screen name="Notification" component={NotificationsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
-      <Tab.Screen name="UserManagement" component={UsersStack}/>
+      {currentUser?.position && Position[currentUser.position] === 'Quản lý' &&
+      <Tab.Screen name="UserManagement" component={UsersStack}/>}
     </Tab.Navigator>
   )
 }

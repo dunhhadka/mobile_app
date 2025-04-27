@@ -26,7 +26,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -44,7 +43,7 @@ public class AttendanceService {
     private final LogMapper logMapper;
 
     private static final LocalTime eightAM = LocalTime.of(8, 0);
-    private static final LocalTime fiveAM = LocalTime.of(17, 0);
+    private static final LocalTime fivePM = LocalTime.of(17, 0);
 
     public List<LogResponse> getLogsByDayAndUserId(int userId, LocalDate date) {
         var alllogs = this.logRepository.findByUserIdAndDate(userId, date);
@@ -284,7 +283,6 @@ public class AttendanceService {
         }
         var clockInTime = toTime(clockIn);
         clockInTime = clockInTime.isBefore(eightAM) ? eightAM : clockInTime;
-
         if (clockOut == null) {
             if (log.isDebugEnabled()) {
                 log.debug(
@@ -302,8 +300,8 @@ public class AttendanceService {
         }
 
         var clockOutTime = toTime(clockOut);
-        clockOutTime = clockOutTime.isAfter(fiveAM) ? fiveAM : clockOutTime;
-
+        clockOutTime = clockOutTime.isAfter(fivePM) ? fivePM : clockOutTime;
+        clockOutTime = clockInTime.isAfter(fivePM)? clockInTime: clockOutTime;
         return new CalculateAttendanceModel(
                 clockInTime,
                 clockOutTime,

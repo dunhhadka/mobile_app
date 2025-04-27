@@ -6,12 +6,12 @@ import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { useGetLogsByDateQuery } from '../../api/magementApi';
 import { AttendanceResponse, LogResponse } from '../../types/management';
 import { startOfDay } from 'date-fns';
+import * as Location from 'expo-location';
 
 interface AttendanceDetailDisplay {
   date: string
   image: string
-  latitude: number
-  longitude: number
+  address: string
   clockInNotes: string
   totalHours: string
   clockInTime: string
@@ -33,6 +33,9 @@ type AttendanceDetailProp = RouteProp<
   }, 'params'
 >
 
+function formatTime(time: Date): string {
+  return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+}
 
 export default function AttendanceDetai() {
   // Dữ liệu giả (fake data)
@@ -69,35 +72,44 @@ export default function AttendanceDetai() {
               const endDate = new Date(end);
 
               // 1. Format thời gian để hiển thị
-              const timeStart = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12:false });
-              const timeEnd = endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' , hour12:false});
-
 
               const diffMs = endDate.getTime() - startDate.getTime();
-              const totalMinutes = Math.floor(diffMs / (1000 * 60));
-              const diffHours = Math.floor(totalMinutes / 60);
-              const remainingMinutes = totalMinutes % 60;
-
+              const diffHours = Math.floor(diffMs / 1000 / 3600);
+              const remainingMinutes = Math.floor(diffMs / 1000 / 60);
+              const remainingSeconds = Math.floor(diffMs / 1000)
               // Format về dạng hh:mm với padStart
-              const duration = `${diffHours.toString().padStart(2, '0')}:${remainingMinutes.toString().padStart(2, '0')}`;
-              const breakLog: BreakLog = { duration, start: timeStart, end: timeEnd }
+              const duration = `${diffHours.toString().padStart(2, '0')}:${remainingMinutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+              const breakLog: BreakLog = { duration, start: formatTime(startDate), end: formatTime(endDate) }
               breaksLogs.push(breakLog)
               flag = 0
+            }
+          }
+          let { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== 'granted') {
+            console.log('Permission to access location was denied');
+            return;
+          }
+          let addressString = "Không rõ"
+          if (checkInLog.latitude && checkInLog.longitude) {
+            const addresses = (await Location.reverseGeocodeAsync({ latitude: Number(checkInLog.latitude), longitude: Number(checkInLog.longitude) }));
+            if (addresses.length > 0) {
+              let address = addresses[0];
+              addressString = `${address.street || ''}, ${address.district || ''}, ${address.city || ''}, ${address.country || ''}`;
             }
           }
           const displayData: AttendanceDetailDisplay =
           {
             date: attendance.date,
-            image: checkInLog.image?.src? checkInLog.image.src:'https://img.freepik.com/premium-vector/man-empty-avatar-casual-business-style-vector-photo-placeholder-social-networks-resumes_885953-434.jpg?w=740',
-            latitude: Number(checkInLog.latitude),
-            longitude: Number(checkInLog.longitude),
+            image: checkInLog.image?.src ? checkInLog.image.src : 'https://img.freepik.com/premium-vector/man-empty-avatar-casual-business-style-vector-photo-placeholder-social-networks-resumes_885953-434.jpg?w=740',
+            address: addressString,
             clockInNotes: String(checkInLog.note),
             totalHours: String(attendance.total_hours),
-            clockInTime: String(attendance.actual_clock_in),
-            clockOutTime: String(attendance.actual_clock_out),
+            clockInTime: attendance.actual_clock_in ? attendance.actual_clock_in.substring(0, 5) : "Không rõ",
+            clockOutTime: attendance.actual_clock_out ? attendance.actual_clock_out?.substring(0, 5) : "Không rõ",
             breaks: breaksLogs,
           }
           setAttendanceDisplay(displayData)
+
         }
       }
       fetchData()
@@ -113,18 +125,15 @@ export default function AttendanceDetai() {
         <Text style={styles.date}>{attendanceDisplay.date}</Text>
 
         {/* Selfie and Location */}
-        <Text style={styles.sectionTitle}>Ảnh chụp điểm danh</Text>
-        <Image
-          source={{ uri: `${attendanceDisplay.image}` }}
-          style={styles.selfieImage}
-        />
-        <Text style={styles.locationText}>
-          Lat: {attendanceDisplay.latitude}
-        </Text>
-        <Text style={styles.locationText}>
-          Long: {attendanceDisplay.longitude}
-        </Text>
-
+        <View style={{ position: 'relative', marginBottom: 10 }}>
+          <Image
+            source={{ uri: `${attendanceDisplay.image}` }}
+            style={styles.selfieImage}
+          />
+          <Text style={styles.locationText}>
+            Địa chỉ: {attendanceDisplay.address}
+          </Text>
+        </View>
         {/* Clock-In Notes */}
         <Text style={styles.sectionTitle}>Ghi chú Clock-in</Text>
         <Text style={styles.notesText}>
@@ -194,8 +203,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   selfieImage: {
-    width: 150,
-    height: 150,
+    width: 250,
+    height: 250,
     borderRadius: 10,
     marginBottom: 10,
     // Đổ bóng cho ảnh
@@ -206,8 +215,15 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   locationText: {
-    fontSize: 14,
-    color: colors.textSecondary, // #6E6B7B - Màu chữ phụ
+    position: 'absolute',
+    bottom: 5,
+    left: 5,
+    right: 5,
+    color: 'white',
+    fontSize: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // nền mờ đen cho dễ đọc
+    padding: 4,
+    borderRadius: 5,
   },
   timestamp: {
     fontSize: 14,
