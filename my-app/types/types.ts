@@ -1,3 +1,4 @@
+
 type TasksStackParamList = {
   ProjectList: undefined
   ProjectDetail: { project_id: number }
@@ -6,9 +7,4 @@ type TasksStackParamList = {
 
 type LeaveStackParamList = {
   LeaveScreen: null
-}
-
-type UserManagementStackParamList = {
-  UserList: undefined
-  CreateUser: {manager_id: number}
 }
