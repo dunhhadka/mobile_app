@@ -237,8 +237,8 @@ export default function ClockInScreen() {
             </View>
             <View style={styles.historyDetail}>
               <Text>Số giờ làm việc{'\n'}<Text style={styles.bold}>{item.total_hours}</Text></Text>
-              <Text>Giờ vào{'\n'}<Text style={styles.bold}>{item.clock_in}</Text></Text>
-              <Text>Giờ về{'\n'}<Text style={styles.bold}>{item.clock_out}</Text></Text>
+              <Text>Giờ vào{'\n'}<Text style={styles.bold}>{item.clock_in?.substring(0,5)}</Text></Text>
+              <Text>Giờ về{'\n'}<Text style={styles.bold}>{item.clock_out?.substring(0,5)}</Text></Text>
             </View>
           </TouchableOpacity>
         ))}

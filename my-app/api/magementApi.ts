@@ -1,7 +1,5 @@
 import {
-  BaseQueryFn,
   createApi,
-  FetchArgs,
   fetchBaseQuery,
   FetchBaseQueryError,
   FetchBaseQueryMeta,
@@ -17,6 +15,7 @@ import {
   Comment,
   DailyReport,
   DailyReportRequest,
+  ForgotPasswordRequest,
   LeaveRequest,
   LeaveResponse,
   LoginRequest,
@@ -33,14 +32,13 @@ import {
   User,
   UserFilterRequest,
   UserRequest,
-  ForgotPasswordRequest,
   VerifyOtpRequest,
   VerifyOtpResponse,
 } from '../types/management'
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry'
 
 export const URL =
-  'https://37a7-2405-4802-1f01-4050-749f-b892-3511-2558.ngrok-free.app'
+  'http://172.11.240.187:8080'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',
@@ -440,13 +438,6 @@ export const managementApi = createApi({
         url: `/api/users/change-password/${request.userId}`,
         method: 'POST',
         body: request,
-      })
-    }),
-    forgotPassword: builder.mutation<void, ForgotPasswordRequest>({
-      query: (request) => ({
-        url: '/api/users/forgot-password',
-        method: 'POST',
-        body: request,
       }),
     }),
 
@@ -454,6 +445,16 @@ export const managementApi = createApi({
       query: (managerId) => ({
         url: `/api/users/manager/${managerId}`,
         method: 'GET',
+      }),
+    }),
+
+    forgotPassword: builder.mutation<void, ForgotPasswordRequest>({
+      query: (request) => ({
+        url: '/api/users/forgot-password',
+        method: 'POST',
+        body: request,
+      }),
+    }),
     verifyOtp: builder.mutation<VerifyOtpResponse, VerifyOtpRequest>({
       query: (request) => ({
         url: '/api/users/verify-otp',
