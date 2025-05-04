@@ -40,7 +40,7 @@ import {
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry'
 
 export const URL =
-  'http://192.168.1.4:8080'
+  'http://192.168.1.5:8080'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',
@@ -454,15 +454,15 @@ export const managementApi = createApi({
       query: (managerId) => ({
         url: `/api/users/manager/${managerId}`,
         method: 'GET',
-        verifyOtp: builder.mutation<VerifyOtpResponse, VerifyOtpRequest>({
-          query: (request) => ({
-            url: '/api/users/verify-otp',
-            method: 'POST',
-            body: request,
-          }),
-        }),
       }),
-    })
+    }),
+    verifyOtp: builder.mutation<VerifyOtpResponse, VerifyOtpRequest>({
+      query: (request) => ({
+        url: '/api/users/verify-otp',
+        method: 'POST',
+        body: request,
+      }),
+    }),
   })
 })
 
@@ -508,5 +508,5 @@ export const {
   useChangePasswordMutation,
   useGetUserByManagerIdQuery,
   useForgotPasswordMutation,
-  // useVerifyOtpMutation,
+  useVerifyOtpMutation,
 } = managementApi
