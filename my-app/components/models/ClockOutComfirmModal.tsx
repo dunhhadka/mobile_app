@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import colors from '../../constants/colors'; // Đường dẫn đến file colors của bạn
 
-const ClockOutModal = ({ onConfirm, onClose }) => {
+const ClockOutModal = ({ onConfirm, onClose , currentTotalTime}) => {
   const [note, setNote] = useState('');
 
   return (
@@ -21,11 +21,7 @@ const ClockOutModal = ({ onConfirm, onClose }) => {
       <View style={styles.timeContainer}>
         <View style={styles.timeBox}>
           <Text style={styles.timeLabel}>Hôm nay</Text>
-          <Text style={styles.timeValue}>08:00:00 Giờ</Text>
-        </View>
-        <View style={styles.timeBox}>
-          <Text style={styles.timeLabel}>Tăng ca</Text>
-          <Text style={styles.timeValue}>00:00:00 Giờ</Text>
+          <Text style={styles.timeValue}>{currentTotalTime} Giờ</Text>
         </View>
       </View>
 

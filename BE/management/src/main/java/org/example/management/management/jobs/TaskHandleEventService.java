@@ -398,7 +398,7 @@ public class TaskHandleEventService {
         }
     }
 
-    @Scheduled(cron = "0 56 13 * * *")
+    @Scheduled(cron = "00 40 07 * * *")
     public void taskRemind() throws JsonProcessingException {
         List<Task> tasks = taskRepository.findByDate(LocalDate.now());
         List<Notification> notifications = new ArrayList<>();

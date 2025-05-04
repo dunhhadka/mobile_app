@@ -222,7 +222,7 @@ public class Task extends AggregateRoot<Task> {
         this.reports.add(dailyReport);
         dailyReport.setTask(this);
 
-        this.addDomainEvent(new DailyReportCreateEvent(this.assignId, this.processId, this.processValue, dailyReport.getDate()));
+//        this.addDomainEvent(new DailyReportCreateEvent(this.assignId, this.processId, this.processValue, dailyReport.getDate()));
 
         this.aggRoot.reCalculateProgress();
     }

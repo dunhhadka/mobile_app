@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import colors from '../../constants/colors';
 import BaseModel from '../models/BaseModel';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
@@ -153,7 +153,7 @@ export default function AttendanceDetai() {
             </Text>
           </View>
         </View>
-
+        <ScrollView>
         {/* Breaks */}
         {attendanceDisplay.breaks.map((breakItem, index) => (
           <View key={index} style={styles.breakContainer}>
@@ -169,7 +169,9 @@ export default function AttendanceDetai() {
             </View>
           </View>
         ))}
+        </ScrollView>
       </View>
+      
     ) : (
       <View>
 

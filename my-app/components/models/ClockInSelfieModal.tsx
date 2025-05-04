@@ -128,7 +128,7 @@ const ClockInSelfieModal: React.FC<Props> = ({ user, onClose }) => {
                 />
             </MapView>
             <View style={styles.modal}>
-                <Text style={styles.title}>Take Selfie to Clock In</Text>
+                <Text style={styles.title}>Chụp ảnh để điểm danh</Text>
 
                 {photo ? (
                     <Image source={{ uri: photo }} style={styles.photo} />
