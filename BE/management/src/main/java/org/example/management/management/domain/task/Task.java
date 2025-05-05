@@ -14,19 +14,19 @@ import org.example.management.management.application.converter.EnumConverter;
 import org.example.management.management.application.converter.IntListConverter;
 import org.example.management.management.application.model.task.TaskImageRequest;
 import org.example.management.management.domain.comment.Comment;
-import org.example.management.management.domain.leaves.Leave;
-import org.example.management.management.domain.task.events.DailyReportCreateEvent;
 import org.example.management.management.domain.task.events.TaskFinishEvent;
 import org.example.management.management.domain.task.events.TaskReOpenEvent;
 import org.example.management.management.domain.task.events.TaskStartEvent;
-import org.example.management.management.infastructure.exception.ConstrainViolationException;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @DynamicUpdate
@@ -170,19 +170,19 @@ public class Task extends AggregateRoot<Task> {
         comment.setTask(this);
     }
 
-    public void deleteComment(int commentId) {
-        var comment = this.comments.stream()
-                .filter(c -> c.getId() == commentId)
-                .findFirst()
-                .orElseThrow(() ->
-                        new ConstrainViolationException(
-                                "comment",
-                                "Comment not found"
-                        ));
-
-        comment.setTask(null);
-        this.comments.remove(comment);
-    }
+//    public void deleteComment(int commentId) {
+//        var comment = this.comments.stream()
+//                .filter(c -> c.getId() == commentId)
+//                .findFirst()
+//                .orElseThrow(() ->
+//                        new ConstrainViolationException(
+//                                "comment",
+//                                "Comment not found"
+//                        ));
+//
+//        comment.setTask(null);
+//        this.comments.remove(comment);
+//    }
 
     public void start() {
         this.timeInfo = this.timeInfo.toBuilder()

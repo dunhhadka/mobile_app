@@ -54,8 +54,7 @@ public class AttendanceService {
                 .stream().collect(Collectors.toMap(Image::getId, Function.identity()));
 
         var response = this.logMapper.toResponses(alllogs);
-        response
-                .forEach(log -> {
+        response.forEach(log -> {
                     var logId = log.getId();
                     var logEntity = alllogs.stream()
                             .filter(l -> l.getId() == logId)
@@ -105,8 +104,7 @@ public class AttendanceService {
                 request.getNote(),
                 request.getLatitude(),
                 request.getLongitude(),
-                userId,
-                null
+                userId
         );
 
         var logSaved = logRepository.save(log);
@@ -194,13 +192,11 @@ public class AttendanceService {
                 calculateModel.actualClockOut,
                 totalHours,
                 request.getNote(),
+                allLogs,
                 userId
         );
+        allLogs.forEach(log->log.setAttendance(attendance));
         var saved = this.attendanceRepository.save(attendance);
-        allLogs.forEach(log -> {
-            log.setAttendance(saved.getId());
-            this.logRepository.save(log);
-        });
         return saved.getId();
     }
 
@@ -237,26 +233,16 @@ public class AttendanceService {
                 .toList();
 
         int logSize = sortedLogs.size();
-
-        int left = 0;
-        int right = logSize - 1;
-        while (left < right) {
-            var logFromLeft = sortedLogs.get(left);
-            if (clockIn == null && logFromLeft.getType() == Log.Type.in && logFromLeft.getCheckIn() != null) {
-                clockIn = logFromLeft.getCheckIn();
-                left++;
-            } else {
-                left++;
-            }
-
-            var logFromRight = sortedLogs.get(right);
-            if (logFromRight.getType() == Log.Type.out && logFromRight.getCheckIn() != null) {
-                clockOut = logFromRight.getCheckIn();
-                right--;
-            } else {
-                right--;
-            }
+        if(allLogs.get(0).getType()!= Log.Type.in ||  allLogs.get(allLogs.size()-1).getType()!=Log.Type.out){
+            throw new ConstrainViolationException(
+                    "ClockInOut",
+                    "Phải ClockIn hoặc Clockout trước"
+            );
         }
+
+        clockIn = allLogs.get(0).getCheckIn();
+        clockOut = allLogs.get(allLogs.size()-1).getCheckIn();
+
 
         Instant breakWork = null;
         Instant backWork;
@@ -275,31 +261,10 @@ public class AttendanceService {
             }
         }
 
-        if (clockIn == null) {
-            throw new ConstrainViolationException(
-                    "ClockIn",
-                    "Phải ClockIn trước"
-            );
-        }
         var clockInTime = toTime(clockIn);
-        clockInTime = clockInTime.isBefore(eightAM) ? eightAM : clockInTime;
-        if (clockOut == null) {
-            if (log.isDebugEnabled()) {
-                log.debug(
-                        """
-                                ClockIn Or ClockOut is null with allLogs {}
-                                """, allLogs);
-            }
-            return new CalculateAttendanceModel(
-                    clockInTime,
-                    null,
-                    toTime(clockIn),
-                    null,
-                    breakTimes
-            );
-        }
-
         var clockOutTime = toTime(clockOut);
+        clockInTime = clockInTime.isBefore(eightAM) ? eightAM : clockInTime;
+        clockOutTime = clockOutTime.isBefore(eightAM) ? clockInTime: clockOutTime;
         clockOutTime = clockOutTime.isAfter(fivePM) ? fivePM : clockOutTime;
         clockOutTime = clockInTime.isAfter(fivePM)? clockInTime: clockOutTime;
         return new CalculateAttendanceModel(

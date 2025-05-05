@@ -107,14 +107,14 @@ public class CommentService {
                 .toList();
     }
 
-    public void deleteId(int commentId, int taskId) {
-        var task = this.taskRepository.findById(taskId)
-                .orElseThrow(() ->
-                        new ConstrainViolationException(
-                                "task",
-                                "Task not found"
-                        ));
-
-        task.deleteComment(commentId);
-    }
+//    public void deleteId(int commentId, int taskId) {
+//        var task = this.taskRepository.findById(taskId)
+//                .orElseThrow(() ->
+//                        new ConstrainViolationException(
+//                                "task",
+//                                "Task not found"
+//                        ));
+//
+//        task.deleteComment(commentId);
+//    }
 }

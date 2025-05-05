@@ -4,10 +4,12 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.Instant;
 
 @Getter
+@Setter
 @Entity
 @Table(name = "logs")
 @NoArgsConstructor
@@ -30,7 +32,10 @@ public class Log {
     private String longitude;
 
     private int userId;
-    private int attendanceId;
+
+    @ManyToOne
+    @JoinColumn(name = "attendance_id")
+    private Attendance attendance;
 
     public Log(
             Instant checkIn,
@@ -39,8 +44,7 @@ public class Log {
             String note,
             String latitude,
             String longitude,
-            int userId,
-            Integer attendanceId
+            int userId
     ) {
         this.checkIn = checkIn;
         this.type = type;
@@ -49,11 +53,6 @@ public class Log {
         this.latitude = latitude;
         this.longitude = longitude;
         this.userId = userId;
-    }
-
-
-    public void setAttendance(int attendanceId){
-        this.attendanceId = attendanceId;
     }
 
     public enum Type {

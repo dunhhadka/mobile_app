@@ -8,7 +8,6 @@ import org.example.management.management.application.service.comment.CommentServ
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,8 +37,8 @@ public class CommentController {
         return this.commentService.getByTaskId(taskId);
     }
 
-    @DeleteMapping("/{taskId}/{commentId}")
-    public void deleteComment(@PathVariable int commentId, @PathVariable int taskId) {
-        this.commentService.deleteId(commentId, taskId);
-    }
+//    @DeleteMapping("/{taskId}/{commentId}")
+//    public void deleteComment(@PathVariable int commentId, @PathVariable int taskId) {
+//        this.commentService.deleteId(commentId, taskId);
+//    }
 }
