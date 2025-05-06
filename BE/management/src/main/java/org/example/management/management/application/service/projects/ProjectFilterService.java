@@ -123,6 +123,10 @@ public class ProjectFilterService {
             specification = specification.and(ProjectSpecification.hasStatusIn(request.getStatuses()));
         }
 
+        if (CollectionUtils.isNotEmpty(request.getCreatedIds())) {
+            specification = specification.and(ProjectSpecification.hasCreatedInIn(request.getCreatedIds()));
+        }
+
         return specification;
     }
 }

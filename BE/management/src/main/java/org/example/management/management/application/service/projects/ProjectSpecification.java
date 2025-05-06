@@ -57,6 +57,10 @@ public class ProjectSpecification {
         return (root, query, cb) -> root.get(Project_.STATUS).in(statuses);
     }
 
+    public static Specification<Project> hasCreatedInIn(List<Integer> createdIds) {
+        return ((root, query, cb) -> root.get(Project_.CREATED_ID).in(createdIds));
+    }
+
     public static Specification<Project> hasUserIdsIn(List<Integer> userIds) {
         return ((root, query, builder) -> {
             Subquery<Integer> subquery = query.subquery(Integer.class);
