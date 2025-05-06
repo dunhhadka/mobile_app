@@ -34,7 +34,7 @@ public class Log {
     private int userId;
 
     @ManyToOne
-    @JoinColumn(name = "attendance_id")
+    @JoinColumn(name = "attendance_id", nullable = true)
     private Attendance attendance;
 
     public Log(

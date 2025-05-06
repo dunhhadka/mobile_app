@@ -212,7 +212,7 @@ export default function SignUpScreen({ navigation }: any) {
         <Text style={styles.errorText}>{errors.confirm_password.message}</Text>
       )}
 
-      <View style={styles.checkboxRow}>
+      {/* <View style={styles.checkboxRow}>
         <Checkbox
           status={agree ? 'checked' : 'unchecked'}
           onPress={() => setAgree(!agree)}
@@ -221,7 +221,7 @@ export default function SignUpScreen({ navigation }: any) {
           I agree with <Text style={styles.link}>terms & conditions</Text> and{' '}
           <Text style={styles.link}>privacy policy</Text>
         </Text>
-      </View>
+      </View> */}
 
       <TouchableOpacity
         style={styles.buttonWrapper}
@@ -232,7 +232,7 @@ export default function SignUpScreen({ navigation }: any) {
           {isCreateLoading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Sign Up</Text>
+            <Text style={styles.buttonText}>Đăng ký</Text>
           )}
         </LinearGradient>
       </TouchableOpacity>
@@ -242,7 +242,7 @@ export default function SignUpScreen({ navigation }: any) {
         onPress={() => navigation.navigate('SignIn')}
       >
         <Text>
-          Already have an account? <Text style={styles.link}>Sign in here</Text>
+          Bạn đã có tài khoản? <Text style={styles.link}>Đăng nhập</Text>
         </Text>
       </TouchableOpacity>
     </ScrollView>

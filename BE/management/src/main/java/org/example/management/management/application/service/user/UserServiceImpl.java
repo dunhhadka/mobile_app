@@ -76,10 +76,10 @@ public class UserServiceImpl implements UserService {
         String name = Stream.of(request.getFirstName(), request.getLastName())
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.joining(" "));
-        user.setPosition(request.getPosition());
+        user.setPosition(Optional.ofNullable(request.getPosition()).orElse(User.Position.manager));
         user.setUserName(name);
         user.setPassword(request.getPassword());
-        user.setRole(User.Role.member);
+        user.setRole(user.getPosition() != null && user.getPosition() == User.Position.manager ? User.Role.manager : User.Role.member);
         user.setDefaultColor(request.getDefaultColor());
         userRepository.save(user);
         return this.getByIds(List.of(user.getId())).get(0);

@@ -13,7 +13,7 @@ import colors from '../../constants/colors'
 import { useCreateUserMutation } from '../../api/magementApi'
 import Toast from 'react-native-toast'
 import { useToast } from 'react-native-toast-notifications'
-import { Controller, DefaultValues, set, useForm } from 'react-hook-form'
+import { Controller, ControllerFieldState, ControllerRenderProps, DefaultValues, FieldValues, set, useForm, UseFormStateReturn } from 'react-hook-form'
 import { UserRequest } from '../../types/management'
 import { useDispatch } from 'react-redux'
 import { setUser } from '../../redux/slices/userSlice'
@@ -159,6 +159,11 @@ export default function CreateUserScreen() {
             {errors.first_name && (
                 <Text style={styles.errorText}>{errors.first_name.message}</Text>
             )}
+            
+            {/* <Controller render={function ({ field, fieldState, formState, }: { field: ControllerRenderProps<FieldValues, string>; fieldState: ControllerFieldState; formState: UseFormStateReturn<FieldValues> }): React.ReactElement {
+                throw new Error('Function not implemented.')
+            } } name={''}            
+            /> */}
 
             <Controller
                 name="password"

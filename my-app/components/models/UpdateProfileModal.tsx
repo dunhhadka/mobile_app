@@ -284,6 +284,7 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
             label: 'Chọn vị trí',
             value: null,
           }}
+          disabled
         />
       </View>
 

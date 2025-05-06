@@ -36,10 +36,10 @@ export default function OnboardScreen() {
 
       {/* Text Content */}
       <Text style={styles.title}>
-        Navigate Your Work Journey Efficient & Easy
+        Quản lý công việc hiệu quả và dễ dàng
       </Text>
       <Text style={styles.subtitle}>
-        Increase your work management & career development radically
+        Tăng cường quản lý và phát triển nhanh chóng
       </Text>
 
       {/* Buttons */}
@@ -47,14 +47,14 @@ export default function OnboardScreen() {
         style={styles.signInBtn}
         onPress={() => navigation.navigate('SignIn')}
       >
-        <Text style={styles.signInText}>Sign In</Text>
+        <Text style={styles.signInText}>Đăng nhập</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.signUpBtn}
         onPress={() => navigation.navigate('SignUp')}
       >
-        <Text style={styles.signUpText}>Sign Up</Text>
+        <Text style={styles.signUpText}>Đăng ký</Text>
       </TouchableOpacity>
     </View>
   )
