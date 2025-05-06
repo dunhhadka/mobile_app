@@ -39,8 +39,7 @@ import {
 } from '../types/management'
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry'
 
-export const URL =
-  'http://192.168.78.3:8080'
+export const URL = 'http://192.168.128.132:8080'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',
@@ -120,9 +119,9 @@ export const managementApi = createApi({
       providesTags: (result) =>
         result
           ? [
-            ...result.map(({ id }) => ({ type: 'project' as const, id })),
-            { type: 'project', id: 'LIST' },
-          ]
+              ...result.map(({ id }) => ({ type: 'project' as const, id })),
+              { type: 'project', id: 'LIST' },
+            ]
           : [{ type: 'project', id: 'LIST' }],
     }),
     updateProject: builder.mutation<Project, ProjectRequest>({
@@ -197,12 +196,12 @@ export const managementApi = createApi({
       providesTags: (result) =>
         result && result.length > 0
           ? [
-            ...result.map((r) => ({
-              type: 'notification' as const,
-              id: r.id,
-            })),
-            { type: 'notification' as const, id: 'LIST' },
-          ]
+              ...result.map((r) => ({
+                type: 'notification' as const,
+                id: r.id,
+              })),
+              { type: 'notification' as const, id: 'LIST' },
+            ]
           : [{ type: 'notification' as const, id: 'LIST' }],
     }),
     markIsRead: builder.mutation<void, number>({
@@ -251,9 +250,9 @@ export const managementApi = createApi({
       providesTags: (result) => {
         return result && result.length
           ? [
-            ...result.map((r) => ({ type: 'task' as const, id: r.id })),
-            { type: 'task' as const, id: 'LIST' },
-          ]
+              ...result.map((r) => ({ type: 'task' as const, id: r.id })),
+              { type: 'task' as const, id: 'LIST' },
+            ]
           : [{ type: 'task' as const, id: 'LIST' }]
       },
     }),
@@ -317,9 +316,9 @@ export const managementApi = createApi({
       providesTags: (result, error, arg, meta) => {
         return result && result.length
           ? [
-            ...result.map((r) => ({ type: 'task' as const, id: r.id })),
-            { type: 'task' as const, id: 'LIST' },
-          ]
+              ...result.map((r) => ({ type: 'task' as const, id: r.id })),
+              { type: 'task' as const, id: 'LIST' },
+            ]
           : [{ type: 'task' as const, id: 'LIST' }]
       },
     }),
@@ -398,9 +397,9 @@ export const managementApi = createApi({
       providesTags: (result) =>
         result && result.length
           ? [
-            ...result.map(({ id }) => ({ type: 'leave' as const, id })),
-            { type: 'leave', id: 'LIST' },
-          ]
+              ...result.map(({ id }) => ({ type: 'leave' as const, id })),
+              { type: 'leave', id: 'LIST' },
+            ]
           : [{ type: 'leave', id: 'LIST' }],
     }),
     getProjectMamagementByProjectIdAndUserId: builder.query<
@@ -440,7 +439,7 @@ export const managementApi = createApi({
         url: `/api/users/change-password/${request.userId}`,
         method: 'POST',
         body: request,
-      })
+      }),
     }),
     forgotPassword: builder.mutation<void, ForgotPasswordRequest>({
       query: (request) => ({
@@ -463,7 +462,7 @@ export const managementApi = createApi({
         body: request,
       }),
     }),
-  })
+  }),
 })
 
 export const {

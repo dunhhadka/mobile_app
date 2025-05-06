@@ -54,6 +54,7 @@ import CreateUserScreen from './components/pages/CreateUserScreen'
 import AttendanceManagementScreen from './components/pages/AttendanceManagementScreen'
 import AttendanceDetai from './components/pages/AttendanceDetail'
 import { currentUser } from './mocks/users'
+import { useGetCurrentUser } from './utils/getCurrentUser'
 
 export type LeaveStackParamList = {
   LeaveScreen: undefined
@@ -163,6 +164,8 @@ function UsersStack() {
 
 function MainTabs() {
   const currentUser = useSelector((state: RootState) => state.user.currentUser)
+
+  const { isManager } = useGetCurrentUser()
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -204,16 +207,15 @@ function MainTabs() {
       <Tab.Screen name="Attendance" component={AttendancesStack} />
       <Tab.Screen name="Notification" component={NotificationsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
-      {currentUser?.position &&
-        Position[currentUser.position] === 'Quản lý' && (
-          <Tab.Screen
-            name="UserManagement"
-            component={UsersStack}
-            options={{
-              tabBarItemStyle: { display: 'none' }, // Hide the tab from the bottom bar
-            }}
-          />
-        )}
+      {isManager && (
+        <Tab.Screen
+          name="UserManagement"
+          component={UsersStack}
+          options={{
+            tabBarItemStyle: { display: 'none' }, // Hide the tab from the bottom bar
+          }}
+        />
+      )}
     </Tab.Navigator>
   )
 }
@@ -242,7 +244,10 @@ export default function App() {
               <RootStack.Screen name="Onboarding" component={OnboardScreen} />
               <RootStack.Screen name="SignIn" component={SignInScreen} />
               <RootStack.Screen name="SignUp" component={SignUpScreen} />
-              <RootStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+              <RootStack.Screen
+                name="ForgotPassword"
+                component={ForgotPasswordScreen}
+              />
               <RootStack.Screen name="Main" component={MainTabs} />
               <RootStack.Screen
                 name="LeaveStack"

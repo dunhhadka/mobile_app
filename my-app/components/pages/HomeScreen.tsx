@@ -22,6 +22,7 @@ import Loading from '../loading/Loading'
 import { Position, ProjectSearchRequest } from '../../types/management'
 import ProjectCard from '../card/ProjectCard'
 import EmptySearchResult from '../models/EmptySearchResult'
+import { useGetCurrentUser } from '../../utils/getCurrentUser'
 
 export default function HomeScreen() {
   const currentUser = useSelector((state: RootState) => state.user.currentUser)
@@ -30,11 +31,10 @@ export default function HomeScreen() {
 
   const navigation = useNavigation()
 
-  const isManager =
-    currentUser?.position && Position[currentUser.position] === 'Quản lý'
+  const { isManager } = useGetCurrentUser()
 
   const projectFilter: ProjectSearchRequest = {
-    createdIds: isManager ? [currentUser.id ?? 0] : [],
+    createdIds: isManager ? [currentUser?.id ?? 0] : [],
     processIds: !isManager ? [currentUser?.id ?? 0] : [],
   }
 

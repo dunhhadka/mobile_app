@@ -32,6 +32,7 @@ import UpdateProfileModal from '../models/UpdateProfileModal'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
 import { RootStackParamList } from '../../App'
 import ChangePasswordForm from '../form/ChangePasswordForm'
+import { useGetCurrentUser } from '../../utils/getCurrentUser'
 
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>()
@@ -70,6 +71,8 @@ export default function ProfileScreen() {
       : 0
 
   useEffect(() => {}, [user])
+
+  const { isManager } = useGetCurrentUser()
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -156,27 +159,29 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Tài khoản</Text>
 
           <View style={styles.infoCard}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.infoItem,
-                pressed && styles.infoItemPressed,
-              ]}
-              onPress={() => {
-                // @ts-ignore
-                navigation.navigate('UserManagement', {
-                  screen: 'UserList',
-                })
-              }}
-            >
-              <View style={styles.infoIconContainer}>
-                <User2 size={20} color={colors.primary} />
-              </View>
-              <View style={styles.infoTextContainer}>
-                <Text style={styles.infoTitle}>Nhân viên</Text>
-              </View>
+            {isManager && (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.infoItem,
+                  pressed && styles.infoItemPressed,
+                ]}
+                onPress={() => {
+                  // @ts-ignore
+                  navigation.navigate('UserManagement', {
+                    screen: 'UserList',
+                  })
+                }}
+              >
+                <View style={styles.infoIconContainer}>
+                  <User2 size={20} color={colors.primary} />
+                </View>
+                <View style={styles.infoTextContainer}>
+                  <Text style={styles.infoTitle}>Nhân viên</Text>
+                </View>
 
-              <ChevronRight size={20} color={colors.textLight} />
-            </Pressable>
+                <ChevronRight size={20} color={colors.textLight} />
+              </Pressable>
+            )}
 
             <Pressable
               style={({ pressed }) => [
