@@ -40,7 +40,7 @@ import {
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry'
 
 export const URL =
-  'http://192.168.1.4:8080'
+  'http://192.168.0.102:8080'
 
 export const managementApi = createApi({
   reducerPath: 'managementApi',

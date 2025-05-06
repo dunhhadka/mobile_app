@@ -76,6 +76,7 @@ public class UserServiceImpl implements UserService {
         String name = Stream.of(request.getFirstName(), request.getLastName())
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.joining(" "));
+        user.setPosition(request.getPosition());
         user.setUserName(name);
         user.setPassword(request.getPassword());
         user.setRole(User.Role.member);
@@ -111,7 +112,10 @@ public class UserServiceImpl implements UserService {
 
         user.updateAddress(request.getAddress());
         user.setDefaultColor(request.getDefaultColor());
-
+        String name = Stream.of(request.getFirstName(), request.getLastName())
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.joining(" "));
+        user.setUserName(name);
         userRepository.save(user);
         return this.getByIds(List.of(user.getId())).get(0);
     }

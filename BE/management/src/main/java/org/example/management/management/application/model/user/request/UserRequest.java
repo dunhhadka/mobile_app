@@ -23,8 +23,6 @@ public class UserRequest {
     @Pattern(regexp = "^\\d{10}$", message = "phone invalid format")
     private String phone;
 
-    private Integer companyId;
-
     private String firstName;
 
     private String lastName;

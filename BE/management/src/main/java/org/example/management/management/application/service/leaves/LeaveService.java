@@ -50,6 +50,9 @@ public class LeaveService {
         if (!CollectionUtils.isEmpty(users)) {
             managerId = users.get(0).getId();
         }
+        if(userId.equals(managerId)) {
+            throw new ConstrainViolationException("userId", "Tài khoản quản lí không cần tạo đơn xin nghỉ");
+        }
         var leave = new Leave(
                 request.getCategory(),
                 request.getStartLeave(),
@@ -93,27 +96,6 @@ public class LeaveService {
         Leave leave = leaveRepository.findById(leaveId)
                 .orElseThrow(() -> new ConstrainViolationException("leaveId", "Không tìm thấy đơn xin nghỉ"));
         leave.updateLeaveStatus(leaveId, status);
-        leaveRepository.save(leave);
-        return leaveMapper.toLeaveResponse(leave);
-    }
-
-    @Transactional
-    public LeaveResponse rejectLeave(Integer leaveId, Integer userId) {
-        Leave leave = leaveRepository.findById(leaveId)
-                .orElseThrow(() -> new ConstrainViolationException("leaveId", "Không tìm thấy đơn xin nghỉ"));
-        leave.reject(userId, Instant.now());
-        leaveRepository.save(leave);
-        return leaveMapper.toLeaveResponse(leave);
-    }
-
-    @Transactional
-    public LeaveResponse approveLeave(Integer leaveId, Integer userId) {
-        Leave leave = leaveRepository.findById(leaveId)
-                .orElseThrow(() -> new ConstrainViolationException("leaveId", "Không tìm thấy đơn xin nghỉ"));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ConstrainViolationException("userId", "Không tìm thấy người dùng đăng nhập"));
-
-        leave.approve(userId, Instant.now());
         leaveRepository.save(leave);
         return leaveMapper.toLeaveResponse(leave);
     }

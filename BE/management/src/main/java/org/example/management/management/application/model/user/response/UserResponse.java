@@ -41,6 +41,7 @@ public class UserResponse {
 
     @Getter
     @Setter
+    @Builder
     public static class AddressResponse {
         private int id;
         private String wardName;

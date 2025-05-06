@@ -87,12 +87,8 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
   const [lastName, setLastName] = useState(user.last_name ?? '')
   const [dob, setDob] = useState<Date | undefined>(undefined)
   const [position, setPosition] = useState(user.position)
-  const [country, setCountry] = useState(user?.address?.country_name ?? '')
-  const [districtName, setDistrictName] = useState(
-    user?.address?.district_name ?? ''
-  )
-  const [ward, setWard] = useState(user?.address?.ward_name ?? '')
-  const [address, setAddress] = useState('')
+  // Chỉ lưu trữ và hiển thị ward_name
+  const [address, setAddress] = useState(user?.address?.ward_name || '')
   const [showPicker, setShowPicker] = useState(false)
 
   const dispatch = useDispatch()
@@ -106,6 +102,7 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
   }))
 
   const handleUpdateProfile = async () => {
+    // Giữ nguyên district_name và country_name, chỉ cập nhật ward_name
     const data = {
       id: user.id,
       first_name: firstName,
@@ -116,9 +113,9 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
       phone: user.phone,
       company_id: user.company_id,
       address: {
-        ward_name: ward,
-        district_name: districtName,
-        country_name: country,
+        ward_name: address, // Chỉ cập nhật ward_name từ input
+        district_name: user?.address?.district_name || '',
+        country_name: user?.address?.country_name || '',
       },
       default_color: user?.default_color ?? getRandomColor(),
     } as UserRequest
@@ -195,8 +192,8 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
       style={styles.boundary}
       contentContainerStyle={styles.container}
     >
-      <Text style={styles.header}>My Personal Data</Text>
-      <Text style={styles.subHeader}>Details about my personal data</Text>
+      <Text style={styles.header}>Thông tin chi tiết</Text>
+      <Text style={styles.subHeader}>Chi tiết về dữ liệu cá nhân của tôi.</Text>
 
       <Pressable onPress={handlePickImage}>
         <View style={styles.avatarContainer}>
@@ -291,38 +288,12 @@ export default function UpdateProfileModel({ user, onClose }: Props) {
       </View>
 
       <Text style={styles.sectionTitle}>Address</Text>
-      <RNPickerSelect
-        onValueChange={(value) => setCountry(value)}
-        value={country}
-        items={[
-          { label: 'Indonesia', value: 'Indonesia' },
-          { label: 'Vietnam', value: 'Vietnam' },
-        ]}
-        style={pickerStyle}
-        placeholder={{}}
-      />
-      <RNPickerSelect
-        onValueChange={(value) => setDistrictName(value)}
-        value={districtName}
-        items={[{ label: 'DKI Jakarta', value: 'DKI Jakarta' }]}
-        style={pickerStyle}
-        placeholder={{}}
-      />
-      <RNPickerSelect
-        onValueChange={(value) => setWard(value)}
-        value={ward}
-        items={[{ label: 'Jakarta Selatan', value: 'Jakarta Selatan' }]}
-        style={pickerStyle}
-        placeholder={{}}
-      />
       <TextInput
-        label="Full Address"
+        label="Adress"
         value={address}
         onChangeText={setAddress}
         style={styles.input}
         mode="outlined"
-        multiline
-        numberOfLines={3}
         theme={{ roundness: 12 }}
       />
 
