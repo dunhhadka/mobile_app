@@ -95,7 +95,14 @@ public class LeaveService {
     public LeaveResponse updateLeaveStatus(Integer leaveId, Integer userId, Leave.Status status) {
         Leave leave = leaveRepository.findById(leaveId)
                 .orElseThrow(() -> new ConstrainViolationException("leaveId", "Không tìm thấy đơn xin nghỉ"));
-        leave.updateLeaveStatus(leaveId, status);
+        User user = userRepository.findById(userId).orElseThrow(() ->
+                new ConstrainViolationException(
+                        "userId",
+                        "Tài khoản không tồn tại"
+                )
+        );
+        leave.updateLeaveStatus(userId, status);
+
         leaveRepository.save(leave);
         return leaveMapper.toLeaveResponse(leave);
     }
